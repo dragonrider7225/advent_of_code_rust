@@ -1,5 +1,9 @@
-use io;
+use advent_of_code as aoc;
+
+use extended_io as eio;
+
+use std::io;
 
 fn main() -> io::Result<()> {
-    run_day(prompt("Enter the number of the day to run")?)
+    aoc::run_day(eio::prompt("Enter the number of the day to run: ")?)
 }

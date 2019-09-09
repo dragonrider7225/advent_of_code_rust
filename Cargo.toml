@@ -1,5 +1,5 @@
 [package]
-name = "advent_of_code_rust"
+name = "advent_of_code"
 version = "0.1.0"
 authors = ["Kevin Moonen <dragonrider7225@gmail.com>"]
 edition = "2018"
@@ -7,3 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+extended_io = { git = "https://github.com/dragonrider7225/extended_io.git", version = "1.4.0" }
+nom = "5.0.0"

@@ -1,18 +1,91 @@
-use std::{error, io};
+#![feature(step_trait)]
+use std::{
+    convert::{AsRef},
+    fmt::Debug,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::Path,
+    str::FromStr,
+};
 
-fn prompt<T, E>(p: &str) -> io::Result<T>
-  where
-    T: FromStr<Err = E>,
-    E: error::Error,
+mod parse;
+
+fn get_lines<P>(path: P) -> io::Result<impl Iterator<Item = String>>
+where
+    P: AsRef<Path>,
 {
-    let mut stdout = io::stdout();
-    stdout.write_all(&p.as_bytes()[..])?;
-    stdout.flush()?;
-    let mut buf = String::new();
-    let _ = io::stdin().read_line(&mut buf)?;
-    Ok(<T as FromStr>::from_str(&buf)?);
+    let ret = BufReader::new(File::open(path)?)
+        .lines()
+        .map(|res| res.expect("Failed to read line"));
+    Ok(ret)
 }
 
-fn run_day(day: u32) -> io::Result<()> {
-    unimplemented!()
+fn parse_lines<I, P>(path: P) -> io::Result<impl Iterator<Item = I>>
+where
+    I: FromStr,
+    <I as FromStr>::Err: Debug,
+    P: AsRef<Path>,
+{
+    let lines = get_lines(path)?;
+    Ok(lines.map(|s| s.parse().expect(&format!(r#"Invalid line: "{}""#, s))))
+}
+
+mod day_1;
+mod day_2;
+mod day_3;
+mod day_4;
+mod day_5;
+mod day_6;
+mod day_7;
+mod day_8;
+mod day_9;
+mod day_10;
+mod day_11;
+mod day_12;
+mod day_13;
+mod day_14;
+mod day_15;
+mod day_16;
+mod day_17;
+mod day_18;
+mod day_19;
+mod day_20;
+mod day_21;
+mod day_22;
+mod day_23;
+mod day_24;
+mod day_25;
+
+pub fn run_day(day: u32) -> io::Result<()> {
+    match day {
+        1 => day_1::run(),
+        2 => day_2::run(),
+        3 => day_3::run(),
+        4 => day_4::run(),
+        5 => day_5::run(),
+        6 => day_6::run(),
+        7 => day_7::run(),
+        8 => day_8::run(),
+        9 => day_9::run(),
+        10 => day_10::run(),
+        11 => day_11::run(),
+        12 => day_12::run(),
+        13 => day_13::run(),
+        14 => day_14::run(),
+        15 => day_15::run(),
+        16 => day_16::run(),
+        17 => day_17::run(),
+        18 => day_18::run(),
+        19 => day_19::run(),
+        20 => day_20::run(),
+        21 => day_21::run(),
+        22 => day_22::run(),
+        23 => day_23::run(),
+        24 => day_24::run(),
+        25 => day_25::run(),
+        day => {
+            let msg = format!("Invalid day: {}", day);
+            Err(io::Error::new(io::ErrorKind::InvalidInput, msg))
+        }
+    }
 }
