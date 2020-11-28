@@ -20,6 +20,7 @@ mod parse;
 mod util;
 mod year_2018;
 mod year_2019;
+mod year_2020;
 
 fn get_lines<P>(path: P) -> io::Result<impl Iterator<Item = String>>
 where
@@ -43,15 +44,10 @@ where
 fn run_year(year: u32) -> io::Result<()> {
     let day_prompt = || eio::prompt("Enter day to run: ");
     match year {
-        2018 => {
-            year_2018::run_day(day_prompt()?)
-        }
-        2019 => {
-            year_2019::run_day(day_prompt()?)
-        }
-        _ => {
-            unimplemented!("Year {}", year)
-        }
+        2018 => year_2018::run_day(day_prompt()?),
+        2019 => year_2019::run_day(day_prompt()?),
+        2020 => year_2020::run_day(day_prompt()?),
+        _ => unimplemented!("Year {}", year),
     }
 }
 
