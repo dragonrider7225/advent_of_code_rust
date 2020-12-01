@@ -1,5 +1,14 @@
 use std::io;
 
+#[allow(unreachable_code)]
 pub(super) fn run() -> io::Result<()> {
-    unimplemented!()
+    {
+        println!("Year ??? Day 1 Part 1");
+        todo!("Year ??? Day 1 Part 1");
+    }
+    {
+        println!("Year ??? Day 1 Part 2");
+        todo!("Year ??? Day 1 Part 2");
+    }
+    Ok(())
 }
