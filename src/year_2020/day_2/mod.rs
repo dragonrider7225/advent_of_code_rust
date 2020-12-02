@@ -30,10 +30,20 @@ impl PasswordPolicy {
             }
             Self::MultiLetterCheck { first_position, second_position, c } => {
                 let mut chars = iter::once('\0').chain(s.chars());
-                let char_1 = chars.clone().nth(first_position).unwrap();
-                let char_2 = chars.nth(second_position).unwrap();
-                ((char_1 == c) && (char_2 != c)) || ((char_1 != c) && (char_2 == c))
+                (chars.clone().nth(first_position).unwrap() == c)
+                    ^ (chars.nth(second_position).unwrap() == c)
             }
+        }
+    }
+
+    fn switch_to_multi_letter_check(&mut self) {
+        match *self {
+            Self::SingleLetterCount { min_count, max_count, c } => *self = Self::MultiLetterCheck {
+                first_position: min_count,
+                second_position: max_count,
+                c,
+            },
+            Self::MultiLetterCheck { .. } => {}
         }
     }
 }
@@ -99,13 +109,7 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2020 Day 2 Part 2");
         password_database.0.iter_mut()
-            .for_each(|entry| if let PasswordPolicy::SingleLetterCount { min_count, max_count, c } = entry.policy {
-            entry.policy = PasswordPolicy::MultiLetterCheck {
-                first_position: min_count,
-                second_position: max_count,
-                c,
-            };
-        });
+            .for_each(|entry| entry.policy.switch_to_multi_letter_check());
         println!("There are {} valid passwords in the database", password_database.count_valid());
     }
     Ok(())
