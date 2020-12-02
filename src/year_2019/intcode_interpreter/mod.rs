@@ -536,7 +536,7 @@ where
             comb::recognize(sequence::pair(comb::opt(bytes::tag("-")), character::digit1)),
             |s: &str| s.parse::<i64>().expect("Invalid i64"),
         );
-        let snl = multi::separated_nonempty_list;
+        let snl = multi::separated_list1;
         comb::map(snl(bytes::tag(","), parse_i64), Self::from)(s)
     }
 }

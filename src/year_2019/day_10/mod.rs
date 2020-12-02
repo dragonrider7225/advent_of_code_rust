@@ -236,7 +236,7 @@ impl NomParse for AsteroidField {
         let asteroid = comb::value(true, character::char('#'));
         let blank = comb::value(false, character::char('.'));
         let row_parser = multi::many1(branch::alt((asteroid, blank)));
-        let field_parser = multi::separated_nonempty_list(
+        let field_parser = multi::separated_list1(
             character::line_ending,
             row_parser,
         );

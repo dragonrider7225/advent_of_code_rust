@@ -1,4 +1,4 @@
-use crate::parse::{self, NomParse};
+use crate::parse::NomParse;
 
 use std::{collections::{HashMap, HashSet}, io, mem, str::FromStr};
 
@@ -35,7 +35,7 @@ struct Movement(Direction, u32);
 impl NomParse for Movement {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
-            sequence::pair(Direction::nom_parse, parse::parse_u32),
+            sequence::pair(Direction::nom_parse, u32::nom_parse),
             |(direction, distance)| Movement(direction, distance),
         )(s)
     }
@@ -142,7 +142,7 @@ impl Wire {
 impl NomParse for Wire {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
-            multi::separated_nonempty_list(
+            multi::separated_list1(
                 bytes::tag(","),
                 Movement::nom_parse,
             ),

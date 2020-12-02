@@ -141,7 +141,7 @@ impl NomParse for Reaction {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
             sequence::separated_pair(
-                multi::separated_nonempty_list(
+                multi::separated_list1(
                     bytes::tag(", "),
                     Material::nom_parse,
                 ),

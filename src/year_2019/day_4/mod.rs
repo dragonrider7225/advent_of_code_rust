@@ -1,4 +1,4 @@
-use crate::parse;
+use crate::parse::NomParse;
 
 use std::{io, ops::Range};
 
@@ -7,9 +7,9 @@ use nom::{IResult, bytes::complete as bytes, combinator as comb, sequence};
 fn parse_range(s: &str) -> IResult<&str, Range<u32>> {
     comb::map(
         sequence::separated_pair(
-            parse::parse_u32,
+            u32::nom_parse,
             bytes::tag("-"),
-            parse::parse_u32,
+            u32::nom_parse,
         ),
         |(least, most)| least..most,
     )(s)

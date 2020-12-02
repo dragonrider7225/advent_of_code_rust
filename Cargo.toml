@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 extended_io = { git = "https://github.com/dragonrider7225/extended_io.git", version = "^2.0.0" }
-nom = "^5.0.0"
+nom = "^6.0.1"
 aoc_iter = { path = "iter_extensions" }
 
 [workspace]
