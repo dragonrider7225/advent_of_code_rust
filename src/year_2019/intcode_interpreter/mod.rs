@@ -526,7 +526,7 @@ where
     }
 }
 
-impl<R, W> NomParse for IntcodeInterpreter<R, W>
+impl<'s, R, W> NomParse<'s> for IntcodeInterpreter<R, W>
 where
   R: BufRead + Sized,
   W: Write + Sized,

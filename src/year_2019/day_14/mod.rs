@@ -70,8 +70,8 @@ impl<'a, 'b> Mul<&'b u64> for &'a Material {
     }
 }
 
-impl NomParse for Material {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for Material {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
                 u64::nom_parse,
@@ -137,8 +137,8 @@ impl<'a, 'b> Mul<&'b u64> for &'a Reaction {
     }
 }
 
-impl NomParse for Reaction {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for Reaction {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
                 multi::separated_list1(

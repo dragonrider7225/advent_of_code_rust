@@ -19,7 +19,7 @@ enum Direction {
     Right,
 }
 
-impl NomParse for Direction {
+impl<'s> NomParse<'s> for Direction {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
             comb::value(Direction::Up, bytes::tag("U")),
@@ -32,7 +32,7 @@ impl NomParse for Direction {
 
 struct Movement(Direction, u32);
 
-impl NomParse for Movement {
+impl<'s> NomParse<'s> for Movement {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
             sequence::pair(Direction::nom_parse, u32::nom_parse),
@@ -139,7 +139,7 @@ impl Wire {
     }
 }
 
-impl NomParse for Wire {
+impl<'s> NomParse<'s> for Wire {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
             multi::separated_list1(

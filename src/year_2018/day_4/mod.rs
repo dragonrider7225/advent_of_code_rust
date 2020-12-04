@@ -36,7 +36,7 @@ impl Display for Date {
     }
 }
 
-impl NomParse for Date {
+impl<'s> NomParse<'s> for Date {
     fn nom_parse(s: &str) -> IResult<&str, Date> {
         comb::map(
             sequence::separated_pair(
@@ -118,7 +118,7 @@ macro_rules! impl_try_from_integer_for_time {
 
 impl_try_from_integer_for_time!(u16 u32 u64 u128 usize i16 i32 i64 i128 isize);
 
-impl NomParse for Time {
+impl<'s> NomParse<'s> for Time {
     fn nom_parse(s: &str) -> IResult<&str, Time> {
         comb::map(
             sequence::separated_pair(
@@ -160,7 +160,7 @@ impl Display for Datetime {
     }
 }
 
-impl NomParse for Datetime {
+impl<'s> NomParse<'s> for Datetime {
     fn nom_parse(s: &str) -> IResult<&str, Datetime> {
         comb::map(
             sequence::separated_pair(
@@ -190,7 +190,7 @@ impl Display for Day4Event {
     }
 }
 
-impl NomParse for Day4Event {
+impl<'s> NomParse<'s> for Day4Event {
     fn nom_parse(s: &str) -> IResult<&str, Day4Event> {
         branch::alt((
             comb::value(Day4Event::WakesUp, bytes::tag("wakes up")),
@@ -235,7 +235,7 @@ impl Display for Day4Entry {
     }
 }
 
-impl NomParse for Day4Entry {
+impl<'s> NomParse<'s> for Day4Entry {
     fn nom_parse(s: &str) -> IResult<&str, Day4Entry> {
         comb::map(
             sequence::pair(

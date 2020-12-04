@@ -10,8 +10,8 @@ enum Tile {
     Tree,
 }
 
-impl NomParse for Tile {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for Tile {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::value(Self::Snow, character::char('.')),
             comb::value(Self::Tree, character::char('#')),
@@ -34,8 +34,8 @@ impl TreeMap {
     }
 }
 
-impl NomParse for TreeMap {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for TreeMap {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         let (_, first_line) = sequence::terminated(
             multi::many1(Tile::nom_parse),
             character::line_ending,

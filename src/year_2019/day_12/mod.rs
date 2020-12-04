@@ -216,11 +216,11 @@ where
     }
 }
 
-impl<T> NomParse for Vec3<T>
+impl<'s, T> NomParse<'s> for Vec3<T>
 where
-  T: NomParse,
+  T: NomParse<'s>,
 {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::delimited(
                 bytes::tag("<"),
@@ -248,7 +248,9 @@ where
 
 impl<T> FromStr for Vec3<T>
 where
-  T: NomParse,
+    // `T` can be parsed from a string of any lifetime, including a lifetime shorter than the
+    // lifetime of `T`.
+    T: for<'s> NomParse<'s>,
 {
     type Err = String;
 

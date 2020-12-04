@@ -231,7 +231,7 @@ impl AsteroidField {
     }
 }
 
-impl NomParse for AsteroidField {
+impl<'s> NomParse<'s> for AsteroidField {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         let asteroid = comb::value(true, character::char('#'));
         let blank = comb::value(false, character::char('.'));

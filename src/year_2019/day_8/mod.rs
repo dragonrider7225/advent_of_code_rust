@@ -14,7 +14,7 @@ struct SIFLayer {
     pixels: [[u8; 25]; 6],
 }
 
-impl NomParse for SIFLayer {
+impl<'s> NomParse<'s> for SIFLayer {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
             multi::count(multi::count(character::one_of("0123456789"), 25), 6),
@@ -38,7 +38,7 @@ struct SpaceImageFormat {
     layers: Vec<SIFLayer>,
 }
 
-impl NomParse for SpaceImageFormat {
+impl<'s> NomParse<'s> for SpaceImageFormat {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
             multi::many1(SIFLayer::nom_parse),

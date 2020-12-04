@@ -48,8 +48,8 @@ impl PasswordPolicy {
     }
 }
 
-impl NomParse for PasswordPolicy {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for PasswordPolicy {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
                 sequence::separated_pair(usize::nom_parse, bytes::tag("-"), usize::nom_parse),
@@ -76,8 +76,8 @@ impl PasswordDatabaseEntry {
     }
 }
 
-impl NomParse for PasswordDatabaseEntry {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s> for PasswordDatabaseEntry {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
                 PasswordPolicy::nom_parse,

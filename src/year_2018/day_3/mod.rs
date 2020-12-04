@@ -235,7 +235,7 @@ impl Ord for Rect {
     }
 }
 
-impl NomParse for Rect {
+impl<'s> NomParse<'s> for Rect {
     fn nom_parse(s: &str) -> IResult<&str, Rect> {
         // format!("#{} @ {},{}: {}x{}", id, left_edge, top_edge, width, height)
         comb::map(
