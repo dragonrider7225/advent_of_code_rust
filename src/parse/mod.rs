@@ -1,5 +1,6 @@
-use nom::{character::complete as character, combinator as comb, IResult};
 use std::str::FromStr;
+
+use nom::{character::complete as character, combinator as comb, multi, IResult};
 
 fn parse_num<T>(s: &str) -> IResult<&str, T>
 where
@@ -23,15 +24,25 @@ pub trait NomParse: Sized {
     ///     type Err = String;
     ///
     ///     fn from_str(s: &str) -> Result<T, <Self as FromStr>::Err> {
-    ///         comb::cut(comb::complete(<_>::nom_parse))(s)
+    ///         Self::nom_parse(s)
+    ///             .finish()
     ///             .map(|(_, res)| res)
-    ///             .map_err(|e| format!("{:?}", e))
+    ///             .map_err(|error| format!("{:?}", error))
     ///     }
     /// }
     /// ```
     ///
     /// [`FromStr`]: /std/str/trait.FromStr.html
     fn nom_parse(s: &str) -> IResult<&str, Self>;
+}
+
+impl<T> NomParse for Vec<T>
+where
+    T: NomParse,
+{
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
+        multi::many0(T::nom_parse)(s)
+    }
 }
 
 macro_rules! impl_nom_parse_for_num {
@@ -56,9 +67,12 @@ macro_rules! impl_from_str_for_nom_parse {
             type Err = String;
 
             fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
-                comb::cut(comb::complete(Self::nom_parse))(s)
+                use ::nom::Finish;
+
+                Self::nom_parse(s)
+                    .finish()
                     .map(|(_, res)| res)
-                    .map_err(|e| format!("{:?}", e))
+                    .map_err(|error| format!("{:?}", error))
             }
         }
     )*)
