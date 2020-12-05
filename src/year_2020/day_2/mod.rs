@@ -3,7 +3,7 @@ use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
     IResult,
 };
-use std::{io, iter, str::FromStr};
+use std::{io, iter};
 
 enum PasswordPolicy {
     SingleLetterCount {

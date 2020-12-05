@@ -74,13 +74,13 @@ impl_nom_parse_for_signed!(i8 i16 i32 i64 i128 isize);
 #[macro_export]
 macro_rules! impl_from_str_for_nom_parse {
     ($($t:ty)*) => ($(
-        impl FromStr for $t
+        impl ::std::str::FromStr for $t
         where
-            Self: for<'s> NomParse<'s>,
+            Self: for<'s> $crate::parse::NomParse<'s>,
         {
             type Err = String;
 
-            fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
+            fn from_str(s: &str) -> Result<Self, <Self as ::std::str::FromStr>::Err> {
                 use ::nom::Finish;
 
                 Self::nom_parse(s)

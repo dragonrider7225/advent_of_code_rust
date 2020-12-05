@@ -1,6 +1,6 @@
 use crate::{parse::NomParse, util::Point};
 
-use std::{io, str::FromStr};
+use std::io;
 
 use nom::{branch, character::complete as character, combinator as comb, multi, IResult};
 

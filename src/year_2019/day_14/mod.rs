@@ -5,7 +5,6 @@ use std::{
     hint::unreachable_unchecked,
     io,
     ops::Mul,
-    str::FromStr,
 };
 
 use nom::{
@@ -29,7 +28,7 @@ impl Material {
 }
 
 impl Display for Material {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.amount(), self.chemical())
     }
 }
@@ -93,7 +92,7 @@ impl Reaction {
 }
 
 impl Display for Reaction {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let ingredients = self
             .ingredients()
             .iter()

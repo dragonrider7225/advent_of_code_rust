@@ -1,6 +1,6 @@
 use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
 
-use std::{cmp::Ordering, io, iter::FromIterator, str::FromStr};
+use std::{cmp::Ordering, io, iter::FromIterator};
 
 use crate::parse::NomParse;
 

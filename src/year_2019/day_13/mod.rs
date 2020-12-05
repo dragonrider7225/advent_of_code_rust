@@ -49,7 +49,7 @@ impl Screen {
 }
 
 impl Display for Screen {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         writeln!(f, "Score: {}", self.score)?;
         for row in &self.tiles {
             for col in row {

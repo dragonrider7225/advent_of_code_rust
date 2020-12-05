@@ -266,7 +266,7 @@ impl Robot {
 }
 
 impl Debug for Robot {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Robot")
             .field("pos", &self.pos)
             .field("field", &self.field)
