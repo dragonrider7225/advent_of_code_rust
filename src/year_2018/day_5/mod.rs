@@ -77,7 +77,8 @@ pub fn run() -> io::Result<()> {
         for c in components {
             stripped_lengths.insert(c, polymer.clone().strip(c).len());
         }
-        let (component, length) = stripped_lengths.into_iter()
+        let (component, length) = stripped_lengths
+            .into_iter()
             .min_by_key(|(_, length)| length.clone())
             .unwrap();
         println!(

@@ -9,15 +9,14 @@ use std::{
 use crate::parse::NomParse;
 
 use nom::{
-    bytes::complete as bytes,
-    character::complete as character,
-    combinator as comb,
-    multi,
-    sequence,
-    IResult,
+    bytes::complete as bytes, character::complete as character, combinator as comb, multi,
+    sequence, IResult,
 };
 
-use extended_io::{self as eio, pipe::{PipeRead, PipeWrite}};
+use extended_io::{
+    self as eio,
+    pipe::{PipeRead, PipeWrite},
+};
 
 enum ParamMode {
     Address,
@@ -154,7 +153,7 @@ impl Index<usize> for IntcodeProgram {
         // `values` is dropped because the pointer is a reference to a
         // `Vec<i64>` which lives longer than `values` does.
         let values: &mut _ = unsafe {
-            let ptr = &self.values as *const Vec<i64> as *mut  Vec<i64>;
+            let ptr = &self.values as *const Vec<i64> as *mut Vec<i64>;
             ptr.as_mut().unwrap()
         };
         if values.len() <= index {
@@ -176,8 +175,8 @@ impl IndexMut<usize> for IntcodeProgram {
 
 pub struct IntcodeInterpreter<R = PipeRead, W = PipeWrite>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     pc: usize,
     prog: IntcodeProgram,
@@ -216,7 +215,9 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                     self.pc += 4;
                 }
                 Instruction::Read(out_mode) => {
-                    let value = self.input.as_mut()
+                    let value = self
+                        .input
+                        .as_mut()
                         .map(|r| eio::read_i64(r).expect("Errored on read"))
                         .unwrap_or_else(|| {
                             let mut line = String::new();
@@ -231,7 +232,9 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                 Instruction::Write(par_mode) => {
                     let par = self.prog[self.pc + 1];
                     let par = self.get_input_parameter(par_mode, par);
-                    self.output.as_mut().map(|w| eio::write_i64(w, par).expect("Error on write"))
+                    self.output
+                        .as_mut()
+                        .map(|w| eio::write_i64(w, par).expect("Error on write"))
                         .unwrap_or_else(|| println!("{}\n", par));
                     self.pc += 2;
                 }
@@ -264,11 +267,7 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                     let par2 = self.get_input_parameter(par2_mode, par2);
                     let out = self.prog[self.pc + 3];
                     let out = self.get_output_parameter(out_mode, out);
-                    *out = if par1 < par2 {
-                        1
-                    } else {
-                        0
-                    };
+                    *out = if par1 < par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
                 Instruction::Equal(par1_mode, par2_mode, out_mode) => {
@@ -278,11 +277,7 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                     let par2 = self.get_input_parameter(par2_mode, par2);
                     let out = self.prog[self.pc + 3];
                     let out = self.get_output_parameter(out_mode, out);
-                    *out = if par1 == par2 {
-                        1
-                    } else {
-                        0
-                    };
+                    *out = if par1 == par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
                 Instruction::MRB(par_mode) => {
@@ -299,8 +294,8 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
 
 impl<R, W> IntcodeInterpreter<R, W>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     pub fn new(prog: IntcodeProgram) -> Self {
         Self::with_streams(prog, None, None)
@@ -319,15 +314,17 @@ where
 
     pub fn read_from_file<P>(path: P) -> io::Result<Self>
     where
-      P: AsRef<Path>,
+        P: AsRef<Path>,
     {
-        std::fs::read_to_string(path)?.parse().map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+        std::fs::read_to_string(path)?
+            .parse()
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
     }
 
     pub fn dup<R1, W1>(&self) -> IntcodeInterpreter<R1, W1>
     where
-      R1: BufRead + Sized,
-      W1: Write + Sized,
+        R1: BufRead + Sized,
+        W1: Write + Sized,
     {
         let mut ret = IntcodeInterpreter::new(self.prog.clone());
         ret.set_debug(self.debug);
@@ -336,8 +333,8 @@ where
 
     pub fn dup_with<R1, W1>(&self, input: R1, output: W1) -> IntcodeInterpreter<R1, W1>
     where
-      R1: BufRead + Sized,
-      W1: Write + Sized,
+        R1: BufRead + Sized,
+        W1: Write + Sized,
     {
         let mut ret = self.dup();
         ret.set_input_stream(input);
@@ -420,13 +417,12 @@ where
                 }
                 Instruction::Read(out_mode) => {
                     let mut line = String::new();
-                    self.input.as_mut()
-                        .map(|r| {
-                            match r.read_line(&mut line) {
-                                Ok(0) => panic!("Ran out of input"),
-                                Ok(n) => n,
-                                Err(e) => panic!("Errored on read: {}", e),
-                            }
+                    self.input
+                        .as_mut()
+                        .map(|r| match r.read_line(&mut line) {
+                            Ok(0) => panic!("Ran out of input"),
+                            Ok(n) => n,
+                            Err(e) => panic!("Errored on read: {}", e),
                         })
                         .unwrap_or_else(|| io::stdin().lock().read_line(&mut line).unwrap());
                     let out = self.prog[self.pc + 1];
@@ -441,7 +437,8 @@ where
                     match self.output.as_mut() {
                         Some(out) => write!(out, "{}", args),
                         None => write!(io::stdout().lock(), "{}", args),
-                    }.unwrap();
+                    }
+                    .unwrap();
                     self.pc += 2;
                 }
                 Instruction::JmpIfTrue(par1_mode, par2_mode) => {
@@ -473,11 +470,7 @@ where
                     let par2 = self.get_input_parameter(par2_mode, par2);
                     let out = self.prog[self.pc + 3];
                     let out = self.get_output_parameter(out_mode, out);
-                    *out = if par1 < par2 {
-                        1
-                    } else {
-                        0
-                    };
+                    *out = if par1 < par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
                 Instruction::Equal(par1_mode, par2_mode, out_mode) => {
@@ -487,11 +480,7 @@ where
                     let par2 = self.get_input_parameter(par2_mode, par2);
                     let out = self.prog[self.pc + 3];
                     let out = self.get_output_parameter(out_mode, out);
-                    *out = if par1 == par2 {
-                        1
-                    } else {
-                        0
-                    };
+                    *out = if par1 == par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
                 Instruction::MRB(par_mode) => {
@@ -508,8 +497,8 @@ where
 
 impl<R, W> From<IntcodeProgram> for IntcodeInterpreter<R, W>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     fn from(prog: IntcodeProgram) -> Self {
         Self::new(prog)
@@ -518,8 +507,8 @@ where
 
 impl<R, W> From<Vec<i64>> for IntcodeInterpreter<R, W>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     fn from(prog: Vec<i64>) -> Self {
         Self::new(IntcodeProgram::new(prog))
@@ -528,12 +517,15 @@ where
 
 impl<'s, R, W> NomParse<'s> for IntcodeInterpreter<R, W>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         let parse_i64 = comb::map(
-            comb::recognize(sequence::pair(comb::opt(bytes::tag("-")), character::digit1)),
+            comb::recognize(sequence::pair(
+                comb::opt(bytes::tag("-")),
+                character::digit1,
+            )),
             |s: &str| s.parse::<i64>().expect("Invalid i64"),
         );
         let snl = multi::separated_list1;
@@ -543,12 +535,14 @@ where
 
 impl<R, W> FromStr for IntcodeInterpreter<R, W>
 where
-  R: BufRead + Sized,
-  W: Write + Sized,
+    R: BufRead + Sized,
+    W: Write + Sized,
 {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        comb::cut(Self::nom_parse)(s).map(|(_, x)| x).map_err(|e| format!("{:?}", e))
+        comb::cut(Self::nom_parse)(s)
+            .map(|(_, x)| x)
+            .map_err(|e| format!("{:?}", e))
     }
 }

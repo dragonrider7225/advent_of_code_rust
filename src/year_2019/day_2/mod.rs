@@ -7,7 +7,10 @@ use extended_io::pipe::{PipeRead, PipeWrite};
 pub(super) fn run() -> io::Result<()> {
     {
         // Part 1
-        let mut prog = crate::get_lines("2019_2.txt")?.next().unwrap().split(",")
+        let mut prog = crate::get_lines("2019_2.txt")?
+            .next()
+            .unwrap()
+            .split(",")
             .map(|s| s.parse().unwrap())
             .collect::<Vec<_>>();
         prog[1] = 12;
@@ -17,7 +20,10 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         // Part 2
-        let mut prog = crate::get_lines("2019_2.txt")?.next().unwrap().split(",")
+        let mut prog = crate::get_lines("2019_2.txt")?
+            .next()
+            .unwrap()
+            .split(",")
             .map(|s| s.parse().expect(&format!(r#"Invalid line: "{}""#, s)))
             .collect::<Vec<_>>();
         for noun in 0..100 {

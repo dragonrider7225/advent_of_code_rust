@@ -5,7 +5,10 @@ use crate::year_2019::{
     robot::{Color, Robot},
 };
 
-use extended_io::{self as eio, pipe::{self, PipeRead, PipeWrite}};
+use extended_io::{
+    self as eio,
+    pipe::{self, PipeRead, PipeWrite},
+};
 
 pub(super) fn run() -> io::Result<()> {
     let prog = IntcodeInterpreter::<PipeRead, PipeWrite>::read_from_file("2019_11.txt")?;

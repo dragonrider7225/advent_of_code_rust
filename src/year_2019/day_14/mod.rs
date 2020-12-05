@@ -9,12 +9,8 @@ use std::{
 };
 
 use nom::{
-    bytes::complete as bytes,
-    character::complete as character,
-    combinator as comb,
-    multi,
-    sequence,
-    IResult,
+    bytes::complete as bytes, character::complete as character, combinator as comb, multi,
+    sequence, IResult,
 };
 
 use crate::parse::NomParse;
@@ -98,7 +94,10 @@ impl Reaction {
 
 impl Display for Reaction {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let ingredients = self.ingredients().iter().map(<Material as ToString>::to_string)
+        let ingredients = self
+            .ingredients()
+            .iter()
+            .map(<Material as ToString>::to_string)
             .collect::<Vec<_>>()
             .join(", ");
         write!(f, "{} => {}", ingredients, self.result())
@@ -109,7 +108,10 @@ impl Mul<u64> for Reaction {
     type Output = Self;
 
     fn mul(self, rhs: u64) -> Self::Output {
-        Self(self.ingredients().iter().map(|mat| mat * rhs).collect(), self.result() * rhs)
+        Self(
+            self.ingredients().iter().map(|mat| mat * rhs).collect(),
+            self.result() * rhs,
+        )
     }
 }
 
@@ -117,7 +119,10 @@ impl<'a> Mul<&'a u64> for Reaction {
     type Output = Self;
 
     fn mul(self, rhs: &'a u64) -> Self::Output {
-        Self(self.ingredients().iter().map(|mat| mat * rhs).collect(), self.result() * rhs)
+        Self(
+            self.ingredients().iter().map(|mat| mat * rhs).collect(),
+            self.result() * rhs,
+        )
     }
 }
 
@@ -125,7 +130,10 @@ impl<'a> Mul<u64> for &'a Reaction {
     type Output = Reaction;
 
     fn mul(self, rhs: u64) -> Self::Output {
-        Reaction(self.ingredients().iter().map(|mat| mat * rhs).collect(), self.result() * rhs)
+        Reaction(
+            self.ingredients().iter().map(|mat| mat * rhs).collect(),
+            self.result() * rhs,
+        )
     }
 }
 
@@ -133,7 +141,10 @@ impl<'a, 'b> Mul<&'b u64> for &'a Reaction {
     type Output = Reaction;
 
     fn mul(self, rhs: &'b u64) -> Self::Output {
-        Reaction(self.ingredients().iter().map(|mat| mat * rhs).collect(), self.result() * rhs)
+        Reaction(
+            self.ingredients().iter().map(|mat| mat * rhs).collect(),
+            self.result() * rhs,
+        )
     }
 }
 
@@ -141,10 +152,7 @@ impl<'s> NomParse<'s> for Reaction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
-                multi::separated_list1(
-                    bytes::tag(", "),
-                    Material::nom_parse,
-                ),
+                multi::separated_list1(bytes::tag(", "), Material::nom_parse),
                 bytes::tag(" => "),
                 Material::nom_parse,
             ),
@@ -158,14 +166,10 @@ impl_from_str_for_nom_parse!(Reaction);
 type Reactions = HashMap<String, Reaction>;
 
 fn parse_reactions() -> io::Result<Reactions> {
-    let ret = crate::parse_lines("2019_14.txt")?
-        .fold(
-            Reactions::new(),
-            |mut acc, x: Reaction| {
-                assert!(acc.insert(x.result().chemical().clone(), x).is_none());
-                acc
-            },
-        );
+    let ret = crate::parse_lines("2019_14.txt")?.fold(Reactions::new(), |mut acc, x: Reaction| {
+        assert!(acc.insert(x.result().chemical().clone(), x).is_none());
+        acc
+    });
     Ok(ret)
 }
 
@@ -183,8 +187,10 @@ pub(super) fn run() -> io::Result<()> {
             let producing = materials.keys().next().unwrap().clone();
             let producing = Material(materials.remove(&producing).unwrap(), producing);
             // print!("Producing {} ", producing);
-            let reaction = reactions.get(producing.chemical())
-                .expect(&format!("1 FUEL requires unproducable material {}", producing.chemical()));
+            let reaction = reactions.get(producing.chemical()).expect(&format!(
+                "1 FUEL requires unproducable material {}",
+                producing.chemical()
+            ));
             let repeats = (producing.amount() as f32 / reaction.result().amount() as f32).ceil();
             let reaction = reaction * repeats as u64;
             // println!("by reaction {}", reaction);
@@ -260,11 +266,10 @@ pub(super) fn run() -> io::Result<()> {
                 // println!("Have {:?} extra", leftovers);
                 let producing = materials.keys().next().unwrap().clone();
                 let producing = Material(materials.remove(&producing).unwrap(), producing);
-                let reaction = reactions.get(producing.chemical())
-                    .expect(&format!(
-                        "1 FUEL requires unproducable material {}",
-                        producing.chemical(),
-                    ));
+                let reaction = reactions.get(producing.chemical()).expect(&format!(
+                    "1 FUEL requires unproducable material {}",
+                    producing.chemical(),
+                ));
                 let repeats = {
                     // If the required amount of the chemical can be produced by a whole number of
                     // occurrences of the reaction, perform the reaction that many times. Otherwise,
@@ -316,7 +321,8 @@ pub(super) fn run() -> io::Result<()> {
                     Ordering::Greater => {
                         panic!(
                             "Incorrect required/total production amounts: {}/{}",
-                            producing.amount(), reaction.result().amount(),
+                            producing.amount(),
+                            reaction.result().amount(),
                         );
                         // unsafe { unreachable_unchecked() },
                     }
@@ -328,9 +334,7 @@ pub(super) fn run() -> io::Result<()> {
                 if trying != 1 {
                     panic!(
                         "{} resulted in {} ORE while trying to produce {} FUEL simultaneously",
-                        "Overly permissive scaling back",
-                        num_ore,
-                        trying,
+                        "Overly permissive scaling back", num_ore, trying,
                     );
                 }
                 break;

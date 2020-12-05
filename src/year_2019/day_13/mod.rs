@@ -1,8 +1,15 @@
 use crate::year_2019::intcode_interpreter::IntcodeInterpreter;
 
-use std::{convert::TryInto, fmt::{self, Display, Formatter}, io, thread};
+use std::{
+    convert::TryInto,
+    fmt::{self, Display, Formatter},
+    io, thread,
+};
 
-use extended_io::{self as eio, pipe::{self, PipeRead, PipeWrite}};
+use extended_io::{
+    self as eio,
+    pipe::{self, PipeRead, PipeWrite},
+};
 
 struct Screen {
     tiles: Vec<Vec<u8>>,
@@ -24,7 +31,8 @@ impl Screen {
             panic!("Invalid tile: {}", tile);
         }
         if y >= self.tiles.len() {
-            self.tiles.extend(vec![vec![0; self.tiles[0].len()]; self.tiles.len() - y + 1]);
+            self.tiles
+                .extend(vec![vec![0; self.tiles[0].len()]; self.tiles.len() - y + 1]);
         }
         if x >= self.tiles[y].len() {
             let missing = self.tiles[y].len() - x + 1;
@@ -45,14 +53,18 @@ impl Display for Screen {
         writeln!(f, "Score: {}", self.score)?;
         for row in &self.tiles {
             for col in row {
-                write!(f, "{}", match col {
-                    0 => ' ',
-                    1 => 'W',
-                    2 => 'B',
-                    3 => 'P',
-                    4 => 'o',
-                    n => panic!("Invalid tile: {}", n),
-                })?;
+                write!(
+                    f,
+                    "{}",
+                    match col {
+                        0 => ' ',
+                        1 => 'W',
+                        2 => 'B',
+                        3 => 'P',
+                        4 => 'o',
+                        n => panic!("Invalid tile: {}", n),
+                    }
+                )?;
             }
             writeln!(f, "")?;
         }
@@ -66,7 +78,8 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2019 Day 12 Part 1");
         let (mut prog_to_screen_read, prog_to_screen_write) = pipe::mk_pipe();
         let (screen_to_prog_read, _) = pipe::mk_pipe();
-        prog.dup_with(screen_to_prog_read, prog_to_screen_write).run_piped();
+        prog.dup_with(screen_to_prog_read, prog_to_screen_write)
+            .run_piped();
         let mut num_blocks = 0;
         while let Ok(_) = eio::read_i64(&mut prog_to_screen_read) {
             let _ = eio::read_i64(&mut prog_to_screen_read)?;
@@ -106,7 +119,8 @@ pub(super) fn run() -> io::Result<()> {
                 }
                 n => n.try_into().unwrap(),
             };
-            let y = eio::read_i64(&mut prog_to_screen_read)?.try_into()
+            let y = eio::read_i64(&mut prog_to_screen_read)?
+                .try_into()
                 .expect("Invalid y coordinate");
             let tile = eio::read_i64(&mut prog_to_screen_read)?;
             if blanking {

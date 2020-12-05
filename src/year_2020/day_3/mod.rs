@@ -36,10 +36,8 @@ impl TreeMap {
 
 impl<'s> NomParse<'s> for TreeMap {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        let (_, first_line) = sequence::terminated(
-            multi::many1(Tile::nom_parse),
-            character::line_ending,
-        )(s)?;
+        let (_, first_line) =
+            sequence::terminated(multi::many1(Tile::nom_parse), character::line_ending)(s)?;
         comb::map(
             multi::many1(sequence::terminated(
                 multi::many_m_n(first_line.len(), first_line.len(), Tile::nom_parse),
@@ -52,8 +50,8 @@ impl<'s> NomParse<'s> for TreeMap {
 
 #[allow(unreachable_code)]
 pub(super) fn run() -> io::Result<()> {
-    let (_, tree_map) = TreeMap::nom_parse(&fs::read_to_string("2020_03.txt")?)
-        .expect("Couldn't parse tree map");
+    let (_, tree_map) =
+        TreeMap::nom_parse(&fs::read_to_string("2020_03.txt")?).expect("Couldn't parse tree map");
     let three = {
         println!("Year 2020 Day 3 Part 1");
         let three = tree_map.count_trees(3, 1);
@@ -65,9 +63,10 @@ pub(super) fn run() -> io::Result<()> {
         let total = iter::once(three)
             .chain(
                 [(1usize, 1usize), (5, 1), (7, 1), (1, 2)]
-                   .iter()
-                   .map(|&(delta_x, delta_y)| tree_map.count_trees(delta_x, delta_y)),
-            ).product::<usize>();
+                    .iter()
+                    .map(|&(delta_x, delta_y)| tree_map.count_trees(delta_x, delta_y)),
+            )
+            .product::<usize>();
         println!("The product is {} trees**5", total);
     }
     Ok(())

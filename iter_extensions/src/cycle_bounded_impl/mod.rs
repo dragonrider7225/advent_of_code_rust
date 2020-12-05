@@ -1,4 +1,7 @@
-use std::{iter::{FusedIterator, TrustedLen}, ops::Try};
+use std::{
+    iter::{FusedIterator, TrustedLen},
+    ops::Try,
+};
 
 pub fn cycle_bounded<I>(num_cycles: usize, base: I) -> CycleBounded<I>
 where
@@ -14,7 +17,12 @@ where
     } else {
         None
     };
-    CycleBounded { num_cycles, inner, back, base }
+    CycleBounded {
+        num_cycles,
+        inner,
+        back,
+        base,
+    }
 }
 
 pub struct CycleBounded<I> {
@@ -142,7 +150,8 @@ where
     where
         F: FnMut(B, Self::Item) -> B,
     {
-        self.try_rfold(init, |acc, item| Some(f(acc, item))).unwrap()
+        self.try_rfold(init, |acc, item| Some(f(acc, item)))
+            .unwrap()
     }
 
     fn rfind<P>(&mut self, mut predicate: P) -> Option<Self::Item>

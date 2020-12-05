@@ -1,15 +1,12 @@
 use crate::parse::NomParse;
 
-use std::{collections::{HashMap, HashSet}, io, mem, str::FromStr};
-
-use nom::{
-    IResult,
-    branch,
-    bytes::complete as bytes,
-    combinator as comb,
-    multi,
-    sequence,
+use std::{
+    collections::{HashMap, HashSet},
+    io, mem,
+    str::FromStr,
 };
+
+use nom::{branch, bytes::complete as bytes, combinator as comb, multi, sequence, IResult};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum Direction {
@@ -95,10 +92,15 @@ impl Wire {
     }
 
     fn intersections(&self, other: &Self) -> HashSet<(Point, u32)> {
-        self.points.keys().collect::<HashSet<_>>()
+        self.points
+            .keys()
+            .collect::<HashSet<_>>()
             .intersection(&other.points.keys().collect())
             .map(|p| {
-                ((*p).clone(), self.steps(p).unwrap() + other.steps(p).unwrap())
+                (
+                    (*p).clone(),
+                    self.steps(p).unwrap() + other.steps(p).unwrap(),
+                )
             })
             .collect()
     }
@@ -142,10 +144,7 @@ impl Wire {
 impl<'s> NomParse<'s> for Wire {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         comb::map(
-            multi::separated_list1(
-                bytes::tag(","),
-                Movement::nom_parse,
-            ),
+            multi::separated_list1(bytes::tag(","), Movement::nom_parse),
             |ms| Wire::from_movements(&ms[..]),
         )(s)
     }
@@ -165,7 +164,9 @@ pub(super) fn run() -> io::Result<()> {
         let mut wires = crate::parse_lines::<Wire, _>("2019_3.txt")?;
         let wire1 = wires.next().expect("Missing first wire");
         let wire2 = wires.next().expect("Missing second wire");
-        let mut intersections = wire1.intersections(&wire2).into_iter()
+        let mut intersections = wire1
+            .intersections(&wire2)
+            .into_iter()
             .map(|(p, _)| p.manhattan_distance_o())
             .collect::<Vec<_>>();
         intersections.sort();
@@ -176,7 +177,9 @@ pub(super) fn run() -> io::Result<()> {
         let mut wires = crate::parse_lines::<Wire, _>("2019_3.txt")?;
         let wire1 = wires.next().expect("Missing first wire");
         let wire2 = wires.next().expect("Missing second wire");
-        let mut intersections = wire1.intersections(&wire2).into_iter()
+        let mut intersections = wire1
+            .intersections(&wire2)
+            .into_iter()
             .map(|x| x.1)
             .collect::<Vec<_>>();
         intersections.sort();

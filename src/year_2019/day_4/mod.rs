@@ -2,15 +2,11 @@ use crate::parse::NomParse;
 
 use std::{io, ops::Range};
 
-use nom::{IResult, bytes::complete as bytes, combinator as comb, sequence};
+use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
 
 fn parse_range(s: &str) -> IResult<&str, Range<u32>> {
     comb::map(
-        sequence::separated_pair(
-            u32::nom_parse,
-            bytes::tag("-"),
-            u32::nom_parse,
-        ),
+        sequence::separated_pair(u32::nom_parse, bytes::tag("-"), u32::nom_parse),
         |(least, most)| least..most,
     )(s)
 }
@@ -44,19 +40,13 @@ fn possible_pw_modified(pw: u32) -> bool {
     let tens = pw / 10 % 10;
     let ones = pw % 10;
     let is_valid_old = possible_pw(pw);
-    let has_pair = hundred_thousands == ten_thousands
-        && ten_thousands != thousands
+    let has_pair = hundred_thousands == ten_thousands && ten_thousands != thousands
         || hundred_thousands != ten_thousands
-        && ten_thousands == thousands
-        && thousands != hundreds
-        || ten_thousands != thousands
-        && thousands == hundreds
-        && hundreds != tens
-        || thousands != hundreds
-        && hundreds == tens
-        && tens != ones
-        || hundreds != tens
-        && tens == ones;
+            && ten_thousands == thousands
+            && thousands != hundreds
+        || ten_thousands != thousands && thousands == hundreds && hundreds != tens
+        || thousands != hundreds && hundreds == tens && tens != ones
+        || hundreds != tens && tens == ones;
     is_valid_old && has_pair
 }
 

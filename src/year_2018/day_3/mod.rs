@@ -1,16 +1,6 @@
-use nom::{
-    bytes::complete as bytes,
-    combinator as comb,
-    sequence,
-    IResult,
-};
+use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
 
-use std::{
-    cmp::Ordering,
-    io,
-    iter::FromIterator,
-    str::FromStr,
-};
+use std::{cmp::Ordering, io, iter::FromIterator, str::FromStr};
 
 use crate::parse::NomParse;
 
@@ -31,12 +21,8 @@ impl<T: Semigroup> Semigroup for Option<T> {
 }
 
 impl Semigroup for Ordering {
-    /// If `self` is `Equal`, return `other`, otherwise return `self`.
     fn op(self, other: Ordering) -> Ordering {
-        match self {
-            Ordering::Equal => other,
-            _ => self,
-        }
+        self.then(other)
     }
 }
 
@@ -57,7 +43,9 @@ impl<T> From<(T, T)> for Point<T> {
 
 impl<T: PartialOrd> PartialOrd for Point<T> {
     fn partial_cmp(&self, other: &Point<T>) -> Option<Ordering> {
-        self.1.partial_cmp(&other.1).op(self.0.partial_cmp(&other.0))
+        self.1
+            .partial_cmp(&other.1)
+            .op(self.0.partial_cmp(&other.0))
     }
 }
 
@@ -77,10 +65,14 @@ struct Rect {
 }
 
 impl Rect {
-    fn with_id(id: u32, left: u32, bottom: u32, width: u32, height: u32)
-            -> Rect {
-
-        Rect { id, left, bottom, width, height }
+    fn with_id(id: u32, left: u32, bottom: u32, width: u32, height: u32) -> Rect {
+        Rect {
+            id,
+            left,
+            bottom,
+            width,
+            height,
+        }
     }
 
     fn new(left: u32, bottom: u32, width: u32, height: u32) -> Rect {
@@ -126,9 +118,11 @@ impl Rect {
     /// Compute the intersection of `self` and `other`. If `self` and `other` do
     /// not intersect, return `None`.
     fn intersect(&self, other: &Rect) -> Option<Rect> {
-        if self.top() <= other.bottom() || other.top() <= self.bottom()
-                || self.right() <= other.left() || other.right() <= self.left() {
-
+        if self.top() <= other.bottom()
+            || other.top() <= self.bottom()
+            || self.right() <= other.left()
+            || other.right() <= self.left()
+        {
             None
         } else {
             let new_left = u32::max(self.left(), other.left());
@@ -140,7 +134,11 @@ impl Rect {
     }
 
     fn intersect_set(&self, others: &RectSet) -> RectSet {
-        others.clone().into_iter().filter_map(|r| r.intersect(self)).collect()
+        others
+            .clone()
+            .into_iter()
+            .filter_map(|r| r.intersect(self))
+            .collect()
     }
 
     /**
@@ -149,9 +147,11 @@ impl Rect {
      * by `other`.
      */
     fn except(&self, other: &Rect) -> RectSet {
-        if self.top() <= other.bottom() || other.top() <= self.bottom()
-                || self.right() <= other.left() || other.right() <= self.left() {
-
+        if self.top() <= other.bottom()
+            || other.top() <= self.bottom()
+            || self.right() <= other.left()
+            || other.right() <= self.left()
+        {
             RectSet::just(self.clone())
         } else {
             // General shape of ret:
@@ -173,7 +173,7 @@ impl Rect {
                 self.left(),
                 other.top(),
                 self.width(),
-                self.top() - pillar_top
+                self.top() - pillar_top,
             );
             let pillar_bottom = u32::max(self.bottom(), other.bottom());
             let pillar_height = pillar_top - pillar_bottom;
@@ -181,19 +181,19 @@ impl Rect {
                 other.right(),
                 pillar_bottom,
                 self.right() - u32::min(self.right(), other.right()),
-                pillar_height
+                pillar_height,
             );
             let left_pillar = Rect::new(
                 self.left(),
                 pillar_bottom,
                 u32::max(self.left(), other.left()) - self.left(),
-                pillar_height
+                pillar_height,
             );
             let bottom_bar = Rect::new(
                 self.left(),
                 self.bottom(),
                 self.width(),
-                pillar_bottom - self.bottom()
+                pillar_bottom - self.bottom(),
             );
             ret.add(top_bar);
             ret.add(right_pillar);
@@ -229,7 +229,8 @@ impl PartialOrd for Rect {
 
 impl Ord for Rect {
     fn cmp(&self, other: &Rect) -> Ordering {
-        self.lower_left().cmp(&other.lower_left())
+        self.lower_left()
+            .cmp(&other.lower_left())
             .op(self.height().cmp(&other.height()))
             .op(self.width().cmp(&other.width()))
     }
@@ -237,49 +238,35 @@ impl Ord for Rect {
 
 impl<'s> NomParse<'s> for Rect {
     fn nom_parse(s: &str) -> IResult<&str, Rect> {
-        // format!("#{} @ {},{}: {}x{}", id, left_edge, top_edge, width, height)
         comb::map(
-            comb::all_consuming(
+            // Parse ((id, (left, bottom)), (width, height)) ("#{} @ {},{}: {}x{}")
+            sequence::pair(
+                // Parse (id, (left, bottom)) ("#{} @ {},{}")
                 sequence::pair(
-                    sequence::pair(
-                        sequence::terminated(
-                            sequence::preceded(
-                                bytes::tag("#"),
-                                u32::nom_parse
-                            ), // Parse id ("#{}")
-                            bytes::tag(" @ ")
-                        ), // Parse id ("#{} @ ")
-                        sequence::separated_pair(
-                            u32::nom_parse,
-                            bytes::tag(","),
-                            u32::nom_parse
-                        ), // Parse (left, bottom) ("{},{}")
-                    ), // Parse (id, (left, bottom)) ("#{} @ {},{}")
-                    sequence::preceded(
-                        bytes::tag(": "),
-                        sequence::separated_pair(
-                            u32::nom_parse,
-                            bytes::tag("x"),
-                            u32::nom_parse
-                        ) // Parse (width, height) ("{}x{}")
-                    ) // Parse (width, height) (": {}x{}")
-                ) // Parse ((id, (left, bottom)), (width, height)) ("#{} @ {},{}: {}x{}")
-            ), // Parse ((id, (left, bottom)), (width, height)) ("#{} @ {},{}: {}x{}")
+                    // Parse id ("#{} @ ")
+                    sequence::terminated(
+                        // Parse id ("#{}")
+                        sequence::preceded(bytes::tag("#"), u32::nom_parse),
+                        bytes::tag(" @ "),
+                    ),
+                    // Parse (left, bottom) ("{},{}")
+                    sequence::separated_pair(u32::nom_parse, bytes::tag(","), u32::nom_parse),
+                ),
+                // Parse (width, height) (": {}x{}")
+                sequence::preceded(
+                    bytes::tag(": "),
+                    // Parse (width, height) ("{}x{}")
+                    sequence::separated_pair(u32::nom_parse, bytes::tag("x"), u32::nom_parse),
+                ),
+            ),
             |((id, (left, bottom)), (width, height))| {
                 Rect::with_id(id, left, bottom, width, height)
-            }
-        )(s) // IResult<Rect>
+            },
+        )(s)
     }
 }
 
-impl FromStr for Rect {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Rect, ()> {
-        comb::all_consuming(Rect::nom_parse)(s).map(|(_, res)| res)
-            .map_err(|_| ())
-    }
-}
+impl_from_str_for_nom_parse!(Rect);
 
 // Invariants: contents of wrapped `Vec` monotonically increase.
 #[derive(Clone)]
@@ -320,7 +307,10 @@ impl RectSet {
     }
 
     fn intersect(&self, other: &RectSet) -> RectSet {
-        self.clone().into_iter().flat_map(|r| r.intersect_set(other)).collect()
+        self.clone()
+            .into_iter()
+            .flat_map(|r| r.intersect_set(other))
+            .collect()
     }
 
     /// Compute the union of `self` and `other` in place.
@@ -420,7 +410,7 @@ impl RectSet {
 impl FromIterator<Rect> for RectSet {
     fn from_iter<T>(iter: T) -> RectSet
     where
-        T: IntoIterator<Item = Rect>
+        T: IntoIterator<Item = Rect>,
     {
         let mut ret = RectSet::new();
         for item in iter {
@@ -446,6 +436,9 @@ pub fn run() -> io::Result<()> {
     // Part 1
     println!("Overlap area: {}", get_claims()?.overlap().area());
     // Part 2
-    println!("Non-overlapping claim: {:?}", get_claims()?.non_overlap_ids());
+    println!(
+        "Non-overlapping claim: {:?}",
+        get_claims()?.non_overlap_ids()
+    );
     Ok(())
 }

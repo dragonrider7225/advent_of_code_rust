@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    io,
-};
+use std::{collections::HashMap, io};
 
 pub fn run() -> io::Result<()> {
     fn get_line_bytes() -> io::Result<impl Iterator<Item = Vec<u8>>> {
@@ -63,9 +60,7 @@ pub fn run() -> io::Result<()> {
                                 common.push(a[j - 1]);
                             }
                         }
-                        println!(
-                            "Common letters are {}",
-                            String::from_utf8_lossy(&common));
+                        println!("Common letters are {}", String::from_utf8_lossy(&common));
                         break 'lv0;
                     }
                     None => {}

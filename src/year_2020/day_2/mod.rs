@@ -1,9 +1,6 @@
 use crate::parse::NomParse;
 use nom::{
-    bytes::complete as bytes,
-    character::complete as character,
-    combinator as comb,
-    sequence,
+    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
     IResult,
 };
 use std::{io, iter, str::FromStr};
@@ -24,11 +21,19 @@ enum PasswordPolicy {
 impl PasswordPolicy {
     fn is_satisfied_by(&self, s: &str) -> bool {
         match *self {
-            Self::SingleLetterCount { min_count, max_count, c } => {
+            Self::SingleLetterCount {
+                min_count,
+                max_count,
+                c,
+            } => {
                 let count = s.chars().filter(|&ch| ch == c).count();
                 (min_count..=max_count).contains(&count)
             }
-            Self::MultiLetterCheck { first_position, second_position, c } => {
+            Self::MultiLetterCheck {
+                first_position,
+                second_position,
+                c,
+            } => {
                 let mut chars = iter::once('\0').chain(s.chars());
                 (chars.clone().nth(first_position).unwrap() == c)
                     ^ (chars.nth(second_position).unwrap() == c)
@@ -38,11 +43,17 @@ impl PasswordPolicy {
 
     fn switch_to_multi_letter_check(&mut self) {
         match *self {
-            Self::SingleLetterCount { min_count, max_count, c } => *self = Self::MultiLetterCheck {
-                first_position: min_count,
-                second_position: max_count,
+            Self::SingleLetterCount {
+                min_count,
+                max_count,
                 c,
-            },
+            } => {
+                *self = Self::MultiLetterCheck {
+                    first_position: min_count,
+                    second_position: max_count,
+                    c,
+                }
+            }
             Self::MultiLetterCheck { .. } => {}
         }
     }
@@ -84,7 +95,10 @@ impl<'s> NomParse<'s> for PasswordDatabaseEntry {
                 bytes::tag(": "),
                 character::alpha0,
             ),
-            |(policy, password)| Self { policy, password: password.to_owned() },
+            |(policy, password)| Self {
+                policy,
+                password: password.to_owned(),
+            },
         )(s)
     }
 }
@@ -104,13 +118,21 @@ pub(super) fn run() -> io::Result<()> {
     let mut password_database = PasswordDatabase(crate::parse_lines("2020_02.txt")?.collect());
     {
         println!("Year 2020 Day 2 Part 1");
-        println!("There are {} valid passwords in the database", password_database.count_valid());
+        println!(
+            "There are {} valid passwords in the database",
+            password_database.count_valid()
+        );
     }
     {
         println!("Year 2020 Day 2 Part 2");
-        password_database.0.iter_mut()
+        password_database
+            .0
+            .iter_mut()
             .for_each(|entry| entry.policy.switch_to_multi_letter_check());
-        println!("There are {} valid passwords in the database", password_database.count_valid());
+        println!(
+            "There are {} valid passwords in the database",
+            password_database.count_valid()
+        );
     }
     Ok(())
 }

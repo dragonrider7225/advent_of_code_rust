@@ -10,11 +10,12 @@ impl Expenses {
         let values = crate::parse_lines(filename)?;
         for value in values {
             match value % 10 {
-                digit@0..=9 => &mut ends[digit as usize],
+                digit @ 0..=9 => &mut ends[digit as usize],
                 // SAFETY: This call to `unreachable_unchecked` is safe because the only possible
                 //         results of `u32::rem(_, 10)` are in the range `(0..=9)`.
                 _ => unsafe { unreachable_unchecked() },
-            }.push(value);
+            }
+            .push(value);
         }
         for end in ends.iter_mut() {
             end.sort();
@@ -81,7 +82,10 @@ impl Expenses {
     fn find_triple_sum(&self, total: u32) -> Option<(u32, u32, u32)> {
         let mut values = Vec::with_capacity(self.ends.iter().map(|end| end.len()).sum());
         {
-            let mut iters = self.ends.iter().map(|end| end.iter().copied().peekable())
+            let mut iters = self
+                .ends
+                .iter()
+                .map(|end| end.iter().copied().peekable())
                 .collect::<Vec<_>>();
             loop {
                 let mut least_index = 0;
@@ -89,9 +93,11 @@ impl Expenses {
                     let least = iters[least_index].peek().copied();
                     let current = iters[index].peek().copied();
                     match (least, current) {
-                        (Some(least), Some(current)) => if current < least {
-                            least_index = index;
-                        },
+                        (Some(least), Some(current)) => {
+                            if current < least {
+                                least_index = index;
+                            }
+                        }
                         (None, Some(_)) => least_index = index,
                         _ => {}
                     }
@@ -141,7 +147,13 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("2020 Day 1 Part 2");
         if let Some((v1, v2, v3)) = expenses.find_triple_sum(2020) {
-            println!("Values are {}, {}, and {}. Their product is {}", v1, v2, v3, v1 * v2 * v3);
+            println!(
+                "Values are {}, {}, and {}. Their product is {}",
+                v1,
+                v2,
+                v3,
+                v1 * v2 * v3
+            );
         }
     }
     Ok(())

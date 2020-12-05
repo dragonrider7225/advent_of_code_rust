@@ -1,7 +1,4 @@
-use std::{
-    collections::HashSet,
-    io,
-};
+use std::{collections::HashSet, io};
 
 pub fn run() -> io::Result<()> {
     {
@@ -22,4 +19,3 @@ pub fn run() -> io::Result<()> {
     }
     Ok(())
 }
-

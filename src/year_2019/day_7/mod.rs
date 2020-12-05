@@ -7,12 +7,14 @@ use std::{
     thread,
 };
 
-use extended_io::{self as eio, pipe::{self, PipeRead, PipeWrite}};
+use extended_io::{
+    self as eio,
+    pipe::{self, PipeRead, PipeWrite},
+};
 
 pub(super) fn run() -> io::Result<()> {
-    let amplifier_controller = IntcodeInterpreter::<PipeRead, PipeWrite>::read_from_file(
-        "2019_7.txt",
-    )?;
+    let amplifier_controller =
+        IntcodeInterpreter::<PipeRead, PipeWrite>::read_from_file("2019_7.txt")?;
     {
         println!("Year 2019 Day 7 Part 1");
         let mut permutations = || {
@@ -22,9 +24,7 @@ pub(super) fn run() -> io::Result<()> {
                         yield [3, 4];
                         yield [4, 3];
                     };
-                    while let GeneratorState::Yielded(sub) =
-                        Pin::new(&mut sub).resume(())
-                    {
+                    while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
                             for j in 0..i {
@@ -38,9 +38,7 @@ pub(super) fn run() -> io::Result<()> {
                         }
                     }
                 };
-                while let GeneratorState::Yielded(sub) =
-                    Pin::new(&mut sub).resume(())
-                {
+                while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
                         for j in 0..i {
@@ -54,9 +52,7 @@ pub(super) fn run() -> io::Result<()> {
                     }
                 }
             };
-            while let GeneratorState::Yielded(sub) =
-                Pin::new(&mut sub).resume(())
-            {
+            while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
                     for j in 0..i {
@@ -71,9 +67,7 @@ pub(super) fn run() -> io::Result<()> {
             }
         };
         let mut results = Cursor::new(vec![]);
-        while let GeneratorState::Yielded(perm) =
-            Pin::new(&mut permutations).resume(())
-        {
+        while let GeneratorState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
             let (to_a_read, mut to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();
@@ -88,17 +82,28 @@ pub(super) fn run() -> io::Result<()> {
             eio::write_i64(&mut c_to_d_write, perm[3])?;
             eio::write_i64(&mut d_to_e_write, perm[4])?;
 
-            amplifier_controller.dup_with(to_a_read, a_to_b_write).run_piped();
-            amplifier_controller.dup_with(a_to_b_read, b_to_c_write).run_piped();
-            amplifier_controller.dup_with(b_to_c_read, c_to_d_write).run_piped();
-            amplifier_controller.dup_with(c_to_d_read, d_to_e_write).run_piped();
-            amplifier_controller.dup_with(d_to_e_read, e_to_write).run_piped();
+            amplifier_controller
+                .dup_with(to_a_read, a_to_b_write)
+                .run_piped();
+            amplifier_controller
+                .dup_with(a_to_b_read, b_to_c_write)
+                .run_piped();
+            amplifier_controller
+                .dup_with(b_to_c_read, c_to_d_write)
+                .run_piped();
+            amplifier_controller
+                .dup_with(c_to_d_read, d_to_e_write)
+                .run_piped();
+            amplifier_controller
+                .dup_with(d_to_e_read, e_to_write)
+                .run_piped();
 
             let result = eio::read_i64(&mut e_to_read)?;
             writeln!(results, "Phase Sequence {:?}: {}", perm, result)?;
         }
         let _ = results.seek(SeekFrom::Start(0))?;
-        let mut lines = results.lines()
+        let mut lines = results
+            .lines()
             .map(|s| s.expect("Ran into an error lines-ing `results`"))
             .map(|s| s.split(": ").map(|s| s.to_string()).collect::<Vec<_>>())
             .map(|mut v| {
@@ -120,9 +125,7 @@ pub(super) fn run() -> io::Result<()> {
                         yield [8, 9];
                         yield [9, 8];
                     };
-                    while let GeneratorState::Yielded(sub) =
-                        Pin::new(&mut sub).resume(())
-                    {
+                    while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
                             for j in 0..i {
@@ -136,9 +139,7 @@ pub(super) fn run() -> io::Result<()> {
                         }
                     }
                 };
-                while let GeneratorState::Yielded(sub) =
-                    Pin::new(&mut sub).resume(())
-                {
+                while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
                         for j in 0..i {
@@ -152,9 +153,7 @@ pub(super) fn run() -> io::Result<()> {
                     }
                 }
             };
-            while let GeneratorState::Yielded(sub) =
-                Pin::new(&mut sub).resume(())
-            {
+            while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
                     for j in 0..i {
@@ -169,9 +168,7 @@ pub(super) fn run() -> io::Result<()> {
             }
         };
         let mut results = vec![];
-        while let GeneratorState::Yielded(perm) =
-            Pin::new(&mut permutations).resume(())
-        {
+        while let GeneratorState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
             let (mut e_to_a_read, mut e_to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();
@@ -185,16 +182,11 @@ pub(super) fn run() -> io::Result<()> {
             eio::write_i64(&mut c_to_d_write, perm[3])?;
             eio::write_i64(&mut d_to_e_write, perm[4])?;
 
-            let amplifier_a = amplifier_controller
-                .dup_with(e_to_a_read.clone(), a_to_b_write);
-            let amplifier_b = amplifier_controller
-                .dup_with(a_to_b_read, b_to_c_write);
-            let amplifier_c = amplifier_controller
-                .dup_with(b_to_c_read, c_to_d_write);
-            let amplifier_d = amplifier_controller
-                .dup_with(c_to_d_read, d_to_e_write);
-            let amplifier_e = amplifier_controller
-                .dup_with(d_to_e_read, e_to_a_write);
+            let amplifier_a = amplifier_controller.dup_with(e_to_a_read.clone(), a_to_b_write);
+            let amplifier_b = amplifier_controller.dup_with(a_to_b_read, b_to_c_write);
+            let amplifier_c = amplifier_controller.dup_with(b_to_c_read, c_to_d_write);
+            let amplifier_d = amplifier_controller.dup_with(c_to_d_read, d_to_e_write);
+            let amplifier_e = amplifier_controller.dup_with(d_to_e_read, e_to_a_write);
 
             let thread_a = thread::Builder::new()
                 .name("2019::7::2::thread_a".to_string())
@@ -220,10 +212,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ok(_) => {}
                 Err(e) => {
                     if e.is::<String>() {
-                        panic!(
-                            "[thread_a] {}",
-                            e.downcast_ref::<String>().unwrap(),
-                        );
+                        panic!("[thread_a] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
                         panic!("[thread_a] {:?}", e);
                     }
@@ -233,10 +222,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ok(_) => {}
                 Err(e) => {
                     if e.is::<String>() {
-                        panic!(
-                            "[thread_b] {}",
-                            e.downcast_ref::<String>().unwrap(),
-                        );
+                        panic!("[thread_b] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
                         panic!("[thread_b] {:?}", e);
                     }
@@ -246,10 +232,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ok(_) => {}
                 Err(e) => {
                     if e.is::<String>() {
-                        panic!(
-                            "[thread_c] {}",
-                            e.downcast_ref::<String>().unwrap(),
-                        );
+                        panic!("[thread_c] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
                         panic!("[thread_c] {:?}", e);
                     }
@@ -259,10 +242,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ok(_) => {}
                 Err(e) => {
                     if e.is::<String>() {
-                        panic!(
-                            "[thread_d] {}",
-                            e.downcast_ref::<String>().unwrap(),
-                        );
+                        panic!("[thread_d] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
                         panic!("[thread_d] {:?}", e);
                     }
@@ -272,10 +252,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ok(_) => {}
                 Err(e) => {
                     if e.is::<String>() {
-                        panic!(
-                            "[thread_e] {}",
-                            e.downcast_ref::<String>().unwrap(),
-                        );
+                        panic!("[thread_e] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
                         panic!("[thread_e] {:?}", e);
                     }
@@ -298,7 +275,9 @@ pub(super) fn run() -> io::Result<()> {
             })
             .collect::<Vec<_>>();
         &mut lines[..].sort_by_key(|(_, speed)| *speed);
-        let (fastest, speed) = lines.into_iter().next_back()
+        let (fastest, speed) = lines
+            .into_iter()
+            .next_back()
             .expect("Ran at least one simulation");
         println!("{:?}: {}", fastest, speed);
     }

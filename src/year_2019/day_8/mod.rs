@@ -2,12 +2,7 @@ use std::{io, str::FromStr};
 
 use crate::parse::NomParse;
 
-use nom::{
-    character::complete as character,
-    combinator as comb,
-    multi,
-    IResult,
-};
+use nom::{character::complete as character, combinator as comb, multi, IResult};
 
 #[derive(Clone, Copy)]
 struct SIFLayer {
@@ -40,10 +35,7 @@ struct SpaceImageFormat {
 
 impl<'s> NomParse<'s> for SpaceImageFormat {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        comb::map(
-            multi::many1(SIFLayer::nom_parse),
-            |layers| Self { layers },
-        )(s)
+        comb::map(multi::many1(SIFLayer::nom_parse), |layers| Self { layers })(s)
     }
 }
 
@@ -51,12 +43,15 @@ impl FromStr for SpaceImageFormat {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::nom_parse(s).map(|(_, x)| x).map_err(|e| format!("{:?}", e))
+        Self::nom_parse(s)
+            .map(|(_, x)| x)
+            .map_err(|e| format!("{:?}", e))
     }
 }
 
 pub(super) fn run() -> io::Result<()> {
-    let pic = String::from_utf8(std::fs::read("2019_8.txt")?).unwrap()
+    let pic = String::from_utf8(std::fs::read("2019_8.txt")?)
+        .unwrap()
         .parse::<SpaceImageFormat>()
         .unwrap();
     {

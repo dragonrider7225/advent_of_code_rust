@@ -6,7 +6,7 @@ fn calc_fft(i: usize, j: usize) -> Option<i32> {
         e if e % 2 == 0 => None,
         e if e % 4 == 1 => Some(1),
         e if e % 4 == 3 => Some(-1),
-        _ => unsafe { unreachable_unchecked() }
+        _ => unsafe { unreachable_unchecked() },
     }
 }
 
@@ -103,13 +103,17 @@ fn run_fft(digits: &[i32]) -> Vec<i32> {
                 .into_iter()
                 .filter_map(|j| Some(digits[j - 1] * calc_fft(i, j)?))
                 .sum::<i32>()
-                .abs() % 10
+                .abs()
+                % 10
         })
         .collect()
 }
 
 pub(super) fn run() -> io::Result<()> {
-    let digits = crate::get_lines("2019_16.txt")?.next().unwrap().chars()
+    let digits = crate::get_lines("2019_16.txt")?
+        .next()
+        .unwrap()
+        .chars()
         .map(|c| iter::once(c).collect::<String>())
         .map(|s| s.parse().expect("Invalid digit"))
         .collect::<Vec<i32>>();
@@ -129,7 +133,10 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         println!("Year 2019 Day 16 Part 2");
-        let offset = digits[..7].iter().copied().fold(0usize, |acc, x| acc * 10 + x as usize);
+        let offset = digits[..7]
+            .iter()
+            .copied()
+            .fold(0usize, |acc, x| acc * 10 + x as usize);
         println!("Offset is {} out of {}", offset, digits.len() * 10_000);
         let message = if offset > 10_000 * digits.len() / 2 {
             println!("Offset is sufficiently large to use the simplified algorithm");
@@ -138,15 +145,18 @@ pub(super) fn run() -> io::Result<()> {
                 .into_iter()
                 .fold::<Box<dyn DoubleEndedIterator<Item = i32>>, _>(
                     box aoc_iter::cycle_bounded(10_000, digits.into_iter()).skip(offset),
-                    |acc_digits, _| acc_digits.rev()
-                        .fold::<(Box<dyn DoubleEndedIterator<Item = i32>>, i32), _>(
-                            (box iter::empty(), 0),
-                            |(acc, sum), digit| {
-                                let sum = (sum + digit) % 10;
-                                (box iter::once(sum).chain(acc), sum)
-                            },
-                        )
-                        .0,
+                    |acc_digits, _| {
+                        acc_digits
+                            .rev()
+                            .fold::<(Box<dyn DoubleEndedIterator<Item = i32>>, i32), _>(
+                                (box iter::empty(), 0),
+                                |(acc, sum), digit| {
+                                    let sum = (sum + digit) % 10;
+                                    (box iter::once(sum).chain(acc), sum)
+                                },
+                            )
+                            .0
+                    },
                 )
                 .take(8)
                 .fold(0, |acc, x| acc * 10 + x)
@@ -158,9 +168,12 @@ pub(super) fn run() -> io::Result<()> {
             (0..8)
                 .into_iter()
                 // O(n**9)
-                .map(|i| (i..digits.len())
-                     .map(|j| calc_100_fft(offset + i + 1, offset + j + 1) * digits[j])
-                     .sum::<i32>() % 10)
+                .map(|i| {
+                    (i..digits.len())
+                        .map(|j| calc_100_fft(offset + i + 1, offset + j + 1) * digits[j])
+                        .sum::<i32>()
+                        % 10
+                })
                 .fold(0, |acc, x| acc * 10 + x)
         };
         // let digits = (0..100).fold(

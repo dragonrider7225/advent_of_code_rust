@@ -8,7 +8,10 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use extended_io::{self as eio, pipe::{PipeRead, PipeWrite}};
+use extended_io::{
+    self as eio,
+    pipe::{PipeRead, PipeWrite},
+};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum Rotation {
@@ -79,7 +82,9 @@ impl Field {
     }
 
     fn add_first_col(&mut self) {
-        self.0.iter_mut().for_each(|v| v.insert(0, Color::default()));
+        self.0
+            .iter_mut()
+            .for_each(|v| v.insert(0, Color::default()));
     }
 
     fn add_last_row(&mut self) {
@@ -174,13 +179,12 @@ impl Robot {
 
     fn try_read<T>(&mut self) -> io::Result<T>
     where
-      i64: TryInto<T>,
-      <i64 as TryInto<T>>::Error: ToString,
+        i64: TryInto<T>,
+        <i64 as TryInto<T>>::Error: ToString,
     {
-         eio::read_i64(&mut self.input)?.try_into()
-             .map_err(|e| {
-                 io::Error::new(io::ErrorKind::InvalidData, e.to_string())
-             })
+        eio::read_i64(&mut self.input)?
+            .try_into()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
     }
 
     fn write(&mut self, value: i64) -> io::Result<()> {
@@ -211,9 +215,7 @@ impl Robot {
             Direction::Left => {
                 if *self.pos.x() == 0 {
                     self.field.add_first_col();
-                    self.painted = self.painted.iter()
-                        .map(|p| p + Point::at(1, 0))
-                        .collect();
+                    self.painted = self.painted.iter().map(|p| p + Point::at(1, 0)).collect();
                 } else {
                     self.pos -= Point::at(1, 0);
                 }
@@ -221,9 +223,7 @@ impl Robot {
             Direction::Down => {
                 if *self.pos.y() == 0 {
                     self.field.add_first_row();
-                    self.painted = self.painted.iter()
-                        .map(|p| p + Point::at(0, 1))
-                        .collect();
+                    self.painted = self.painted.iter().map(|p| p + Point::at(0, 1)).collect();
                 } else {
                     self.pos -= Point::at(0, 1);
                 }
@@ -267,7 +267,8 @@ impl Robot {
 
 impl Debug for Robot {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.debug_struct("Robot").field("pos", &self.pos)
+        f.debug_struct("Robot")
+            .field("pos", &self.pos)
             .field("field", &self.field)
             .field("facing", &self.facing)
             .field("painted", &self.painted)

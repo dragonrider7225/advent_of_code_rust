@@ -1,10 +1,4 @@
-use nom::{
-    branch,
-    bytes::complete as bytes,
-    combinator as comb,
-    sequence,
-    IResult,
-};
+use nom::{branch, bytes::complete as bytes, combinator as comb, sequence, IResult};
 
 use std::{
     collections::HashMap,
@@ -45,8 +39,8 @@ impl<'s> NomParse<'s> for Date {
                 sequence::separated_pair(
                     u8::nom_parse, // Parse month ("{u8}")
                     bytes::tag("-"),
-                    u8::nom_parse // Parse day ("{u8}")
-                ) // Parse (month, day) ("{u8}-{u8}")
+                    u8::nom_parse, // Parse day ("{u8}")
+                ), // Parse (month, day) ("{u8}-{u8}")
             ), // Parse (year, (month, day)) ("{u32}-{u8}-{u8}")
             |(year, (month, day))| Date::new(year, month, day),
         )(s)
@@ -61,10 +55,7 @@ struct Time {
 
 impl Time {
     fn new(hour: u8, minute: u8) -> Time {
-        Time {
-            hour,
-            minute,
-        }
+        Time { hour, minute }
     }
 
     fn hour(&self) -> u32 {
@@ -124,7 +115,7 @@ impl<'s> NomParse<'s> for Time {
             sequence::separated_pair(
                 u8::nom_parse, // Parse hour ("{u8}")
                 bytes::tag(":"),
-                u8::nom_parse // Parse minute ("{u8}")
+                u8::nom_parse, // Parse minute ("{u8}")
             ), // Parse (hour, minute) ("{u8}:{u8}")
             |(hour, minute)| Time::new(hour, minute),
         )(s)
@@ -143,10 +134,7 @@ impl Datetime {
     /// `hour` is assumed to be in the range `0..24`.
     /// `minute` is assumed to be in the range `0..59`.
     fn new(date: Date, time: Time) -> Datetime {
-        Datetime {
-            date,
-            time,
-        }
+        Datetime { date, time }
     }
 
     fn time(&self) -> Time {
@@ -163,11 +151,8 @@ impl Display for Datetime {
 impl<'s> NomParse<'s> for Datetime {
     fn nom_parse(s: &str) -> IResult<&str, Datetime> {
         comb::map(
-            sequence::separated_pair(
-                Date::nom_parse,
-                bytes::tag(" "),
-                Time::nom_parse,
-            ), // Parse (date, time) ("{u32}-{u8}-{u8} {u8}:{u8}")
+            // Parse (date, time) ("{u32}-{u8}-{u8} {u8}:{u8}")
+            sequence::separated_pair(Date::nom_parse, bytes::tag(" "), Time::nom_parse),
             |(date, time)| Datetime::new(date, time),
         )(s)
     }
@@ -199,9 +184,9 @@ impl<'s> NomParse<'s> for Day4Event {
                 sequence::delimited(
                     bytes::tag("Guard #"),
                     u32::nom_parse, // Parse guard_num ("{u32}")
-                    bytes::tag(" begins shift")
+                    bytes::tag(" begins shift"),
                 ), // Parse guard_num ("Guard #{u32} begins shift")
-                |n| Day4Event::BeginsShift(n)
+                |n| Day4Event::BeginsShift(n),
             ),
         ))(s)
     }
@@ -214,10 +199,7 @@ struct Day4Entry {
 
 impl Day4Entry {
     fn new(datetime: Datetime, event: Day4Event) -> Day4Entry {
-        Day4Entry {
-            datetime,
-            event,
-        }
+        Day4Entry { datetime, event }
     }
 
     fn datetime(&self) -> Datetime {
@@ -239,14 +221,10 @@ impl<'s> NomParse<'s> for Day4Entry {
     fn nom_parse(s: &str) -> IResult<&str, Day4Entry> {
         comb::map(
             sequence::pair(
-                sequence::delimited(
-                    bytes::tag("["),
-                    Datetime::nom_parse,
-                    bytes::tag("] ")
-                ),
-                Day4Event::nom_parse
+                sequence::delimited(bytes::tag("["), Datetime::nom_parse, bytes::tag("] ")),
+                Day4Event::nom_parse,
             ),
-            |(datetime, event)| Day4Entry::new(datetime, event)
+            |(datetime, event)| Day4Entry::new(datetime, event),
         )(s)
     }
 }
@@ -255,7 +233,8 @@ impl FromStr for Day4Entry {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Day4Entry, ()> {
-        comb::all_consuming(Day4Entry::nom_parse)(s).map(|(_, entry)| entry)
+        comb::all_consuming(Day4Entry::nom_parse)(s)
+            .map(|(_, entry)| entry)
             .map_err(|_| ())
     }
 }
@@ -301,17 +280,11 @@ fn build_repose_record() -> io::Result<ReposeRecord> {
             Day4Event::WakesUp if sleep_time.is_some() && guard.is_some() => {
                 let wake_time = entry.datetime().time().into();
                 repose_record
-                    .add_sleep_range(
-                        guard.unwrap(),
-                        sleep_time.unwrap().into()..wake_time
-                    );
+                    .add_sleep_range(guard.unwrap(), sleep_time.unwrap().into()..wake_time);
                 sleep_time = None;
             }
             Day4Event::WakesUp => {
-                panic!(
-                    "Nonexistent or awake guard {:?} can't wake up",
-                    guard
-                );
+                panic!("Nonexistent or awake guard {:?} can't wake up", guard);
             }
             Day4Event::FallsAsleep if sleep_time.is_none() && guard.is_some() => {
                 sleep_time = Some(entry.datetime().time());
@@ -328,8 +301,7 @@ fn build_repose_record() -> io::Result<ReposeRecord> {
             Day4Event::BeginsShift(g) => {
                 panic!(
                     "New guard {} can't start shift while old guard {:?} is asleep",
-                    g,
-                    guard,
+                    g, guard,
                 );
             }
         }
@@ -354,25 +326,32 @@ fn build_counts() -> io::Result<HashMap<u32, HashMap<u16, u32>>> {
 pub fn run() -> io::Result<()> {
     {
         // Part 1
-        let (guard, guard_counts) = build_counts()?.into_iter()
+        let (guard, guard_counts) = build_counts()?
+            .into_iter()
             .max_by_key(|(_, guard_counts)| {
-                guard_counts.into_iter().map(|(_, &count)| count as u64)
+                guard_counts
+                    .into_iter()
+                    .map(|(_, &count)| count as u64)
                     .sum::<u64>()
             })
             .unwrap();
-        let (minute, count) = guard_counts.into_iter()
+        let (minute, count) = guard_counts
+            .into_iter()
             .max_by_key(|(_, count)| count.clone())
             .unwrap();
         println!(
             "Guard #{} slept the most with {} minutes at minute {}",
-            guard, count, minute);
+            guard, count, minute
+        );
         println!("Key is {}", guard * minute as u32);
     }
     {
         // Part 2
-        let (guard, minute, count) = build_counts()?.into_iter()
+        let (guard, minute, count) = build_counts()?
+            .into_iter()
             .map(|(guard, counts)| {
-                let (minute, count) = counts.into_iter()
+                let (minute, count) = counts
+                    .into_iter()
                     .max_by_key(|(_, count)| count.clone())
                     .unwrap();
                 (guard, minute, count)
@@ -381,7 +360,8 @@ pub fn run() -> io::Result<()> {
             .unwrap();
         println!(
             "Guard #{} slept the most consistently with {} minutes at minute {}",
-            guard, count, minute);
+            guard, count, minute
+        );
         println!("Key is {}", guard * minute as u32);
     }
     Ok(())

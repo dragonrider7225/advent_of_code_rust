@@ -7,7 +7,10 @@ struct Body {
 
 impl Body {
     fn new(name: String) -> Body {
-        Body { name, orbiters: vec![] }
+        Body {
+            name,
+            orbiters: vec![],
+        }
     }
 
     fn count_orbits(&self, num_parents: u32) -> u32 {
@@ -87,13 +90,12 @@ impl Default for Body {
 
 fn get_orbits() -> io::Result<Body> {
     let mut orbits: Box<dyn Iterator<Item = (String, String)>> =
-        box crate::get_lines("2019_6.txt")?
-            .map(|s| {
-                let mut strs = s.split(")").map(|s| s.to_owned());
-                let parent = strs.next().unwrap();
-                let child = strs.next().unwrap();
-                (parent, child)
-            });
+        box crate::get_lines("2019_6.txt")?.map(|s| {
+            let mut strs = s.split(")").map(|s| s.to_owned());
+            let parent = strs.next().unwrap();
+            let child = strs.next().unwrap();
+            (parent, child)
+        });
     let mut com = Body::default();
     loop {
         let mut missed = vec![];

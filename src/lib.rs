@@ -26,7 +26,8 @@ fn get_lines<P>(path: P) -> io::Result<impl Iterator<Item = String>>
 where
     P: AsRef<Path>,
 {
-    let ret = BufReader::new(File::open(path)?).lines()
+    let ret = BufReader::new(File::open(path)?)
+        .lines()
         .map(|res| res.expect("Failed to read line"));
     Ok(ret)
 }

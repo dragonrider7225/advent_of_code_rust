@@ -24,7 +24,7 @@ impl<T> Vec3<T> {
 
 impl<T, U, V> Add<Vec3<U>> for Vec3<T>
 where
-  T: Add<U, Output = V>,
+    T: Add<U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -35,8 +35,8 @@ where
 
 impl<'a, T, U, V> Add<&'a Vec3<U>> for Vec3<T>
 where
-  T: Add<U, Output = V>,
-  U: Clone,
+    T: Add<U, Output = V>,
+    U: Clone,
 {
     type Output = Vec3<V>;
 
@@ -51,7 +51,7 @@ where
 
 impl<'a, T, U, V> Add<&'a mut Vec3<U>> for Vec3<T>
 where
-  T: Add<&'a mut U, Output = V>,
+    T: Add<&'a mut U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -66,7 +66,7 @@ where
 
 impl<'a, T, U, V> Add<Vec3<U>> for &'a Vec3<T>
 where
-  &'a T: Add<U, Output = V>,
+    &'a T: Add<U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -77,7 +77,7 @@ where
 
 impl<'a, 'b, T, U, V> Add<&'b Vec3<U>> for &'a Vec3<T>
 where
-  &'a T: Add<&'b U, Output = V>,
+    &'a T: Add<&'b U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -88,7 +88,7 @@ where
 
 impl<'a, 'b, T, U, V> Add<&'b mut Vec3<U>> for &'a Vec3<T>
 where
-  &'a T: Add<&'b mut U, Output = V>,
+    &'a T: Add<&'b mut U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -103,7 +103,7 @@ where
 
 impl<'a, T, U, V> Add<Vec3<U>> for &'a mut Vec3<T>
 where
-  &'a mut T: Add<U, Output = V>,
+    &'a mut T: Add<U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -118,7 +118,7 @@ where
 
 impl<'a, 'b, T, U, V> Add<&'b Vec3<U>> for &'a mut Vec3<T>
 where
-  &'a mut T: Add<&'b U, Output = V>,
+    &'a mut T: Add<&'b U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -133,7 +133,7 @@ where
 
 impl<'a, 'b, T, U, V> Add<&'b mut Vec3<U>> for &'a mut Vec3<T>
 where
-  &'a mut T: Add<&'b mut U, Output = V>,
+    &'a mut T: Add<&'b mut U, Output = V>,
 {
     type Output = Vec3<V>;
 
@@ -148,7 +148,7 @@ where
 
 impl<T, U> AddAssign<Vec3<U>> for Vec3<T>
 where
-  T: AddAssign<U>,
+    T: AddAssign<U>,
 {
     fn add_assign(&mut self, other: Vec3<U>) {
         self.x += other.x;
@@ -159,8 +159,8 @@ where
 
 impl<'a, T, U> AddAssign<&'a Vec3<U>> for Vec3<T>
 where
-  T: AddAssign<U>,
-  U: Clone,
+    T: AddAssign<U>,
+    U: Clone,
 {
     fn add_assign(&mut self, other: &'a Vec3<U>) {
         self.x += other.x.clone();
@@ -171,8 +171,8 @@ where
 
 impl<'a, T, U> AddAssign<&'a mut Vec3<U>> for Vec3<T>
 where
-  T: AddAssign<U>,
-  U: Clone,
+    T: AddAssign<U>,
+    U: Clone,
 {
     fn add_assign(&mut self, other: &'a mut Vec3<U>) {
         self.x += other.x.clone();
@@ -183,7 +183,7 @@ where
 
 impl<'a, T, U> AddAssign<Vec3<U>> for &'a mut Vec3<T>
 where
-  T: AddAssign<U>,
+    T: AddAssign<U>,
 {
     fn add_assign(&mut self, other: Vec3<U>) {
         self.x += other.x;
@@ -194,8 +194,8 @@ where
 
 impl<'a, 'b, T, U> AddAssign<&'b Vec3<U>> for &'a mut Vec3<T>
 where
-  T: AddAssign<U>,
-  U: Clone,
+    T: AddAssign<U>,
+    U: Clone,
 {
     fn add_assign(&mut self, other: &'b Vec3<U>) {
         self.x += other.x.clone();
@@ -206,8 +206,8 @@ where
 
 impl<'a, 'b, T, U> AddAssign<&'b mut Vec3<U>> for &'a mut Vec3<T>
 where
-  T: AddAssign<U>,
-  U: Clone,
+    T: AddAssign<U>,
+    U: Clone,
 {
     fn add_assign(&mut self, other: &'b mut Vec3<U>) {
         self.x += other.x.clone();
@@ -218,7 +218,7 @@ where
 
 impl<'s, T> NomParse<'s> for Vec3<T>
 where
-  T: NomParse<'s>,
+    T: NomParse<'s>,
 {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
@@ -228,15 +228,9 @@ where
                     sequence::preceded(bytes::tag("x="), NomParse::nom_parse),
                     bytes::tag(", "),
                     sequence::separated_pair(
-                        sequence::preceded(
-                            bytes::tag("y="),
-                            NomParse::nom_parse,
-                        ),
+                        sequence::preceded(bytes::tag("y="), NomParse::nom_parse),
                         bytes::tag(", "),
-                        sequence::preceded(
-                            bytes::tag("z="),
-                            NomParse::nom_parse,
-                        ),
+                        sequence::preceded(bytes::tag("z="), NomParse::nom_parse),
                     ),
                 ),
                 bytes::tag(">"),
@@ -255,7 +249,9 @@ where
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::nom_parse(s).map(|(_, x)| x).map_err(|e| format!("{:?}", e))
+        Self::nom_parse(s)
+            .map(|(_, x)| x)
+            .map_err(|e| format!("{:?}", e))
     }
 }
 
@@ -320,10 +316,7 @@ pub(super) fn run() -> io::Result<()> {
         let mut xv1 = initial_xv.clone();
         loop {
             if steps % 100_000 == 0 {
-                println!(
-                    "Reached {} distinct states since last overflow",
-                    steps,
-                );
+                println!("Reached {} distinct states since last overflow", steps,);
             }
             let xv2 = xv1.clone();
             for i in 0..xv1.len() {
@@ -372,7 +365,9 @@ pub(super) fn run() -> io::Result<()> {
         }
         println!(
             "The moons returned to their initial state after {}*{}+{} steps",
-            overflows, std::u128::MAX, steps,
+            overflows,
+            std::u128::MAX,
+            steps,
         );
     }
     Ok(())

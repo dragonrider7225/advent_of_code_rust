@@ -1,7 +1,5 @@
 use std::io;
 
-mod intcode_interpreter;
-pub(super) mod robot;
 mod day_1;
 mod day_2;
 mod day_3;
@@ -11,6 +9,7 @@ mod day_6;
 mod day_7;
 mod day_8;
 mod day_9;
+
 mod day_10;
 mod day_11;
 mod day_12;
@@ -27,6 +26,9 @@ mod day_22;
 mod day_23;
 mod day_24;
 mod day_25;
+
+mod intcode_interpreter;
+mod robot;
 
 pub fn run_day(day: u32) -> io::Result<()> {
     match day {
