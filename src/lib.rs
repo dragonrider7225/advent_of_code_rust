@@ -1,7 +1,6 @@
 //! This crate aggregates my solutions to all [advent of code](https://adventofcode.com/) problems.
 
 #![warn(rust_2018_idioms)]
-
 #![feature(box_syntax)]
 #![feature(generators, generator_trait)]
 #![feature(optin_builtin_traits)]
@@ -42,7 +41,11 @@ where
     P: AsRef<Path>,
 {
     let lines = get_lines(path)?;
-    Ok(lines.map(|s| s.parse().map_err(|e| format!("Invalid line {:?}: {:?}", s, e)).unwrap()))
+    Ok(lines.map(|s| {
+        s.parse()
+            .map_err(|e| format!("Invalid line {:?}: {:?}", s, e))
+            .unwrap()
+    }))
 }
 
 fn run_year(year: u32, day: Option<u32>) -> io::Result<()> {

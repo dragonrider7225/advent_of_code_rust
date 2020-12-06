@@ -1,7 +1,7 @@
 //! An executable wrapper around (my) advent of code solutions.
 use advent_of_code as aoc;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 
 use std::io;
 
@@ -11,47 +11,26 @@ fn main() -> io::Result<()> {
         .author("Kevin M. <dragonrider7225@gmail.com>")
         .about("Runs one day of one year of the Advent of Code <adventofcode.com>")
         .max_term_width(100)
-        .arg(Arg::with_name("year")
-            .short("y")
-            .long("year")
-            .takes_value(true)
-            .value_name("YEAR")
-            .possible_values(&["2018", "2019", "2020"])
-            .help("Selects the year to run"),
+        .arg(
+            Arg::with_name("year")
+                .short("y")
+                .long("year")
+                .takes_value(true)
+                .value_name("YEAR")
+                .possible_values(&["2018", "2019", "2020"])
+                .help("Selects the year to run"),
         )
-        .arg(Arg::with_name("day")
-            .short("d")
-            .long("day")
-            .takes_value(true)
-            .value_name("DAY")
-            .possible_values(&[
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "11",
-                "12",
-                "13",
-                "14",
-                "15",
-                "16",
-                "17",
-                "18",
-                "19",
-                "20",
-                "21",
-                "22",
-                "23",
-                "24",
-                "25",
-            ])
-            .help("Selects the day to run"),
+        .arg(
+            Arg::with_name("day")
+                .short("d")
+                .long("day")
+                .takes_value(true)
+                .value_name("DAY")
+                .possible_values(&[
+                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14",
+                    "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25",
+                ])
+                .help("Selects the day to run"),
         )
         .get_matches();
     let year = matches.value_of("year").and_then(|s| s.parse::<u32>().ok());
