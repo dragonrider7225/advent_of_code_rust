@@ -181,6 +181,7 @@ pub(super) fn run() -> io::Result<()> {
 mod test {
     use super::*;
 
+    #[ignore]
     #[test]
     fn noop_parses() {
         let expected = Ok(Instruction::NoOp(0));
@@ -188,6 +189,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn noop_can_have_any_argument() {
         let expected = Ok(Instruction::NoOp(7));
@@ -196,6 +198,7 @@ mod test {
         assert_eq!(expected, "nop -32".parse());
     }
 
+    #[ignore]
     #[test]
     fn accumulate_parses() {
         let expected = Ok(Instruction::Accumulate(5));
@@ -203,6 +206,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn accumulate_negative_parses() {
         let expected = Ok(Instruction::Accumulate(-5));
@@ -210,6 +214,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn state_runs_correctly() {
         use Instruction::{Accumulate, Jump, NoOp};
