@@ -20,6 +20,35 @@ impl<T> Point<T> {
     }
 }
 
+macro_rules! impl_manhattan_distance_const {
+    ($($t:ty)+) => ($(
+        impl Point<$t> {
+            pub const fn manhattan_distance(&self, rhs: &Self) -> $t {
+                (if self.x < rhs.x { rhs.x - self.x } else { self.x - rhs.x })
+                    + (if self.y < rhs.y { rhs.y - self.y } else { self.y - rhs.y })
+            }
+        }
+    )+)
+}
+
+impl_manhattan_distance_const!(
+    u8 u16 u32 u64 u128 usize
+    i8 i16 i32 i64 i128 isize
+);
+
+macro_rules! impl_manhattan_distance {
+    ($($t:ty)+) => ($(
+        impl Point<$t> {
+            pub fn manhattan_distance(&self, rhs: &Self) -> $t {
+                (if self.x < rhs.x { rhs.x - self.x } else { self.x - rhs.x })
+                    + (if self.y < rhs.y { rhs.y - self.y } else { self.y - rhs.y })
+            }
+        }
+    )+)
+}
+
+impl_manhattan_distance!(f32 f64);
+
 impl<T, U, V> Add<Point<U>> for Point<T>
 where
     T: Add<U, Output = V>,
