@@ -183,15 +183,16 @@ mod test {
 
     #[test]
     fn noop_parses() {
-        let expected = Ok(Instruction::NoOp);
+        let expected = Ok(Instruction::NoOp(0));
         let actual = "nop +0".parse();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn noop_can_have_any_argument() {
-        let expected = Ok(Instruction::NoOp);
+        let expected = Ok(Instruction::NoOp(7));
         assert_eq!(expected, "nop +7".parse());
+        let expected = Ok(Instruction::NoOp(-32));
         assert_eq!(expected, "nop -32".parse());
     }
 
@@ -214,7 +215,7 @@ mod test {
         use Instruction::{Accumulate, Jump, NoOp};
 
         let instructions = [
-            NoOp,
+            NoOp(0),
             Accumulate(1),
             Jump(4),
             Accumulate(3),
@@ -225,8 +226,8 @@ mod test {
             Accumulate(6),
         ];
         let state = State::new(&instructions);
-        let expected = 5;
-        let actual = state.run_until_loop();
+        let expected = Err(5);
+        let actual = state.run();
         assert_eq!(expected, actual);
     }
 }
