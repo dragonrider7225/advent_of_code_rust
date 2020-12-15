@@ -5,6 +5,7 @@
 #![feature(generators, generator_trait)]
 #![feature(optin_builtin_traits)]
 #![feature(step_trait)]
+#![feature(type_ascription)]
 
 use std::{
     convert::AsRef,
