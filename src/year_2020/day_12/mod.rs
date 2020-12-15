@@ -194,6 +194,7 @@ pub(super) fn run() -> io::Result<()> {
 mod test {
     use super::*;
 
+    #[ignore]
     #[test]
     fn ship_follows_instructions() {
         let expected = Ship {
@@ -211,6 +212,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn waypoint_follows_instructions() {
         let expected = Ship {
