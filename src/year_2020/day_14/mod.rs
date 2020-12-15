@@ -272,6 +272,7 @@ pub(super) fn run() -> io::Result<()> {
 mod test {
     use super::*;
 
+    #[ignore]
     #[test]
     fn set_mask_parses() {
         let expected = Ok(Instruction::SetMask(Mask {
@@ -282,6 +283,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn set_value_parses() {
         let expected = Ok(Instruction::SetValue {
@@ -292,6 +294,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn program_parses() {
         let expected = Ok(Program {
@@ -324,6 +327,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn program_runs_correctly() {
         let program = Program {
@@ -351,6 +355,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn program_v2_masks_address_correctly() {
         let expected = vec![26, 27, 58, 59];
@@ -368,6 +373,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn mask_v2_sets_memory_correctly() {
         let mut memory = ProgramMemory(HashMap::new());
@@ -385,6 +391,7 @@ mod test {
         assert_eq!(memory.0[&Value::try_from(59).unwrap()].unwrap(), 100);
     }
 
+    #[ignore]
     #[test]
     fn program_v2_masks_address_correctly_2() {
         let expected = vec![16, 17, 18, 19, 24, 25, 26, 27];
@@ -402,6 +409,7 @@ mod test {
         assert_eq!(expected, actual);
     }
 
+    #[ignore]
     #[test]
     fn program_v2_runs_correctly() {
         let program = Program {
