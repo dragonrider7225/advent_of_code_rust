@@ -1,7 +1,7 @@
 //! This crate aggregates my solutions to all [advent of code](https://adventofcode.com/) problems.
 
 #![warn(rust_2018_idioms)]
-#![feature(box_syntax)]
+#![feature(box_syntax, box_patterns)]
 #![feature(generators, generator_trait)]
 #![feature(hash_drain_filter)]
 #![feature(optin_builtin_traits)]
