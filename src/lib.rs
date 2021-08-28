@@ -4,7 +4,6 @@
 #![feature(box_syntax, box_patterns)]
 #![feature(generators, generator_trait)]
 #![feature(hash_drain_filter)]
-#![feature(optin_builtin_traits)]
 #![feature(step_trait)]
 #![feature(type_ascription)]
 

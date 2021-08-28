@@ -112,7 +112,7 @@ pub(super) fn run() -> io::Result<()> {
                 (name, speed)
             })
             .collect::<Vec<_>>();
-        &mut lines[..].sort_by_key(|(_, speed)| std::u32::MAX - speed);
+        lines[..].sort_by_key(|(_, speed)| std::u32::MAX - speed);
         let (fastest, speed) = &lines[0];
         println!("{}: {}", fastest, speed);
     }
@@ -274,7 +274,7 @@ pub(super) fn run() -> io::Result<()> {
                 (name, thrust)
             })
             .collect::<Vec<_>>();
-        &mut lines[..].sort_by_key(|(_, speed)| *speed);
+        lines[..].sort_by_key(|(_, speed)| *speed);
         let (fastest, speed) = lines
             .into_iter()
             .next_back()

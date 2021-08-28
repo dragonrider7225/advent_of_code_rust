@@ -136,14 +136,14 @@ where
     fn try_rfold<B, F, R>(&mut self, init: B, mut f: F) -> R
     where
         F: FnMut(B, Self::Item) -> R,
-        R: Try<Ok = B>,
+        R: Try<Output = B>,
     {
         let mut res = init;
         while let Some(back_iter) = self.back_iter_mut() {
             res = back_iter.try_rfold(res, &mut f)?;
             self.next_cycle_back();
         }
-        Try::from_ok(res)
+        Try::from_output(res)
     }
 
     fn rfold<B, F>(mut self, init: B, mut f: F) -> B
@@ -246,13 +246,13 @@ where
     fn try_fold<B, F, R>(&mut self, mut init: B, mut f: F) -> R
     where
         F: FnMut(B, Self::Item) -> R,
-        R: Try<Ok = B>,
+        R: Try<Output = B>,
     {
         while let Some(front_iter) = self.front_iter_mut() {
             init = front_iter.try_fold(init, &mut f)?;
             self.next_cycle();
         }
-        Try::from_ok(init)
+        Try::from_output(init)
     }
 
     fn fold<B, F>(mut self, mut init: B, mut f: F) -> B
