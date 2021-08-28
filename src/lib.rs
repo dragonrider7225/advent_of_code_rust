@@ -3,7 +3,6 @@
 #![warn(rust_2018_idioms)]
 #![feature(box_syntax)]
 #![feature(generators, generator_trait)]
-#![feature(optin_builtin_traits)]
 #![feature(step_trait)]
 
 use std::{

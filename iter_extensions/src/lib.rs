@@ -4,7 +4,7 @@
     iter_advance_by,
     trusted_len,
     try_find,
-    try_trait
+    try_trait_v2
 )]
 
 mod cycle_bounded_impl;
