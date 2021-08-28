@@ -1,11 +1,13 @@
 use crate::parse::NomParse;
 use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, Finish, IResult,
+    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+    error::ParseError, multi, sequence, AsChar, Finish, IResult, InputIter, InputLength, Offset,
+    Slice,
 };
 use std::{
     collections::{HashMap, HashSet},
     fs, io, iter,
+    ops::{RangeFrom, RangeTo},
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -112,15 +114,13 @@ impl_from_str_for_nom_parse!(UnnamedRule);
 
 impl<'s> NomParse<'s> for UnnamedRule {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        use nom::{error::ParseError, AsChar, InputIter, Offset, Slice};
-        use std::ops::{RangeFrom, RangeTo};
-
         fn satisfy_many1<I, E>(f: impl Fn(char) -> bool) -> impl FnMut(I) -> IResult<I, I, E>
         where
             E: ParseError<I>,
-            I: Clone + InputIter + Offset + PartialEq,
-            I: Slice<RangeFrom<usize>> + Slice<RangeTo<usize>>,
+            I: Slice<RangeFrom<usize>> + InputIter,
             <I as InputIter>::Item: AsChar,
+            I: Clone + InputLength,
+            I: Clone + Offset + Slice<RangeTo<usize>>,
         {
             comb::recognize(multi::many1(character::satisfy(f)))
         }
