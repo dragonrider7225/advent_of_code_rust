@@ -55,6 +55,7 @@ fn run_year(year: u32, day: Option<u32>) -> io::Result<()> {
         2018 => year_2018::run_day(day_prompt()?),
         2019 => year_2019::run_day(day_prompt()?),
         2020 => year_2020::run_day(day_prompt()?),
+        2021 => aoc_2021::run_day(day_prompt()?),
         _ => unimplemented!("Year {}", year),
     }
 }

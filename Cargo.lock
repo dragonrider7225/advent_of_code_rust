@@ -6,6 +6,7 @@ version = 3
 name = "advent_of_code"
 version = "0.1.1"
 dependencies = [
+ "aoc_2021",
  "aoc_iter",
  "clap",
  "extended_io",
@@ -20,6 +21,10 @@ checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
 dependencies = [
  "winapi",
 ]
+
+[[package]]
+name = "aoc_2021"
+version = "0.1.0"
 
 [[package]]
 name = "aoc_iter"

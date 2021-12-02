@@ -17,7 +17,7 @@ fn main() -> io::Result<()> {
                 .long("year")
                 .takes_value(true)
                 .value_name("YEAR")
-                .possible_values(&["2018", "2019", "2020"])
+                .possible_values(&["2018", "2019", "2020", "2021"])
                 .help("Selects the year to run"),
         )
         .arg(
