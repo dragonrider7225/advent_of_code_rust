@@ -400,6 +400,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn parses_branch() {
         let rule_str = "2 3 | 3 2";
         let expected = Ok(UnnamedRule::Branch(box [
@@ -417,6 +418,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn parses_rules() {
         let rule_str = concat!(
             "0: 4 1 5\n",
@@ -491,6 +493,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn finds_correct_matches_1() {
         let rules = [
             Rule {
@@ -564,6 +567,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn finds_correct_matches_2() {
         let (rules, strings) = get_advanced();
         let expected = ["bbabbbbaabaabba", "ababaaaaaabaaab", "ababaaaaabbbaba"]
@@ -579,6 +583,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn finds_correct_matches_with_loop() {
         let (mut rules, strings) = get_advanced();
         rules.insert(
