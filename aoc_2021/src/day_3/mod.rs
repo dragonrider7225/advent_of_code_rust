@@ -131,6 +131,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn test_part1() -> io::Result<()> {
         let s =
             "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
@@ -141,6 +142,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_part2() -> io::Result<()> {
         let s =
             "00100\n11110\n10110\n10111\n10101\n01111\n00111\n11100\n10000\n11001\n00010\n01010";
