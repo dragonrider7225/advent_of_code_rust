@@ -233,6 +233,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn test_part1() -> io::Result<()> {
         let s = "2199943210\n3987894921\n9856789892\n8767896789\n9899965678";
         let expected = 15;
@@ -242,6 +243,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_part2() -> io::Result<()> {
         let s = "2199943210\n3987894921\n9856789892\n8767896789\n9899965678";
         let expected = 1134;
