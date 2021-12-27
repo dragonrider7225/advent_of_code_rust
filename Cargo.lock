@@ -26,12 +26,20 @@ dependencies = [
 name = "aoc_2021"
 version = "0.1.0"
 dependencies = [
+ "aoc_util",
  "nom",
 ]
 
 [[package]]
 name = "aoc_iter"
 version = "0.1.0"
+
+[[package]]
+name = "aoc_util"
+version = "0.1.0"
+dependencies = [
+ "nom",
+]
 
 [[package]]
 name = "atty"
