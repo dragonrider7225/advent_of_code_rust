@@ -286,6 +286,7 @@ mod tests {
     const TEST_DATA: &'static str = "Player 1 starting position: 4\nPlayer 2 starting position: 8";
 
     #[test]
+    #[ignore]
     fn test_part1() -> io::Result<()> {
         let expected = 739_785;
         let actual = part1(&mut Cursor::new(TEST_DATA))?;
@@ -294,6 +295,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_part2() -> io::Result<()> {
         let expected = 444_356_092_776_315;
         let actual = part2(&mut Cursor::new(TEST_DATA))?;
