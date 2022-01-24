@@ -6,6 +6,9 @@
 
 use nom::{character::complete as character, combinator as comb, multi, sequence, IResult};
 
+/// Utilities for axis-aligned bounding boxes.
+pub mod aabb;
+
 macro_rules! digits {
     () => {
         multi::many1(character::one_of("0123456789"))
