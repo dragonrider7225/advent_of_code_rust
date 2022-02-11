@@ -9,6 +9,10 @@ use nom::{character::complete as character, combinator as comb, multi, sequence,
 /// Utilities for axis-aligned bounding boxes.
 pub mod aabb;
 
+/// A generic implementation of the A* search algorithm. Currently does not work correctly.
+#[doc(hidden)]
+pub mod a_star;
+
 macro_rules! digits {
     () => {
         multi::many1(character::one_of("0123456789"))
