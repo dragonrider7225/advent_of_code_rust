@@ -14,4 +14,4 @@ aoc_2021 = { path = "aoc_2021" }
 clap = "^2.33.3"
 
 [workspace]
-members = ["iter_extensions", "aoc_2021"]
+members = ["iter_extensions", "aoc_2021", "aoc_util"]
