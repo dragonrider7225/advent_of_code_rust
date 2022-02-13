@@ -59,14 +59,15 @@ impl<'field> TicketRules<'field> {
         for ticket in tickets {
             intermediate.iter_mut().for_each(|(&field, indices)| {
                 indices.retain(|&idx| {
-                    let ret = self.rules[&field].is_satisfied_by(ticket.fields[idx]);
-                    if !ret {
-                        #[cfg(test)]
+                    #[allow(clippy::let_and_return)]
+                    let result = self.rules[&field].is_satisfied_by(ticket.fields[idx]);
+                    #[cfg(test)]
+                    if !result {
                         println!(
                             "Removing index {idx} for field {field:?} because it is not satisfied by {ticket:?}",
                         );
                     }
-                    ret
+                    result
                 });
             });
         }

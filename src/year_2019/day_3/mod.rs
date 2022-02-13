@@ -155,7 +155,7 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .map(|(p, _)| p.manhattan_distance_o())
             .collect::<Vec<_>>();
-        intersections.sort();
+        intersections.sort_unstable();
         println!("Minimum intersection distance is {}", intersections[0]);
     }
     {
@@ -168,7 +168,7 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .map(|x| x.1)
             .collect::<Vec<_>>();
-        intersections.sort();
+        intersections.sort_unstable();
         println!("Minimum combined steps is {}", intersections[0]);
     }
     Ok(())

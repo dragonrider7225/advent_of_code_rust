@@ -57,14 +57,18 @@ impl LanternfishTimers {
                 Ok(6) => timers.six_remaining += 1,
                 Ok(7) => timers.seven_remaining += 1,
                 Ok(8) => timers.eight_remaining += 1,
-                Ok(i) => Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Invalid timer: {i}"),
-                ))?,
-                Err(e) => Err(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    format!("Invalid timer {i:?}: {e:?}"),
-                ))?,
+                Ok(i) => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("Invalid timer: {}", i),
+                    ))
+                }
+                Err(e) => {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!("Invalid timer {:?}: {:?}", i, e),
+                    ))
+                }
             }
         }
         Ok(timers)

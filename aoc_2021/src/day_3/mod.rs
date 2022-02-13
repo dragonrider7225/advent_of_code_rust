@@ -27,10 +27,12 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
                     match bit {
                         '0' => counts.0 += 1,
                         '1' => counts.1 += 1,
-                        bit => Err(io::Error::new(
-                            io::ErrorKind::InvalidData,
-                            String::from(bit),
-                        ))?,
+                        bit => {
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                String::from(bit),
+                            ))
+                        }
                     }
                 }
                 Ok(Some(acc))
@@ -96,7 +98,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
                     bit => Err(io::Error::new(
                         io::ErrorKind::InvalidData,
                         String::from(bit),
-                    ))?,
+                    )),
                 })
                 .collect::<io::Result<Vec<_>>>()
         })

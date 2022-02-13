@@ -18,7 +18,7 @@ impl Expenses {
             .push(value);
         }
         for end in ends.iter_mut() {
-            end.sort();
+            end.sort_unstable();
         }
         Ok(Self { ends })
     }

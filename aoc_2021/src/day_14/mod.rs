@@ -46,7 +46,7 @@ impl Polymer {
                 let (pair, result) = line.trim().split_once(" -> ").ok_or_else(mk_error)?;
                 match (pair.len(), result.len()) {
                     (2, 1) => {}
-                    _ => Err(mk_error())?,
+                    _ => return Err(mk_error()),
                 }
                 let mut pair_chars = pair.chars();
                 let left = pair_chars.next().ok_or_else(mk_error)?;

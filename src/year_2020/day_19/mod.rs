@@ -89,7 +89,7 @@ impl UnnamedRule {
                 ) -> bool {
                     let max_length = s.len();
                     match parts {
-                        &[] => max_length == 0,
+                        [] => max_length == 0,
                         [first, ..] => {
                             for length in first.length(rules, lengths, max_length) {
                                 if first.matches(&s[..length], rules, lengths)

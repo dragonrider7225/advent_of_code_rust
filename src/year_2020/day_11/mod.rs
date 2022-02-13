@@ -195,19 +195,16 @@ impl<'behavior> GameOfLife<'behavior> {
     fn step(&mut self) -> bool {
         let mut new_tiles = self.tiles.clone();
         let mut changed = false;
-        for (i, new_tile_row) in new_tiles.iter_mut().enumerate().take(self.tiles.len()) {
-            for (j, new_tile) in new_tile_row
-                .iter_mut()
-                .enumerate()
-                .take(self.tiles[i].len())
-                .filter(|&(j, _)| self.occupation_behavior.update_tile(i, j, &self.tiles))
-            {
-                if self.tiles[i][j].is_occupied() {
-                    new_tile.leave();
-                } else {
-                    new_tile.occupy();
+        for (i, (new_row, old_row)) in new_tiles.iter_mut().zip(self.tiles.iter()).enumerate() {
+            for (j, (new_tile, old_tile)) in new_row.iter_mut().zip(old_row.iter()).enumerate() {
+                if self.occupation_behavior.update_tile(i, j, &self.tiles) {
+                    if old_tile.is_occupied() {
+                        new_tile.leave();
+                    } else {
+                        new_tile.occupy();
+                    }
+                    changed = true;
                 }
-                changed = true;
             }
         }
         self.tiles = new_tiles;

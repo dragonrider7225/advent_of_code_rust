@@ -4,7 +4,7 @@ use std::{
     collections::HashSet,
     convert::{TryFrom, TryInto},
     fmt::{self, Debug, Formatter},
-    io::{self},
+    io,
     ops::{Index, IndexMut},
 };
 

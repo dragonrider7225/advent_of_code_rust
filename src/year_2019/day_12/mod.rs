@@ -266,10 +266,7 @@ pub(super) fn run() -> io::Result<()> {
         for _ in 0..1000 {
             let xv2 = xv1.clone();
             for (i, (ref moon1_x, moon1_v)) in xv1.iter_mut().enumerate() {
-                for (j, (moon2_x, _)) in xv2.iter().enumerate() {
-                    if i == j {
-                        continue;
-                    }
+                for (_, (moon2_x, _)) in xv2.iter().enumerate().filter(|&(j, _)| i != j) {
                     match moon1_x.x.cmp(&moon2_x.x) {
                         Ordering::Less => moon1_v.x += 1,
                         Ordering::Equal => {}
@@ -316,10 +313,7 @@ pub(super) fn run() -> io::Result<()> {
             }
             let xv2 = xv1.clone();
             for (i, (ref moon1_x, moon1_v)) in xv1.iter_mut().enumerate() {
-                for (j, (moon2_x, _)) in xv2.iter().enumerate() {
-                    if i == j {
-                        continue;
-                    }
+                for (_, (moon2_x, _)) in xv2.iter().enumerate().filter(|&(j, _)| i != j) {
                     match moon1_x.x.cmp(&moon2_x.x) {
                         Ordering::Less => moon1_v.x += 1,
                         Ordering::Equal => {}

@@ -760,9 +760,9 @@ mod tests {
         let difference = box1.except(&box2);
         dbg!(&difference);
         match difference.inner {
-            AabbSetInner::Empty => assert!(true),
-            AabbSetInner::Singleton(_) => assert!(false, "Got singleton for empty set"),
-            AabbSetInner::Multi { .. } => assert!(false, "Got multi-part empty set"),
+            AabbSetInner::Empty => {}
+            AabbSetInner::Singleton(_) => unreachable!("Got singleton for empty set"),
+            AabbSetInner::Multi { .. } => unreachable!("Got multi-part empty set"),
         }
         assert_eq!(0, difference.size());
     }

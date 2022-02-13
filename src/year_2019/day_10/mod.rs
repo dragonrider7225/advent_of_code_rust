@@ -1,6 +1,6 @@
 use crate::{parse::NomParse, util::Point};
 
-use std::io;
+use std::{io, mem};
 
 use nom::{branch, character::complete as character, combinator as comb, multi, IResult};
 
@@ -41,7 +41,7 @@ impl RatioGenerator {
             self.current_set.push(x)
         }
         // `self.last_set` is now empty.
-        std::mem::swap(&mut self.current_set, &mut self.last_set);
+        mem::swap(&mut self.current_set, &mut self.last_set);
         // `self.current_set` is now empty.
         for _ in 0..current_len {
             if !self.last_set.is_empty() && !self.last_set[0].0 && !self.last_set[1].0 {
@@ -50,7 +50,7 @@ impl RatioGenerator {
                 self.current_set.push(self.last_set.remove(0));
             }
         }
-        self.current_set.extend(std::mem::take(&mut self.last_set));
+        self.current_set.extend(mem::take(&mut self.last_set));
         self.has_next = false;
         false
     }
@@ -85,7 +85,7 @@ impl Iterator for RatioGenerator {
 
             if self.last_set.len() == 1 {
                 self.current_set.push(self.last_set.remove(0));
-                std::mem::swap(&mut self.last_set, &mut self.current_set);
+                mem::swap(&mut self.last_set, &mut self.current_set);
             }
             if !cl_large {
                 return Some(current_last);
@@ -254,8 +254,7 @@ pub(super) fn run() -> io::Result<()> {
                 Multiplier::new(p, right_space, top_space).find_map(|p| {
                     Some(Point::at(col + p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
                 })
-            })
-            .collect::<Vec<_>>();
+            });
         // let right = (1..=right_space)
         //     .filter_map(|n| {
         //         Some(Point::at(col + n, row))
@@ -270,8 +269,7 @@ pub(super) fn run() -> io::Result<()> {
                 Multiplier::new(p, right_space, bottom_space).find_map(|p| {
                     Some(Point::at(col + p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
                 })
-            })
-            .collect::<Vec<_>>();
+            });
         // let bottom = (1..=bottom_space)
         //     .filter_map(|n| {
         //         Some(Point::at(col, row + n))
@@ -286,8 +284,7 @@ pub(super) fn run() -> io::Result<()> {
                 Multiplier::new(p, left_space, bottom_space).find_map(|p| {
                     Some(Point::at(col - p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
                 })
-            })
-            .collect::<Vec<_>>();
+            });
         // let left = (1..=left_space)
         //     .filter_map(|n| {
         //         Some(Point::at(col - n, row))
@@ -302,8 +299,7 @@ pub(super) fn run() -> io::Result<()> {
                 Multiplier::new(p, left_space, top_space).find_map(|p| {
                     Some(Point::at(col - p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
                 })
-            })
-            .collect::<Vec<_>>();
+            });
         // This is missing 7 values, the cardinal direction iterators seem to
         // be doubled by the diagonal iterators, and I can't figure out why.
         // The correct answer on my input was at 184 instead of 200 and I got
@@ -315,11 +311,11 @@ pub(super) fn run() -> io::Result<()> {
                 upper_right.into_iter()
             // )
             // .chain(right.into_iter())
-            .chain(lower_right.into_iter())
+            .chain(lower_right)
             // .chain(bottom.into_iter())
-            .chain(lower_left.into_iter())
+            .chain(lower_left)
             // .chain(left.into_iter())
-            .chain(upper_left.into_iter());
+            .chain(upper_left);
         for i in 1..=282 {
             println!("Asteroid {}: {:?}", i, asteroids.next());
         }

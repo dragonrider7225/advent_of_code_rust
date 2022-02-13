@@ -240,9 +240,9 @@ impl Expr {
                 unreachable!("Every compound expression must contain either a pair of parentheses, a plus sign, or a multiplication sign");
             }
         }
-        match &*tokens {
-            [] => unreachable!("Need at least token to evaluate"),
-            &[ExprToken::Val(v)] => v,
+        match *tokens {
+            [] => unreachable!("Need at least one token to evaluate"),
+            [ExprToken::Val(v)] => v,
             _ => unreachable!(),
         }
     }

@@ -220,10 +220,10 @@ fn read_ieai(input: &mut dyn BufRead) -> io::Result<(ImageEnhancementAlgorithm, 
     let mut buf = String::new();
     input.read_line(&mut buf)?;
     if !buf.trim().is_empty() {
-        Err(io::Error::new(
+        return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             format!("Missing blank line before image: {:?}", buf.trim()),
-        ))?
+        ));
     }
     let image = Image::read(input)?;
     Ok((iea, image))
@@ -268,7 +268,7 @@ mod tests {
 
     use super::*;
 
-    const TEST_DATA: &'static str = concat!(
+    const TEST_DATA: &str = concat!(
         "..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###..",
         ".####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#.",
         ".#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#...",

@@ -15,10 +15,12 @@ impl FromStr for Point {
     type Err = io::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (x, y) = s.split_once(',').ok_or(io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("Point {s:?} missing comma"),
-        ))?;
+        let (x, y) = s.split_once(',').ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Point {:?} missing comma", s),
+            )
+        })?;
         let x = x.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -55,10 +57,12 @@ impl FromStr for Line {
     type Err = io::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (from, to) = s.split_once(" -> ").ok_or(io::Error::new(
-            io::ErrorKind::InvalidData,
-            format!("Line {s:?} missing arrow"),
-        ))?;
+        let (from, to) = s.split_once(" -> ").ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Line {:?} missing arrow", s),
+            )
+        })?;
         let from = from.parse()?;
         let to = to.parse()?;
         let (from, to) = if to < from { (to, from) } else { (from, to) };
