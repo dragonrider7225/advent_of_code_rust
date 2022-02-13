@@ -5,6 +5,8 @@ use std::{
     mem,
 };
 
+use aoc_util::nom_extended;
+
 use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
     Finish,
@@ -171,7 +173,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
             comb::map(
                 sequence::preceded(
                     bytes::tag("Player 1 starting position: "),
-                    aoc_util::recognize_u32,
+                    nom_extended::recognize_u32,
                 ),
                 Player::at,
             ),
@@ -179,7 +181,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
             comb::map(
                 sequence::preceded(
                     bytes::tag("Player 2 starting position: "),
-                    aoc_util::recognize_u32,
+                    nom_extended::recognize_u32,
                 ),
                 Player::at,
             ),
@@ -213,7 +215,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u64> {
             comb::map(
                 sequence::preceded(
                     bytes::tag("Player 1 starting position: "),
-                    aoc_util::recognize_u32,
+                    nom_extended::recognize_u32,
                 ),
                 Player::at,
             ),
@@ -221,7 +223,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u64> {
             comb::map(
                 sequence::preceded(
                     bytes::tag("Player 2 starting position: "),
-                    aoc_util::recognize_u32,
+                    nom_extended::recognize_u32,
                 ),
                 Player::at,
             ),

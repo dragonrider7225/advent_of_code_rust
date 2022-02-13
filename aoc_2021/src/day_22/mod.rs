@@ -3,15 +3,19 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-use aoc_util::aabb::{Aabb, AabbSet};
+use aoc_util::{
+    aabb::{Aabb, AabbSet},
+    nom_extended,
+};
+
 use nom::{branch, bytes::complete as bytes, combinator as comb, sequence, Finish, IResult};
 
 fn aabb_nom_parse(s: &str) -> IResult<&str, Aabb> {
     fn read_range(s: &str) -> IResult<&str, (i64, i64)> {
         sequence::separated_pair(
-            aoc_util::recognize_i64,
+            nom_extended::recognize_i64,
             bytes::tag(".."),
-            aoc_util::recognize_i64,
+            nom_extended::recognize_i64,
         )(s)
     }
 
