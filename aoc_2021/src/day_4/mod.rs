@@ -68,19 +68,21 @@ impl BingoCard {
             number: 0,
             marked: false,
         }; 5]; 5];
-        for (i, row) in numbers.iter_mut().enumerate() {
-            let line = lines.next().ok_or(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Missing card line {}/5", i + 1),
-            ))??;
+        for (i, number_slot) in numbers.iter_mut().enumerate() {
+            let line = lines.next().ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Missing card line {}/5", i + 1),
+                )
+            })??;
             for (j, number) in (0..).zip(line.split_whitespace()) {
                 if j >= 5 {
-                    Err(io::Error::new(
+                    return Err(io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Got too many numbers on line {i}"),
-                    ))?;
+                        format!("Got too many numbers on line {}", i),
+                    ));
                 }
-                row[j].number = number.parse().map_err(|e| {
+                number_slot[j].number = number.parse().map_err(|e| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
                         format!("Invalid number {number:?} at row {i} column {j}: {e}"),
@@ -96,10 +98,10 @@ impl BingoCard {
         while let Some(line) = lines.next() {
             let line = line?;
             if !line.is_empty() {
-                Err(io::Error::new(
+                return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Card {} is too tall", cards.len() + 1),
-                ))?;
+                ));
             }
             cards.push(BingoCard::from_lines(lines.by_ref().take(5))?);
         }
@@ -109,10 +111,9 @@ impl BingoCard {
 
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     let mut lines = input.lines();
-    let numbers = lines.next().ok_or(io::Error::new(
-        io::ErrorKind::InvalidData,
-        "Missing number line",
-    ))??;
+    let numbers = lines
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing number line"))??;
     let mut cards = BingoCard::read_cards(lines)?;
     for number in numbers.split(',') {
         let number = number.parse().map_err(|e| {
@@ -136,10 +137,9 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
 
 fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
     let mut lines = input.lines();
-    let numbers = lines.next().ok_or(io::Error::new(
-        io::ErrorKind::InvalidData,
-        "Missing number line",
-    ))??;
+    let numbers = lines
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing number line"))??;
     let mut cards = BingoCard::read_cards(lines)?;
     let mut done_cards = vec![];
     for number in numbers.split(',') {

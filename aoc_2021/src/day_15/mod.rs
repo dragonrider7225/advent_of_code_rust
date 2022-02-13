@@ -24,10 +24,10 @@ impl Grid {
             if acc.is_empty() {
                 acc.width = line.len();
             } else if acc.width != line.len() {
-                Err(io::Error::new(
+                return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Line {:?} incorrect length, expected {}", line, acc.width),
-                ))?
+                ));
             }
             acc.reserve();
             line.chars()

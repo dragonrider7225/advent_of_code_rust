@@ -173,7 +173,7 @@ impl ConwayCubes {
 impl Debug for ConwayCubes {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut active = self.active.iter().copied().collect::<Vec<_>>();
-        active.sort();
+        active.sort_unstable();
         let mut debug_struct = f.debug_struct("ConwayCubes");
         if self.use_w {
             debug_struct.field("active", &active);

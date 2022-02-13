@@ -76,13 +76,13 @@ impl Display for Time {
 macro_rules! impl_into_integer_for_time {
     ($($t:ty)*) => ($(
         impl From<Time> for $t {
-            fn from(this: Time) -> $t {
-                60 * this.hour() as $t + this.minute() as $t
+            fn from(this: Time) -> Self {
+                60 * this.hour() as Self + this.minute() as Self
             }
         }
 
         impl From<&'_ Time> for $t {
-            fn from(this: &Time) -> $t {
+            fn from(this: &'_ Time) -> Self {
                 (*this).into()
             }
         }

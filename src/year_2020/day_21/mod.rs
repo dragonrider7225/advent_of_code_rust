@@ -90,10 +90,9 @@ fn read_allergens(
             // form `"dairy, fish)"`.
             let mut acc = acc?;
             let line = line?;
-            let (ingredients, allergens) = line.split_once(" (contains ").ok_or(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "Missing allergen list",
-            ))?;
+            let (ingredients, allergens) = line.split_once(" (contains ").ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "Missing allergen list")
+            })?;
             // This can't be a HashSet because HashSet doesn't implement Hash for some reason.
             let ingredients = ingredients
                 .split_whitespace()

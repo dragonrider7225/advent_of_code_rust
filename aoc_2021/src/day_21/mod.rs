@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::{self, BufRead, BufReader},
+    mem,
 };
 
 use nom::{
@@ -133,7 +134,7 @@ impl DiracGameState {
     fn play_round(&mut self) -> bool {
         assert!(self.blank_states.is_empty());
         let potential_rolls = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)];
-        let mut states = std::mem::take(&mut self.states);
+        let mut states = mem::take(&mut self.states);
         for ((p1, p2), count) in states.drain() {
             for (distance, freq) in potential_rolls.iter().copied() {
                 let mut p1 = p1;
@@ -155,7 +156,7 @@ impl DiracGameState {
                 }
             }
         }
-        std::mem::swap(&mut states, &mut self.blank_states);
+        mem::swap(&mut states, &mut self.blank_states);
         self.states = states;
         self.states.is_empty()
     }
@@ -283,7 +284,7 @@ mod tests {
 
     use super::*;
 
-    const TEST_DATA: &'static str = "Player 1 starting position: 4\nPlayer 2 starting position: 8";
+    const TEST_DATA: &str = "Player 1 starting position: 4\nPlayer 2 starting position: 8";
 
     #[test]
     #[ignore]

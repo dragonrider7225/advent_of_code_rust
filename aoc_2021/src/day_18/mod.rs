@@ -3,6 +3,7 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader, Cursor},
     iter::Sum,
+    mem,
     ops::{Add, Index, IndexMut},
 };
 
@@ -37,7 +38,7 @@ impl Number {
 impl Number {
     fn take(&mut self, path: &[Branch]) -> Option<Self> {
         if path.is_empty() {
-            Some(std::mem::replace(self, Self::Literal(0)))
+            Some(mem::replace(self, Self::Literal(0)))
         } else {
             match path[0] {
                 Branch::Left => self.snailfish_mut()?.left_mut().take(&path[1..]),
@@ -354,7 +355,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
         .lines()
         .map(|line| SnailfishNumber::read(&mut Cursor::new(line?)))
         .sum::<io::Result<Option<SnailfishNumber>>>()?
-        .ok_or(io::Error::new(io::ErrorKind::InvalidData, "No input"))?;
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "No input"))?;
     Ok(sum.magnitude())
 }
 
@@ -371,7 +372,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
             sum.magnitude()
         })
         .reduce(u32::max)
-        .ok_or(io::Error::new(io::ErrorKind::InvalidData, "Missing input"))
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing input"))
 }
 
 pub(super) fn run() -> io::Result<()> {
@@ -617,7 +618,7 @@ mod tests {
         Ok(())
     }
 
-    const TEST_DATA: &'static str = concat!(
+    const TEST_DATA: &str = concat!(
         "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]\n",
         "[[[5,[2,8]],4],[5,[[9,9],0]]]\n",
         "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]\n",

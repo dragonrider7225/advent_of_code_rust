@@ -55,8 +55,8 @@ pub fn run() -> io::Result<()> {
                     for j in 0..a.len() {
                         match j.cmp(&i) {
                             Ordering::Less => common.push(a[j]),
-                            Ordering::Greater => common.push(a[j - 1]),
                             Ordering::Equal => {}
+                            Ordering::Greater => common.push(a[j - 1]),
                         }
                     }
                     println!("Common letters are {}", String::from_utf8_lossy(&common));

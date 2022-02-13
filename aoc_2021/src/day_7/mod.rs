@@ -34,7 +34,7 @@ fn count_fuel(positions: &[usize], position: usize) -> usize {
 fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     let mut positions = read_positions(input)?;
     let num_positions = positions.len();
-    positions.sort();
+    positions.sort_unstable();
     Ok(count_fuel(&positions, positions[num_positions / 2]))
 }
 

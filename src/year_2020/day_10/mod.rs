@@ -41,7 +41,7 @@ pub(super) fn run() -> io::Result<()> {
     let adapters = {
         let mut res = crate::parse_lines("2020_10.txt")?.collect::<Vec<u32>>();
         res.push(0);
-        res.sort();
+        res.sort_unstable();
         res.push(res.last().unwrap() + 3);
         res
     };

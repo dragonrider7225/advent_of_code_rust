@@ -69,11 +69,13 @@ impl Heightmap {
                     Ordering::Less => Err(HeightmapParseError::NarrowRow {
                         expected: this.width,
                         actual,
-                    })?,
+                    }
+                    .into()),
                     Ordering::Greater => Err(HeightmapParseError::WideRow {
                         expected: this.width,
                         actual,
-                    })?,
+                    }
+                    .into()),
                     Ordering::Equal => io::Result::Ok(this),
                 }
             },
@@ -95,14 +97,10 @@ impl Heightmap {
                     Some(x + 1).filter(|&x| x < self.width).map(|x| (y, x)),
                     Some(y + 1).filter(|&y| y < self.height).map(|y| (y, x)),
                 ];
-                let neighbor_heights = neighbors
-                    .into_iter()
-                    .flatten()
-                    .map(|(y, x)| self[(x, y)])
-                    .collect::<Vec<_>>();
-                let is_lowpoint = neighbor_heights
-                    .into_iter()
-                    .all(|neighbor_height| point_height < neighbor_height);
+                let mut neighbor_heights =
+                    neighbors.into_iter().flatten().map(|(y, x)| self[(x, y)]);
+                let is_lowpoint =
+                    neighbor_heights.all(|neighbor_height| point_height < neighbor_height);
                 if is_lowpoint {
                     Some((x, y))
                 } else {

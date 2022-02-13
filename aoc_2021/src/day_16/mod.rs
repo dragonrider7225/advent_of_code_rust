@@ -74,10 +74,12 @@ impl TryFrom<u8> for LeftoverBits {
             b'D' => ret.bits = [true, true, false, true],
             b'E' => ret.bits = [true, true, true, false],
             b'F' => ret.bits = [true, true, true, true],
-            _ => Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("Invalid hex digit {value:?}"),
-            ))?,
+            _ => {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("Invalid hex digit {:?}", value),
+                ))
+            }
         }
         ret.idx = 0;
         Ok(ret)
@@ -97,7 +99,7 @@ enum Payload {
 }
 
 impl Payload {
-    fn iter(&self) -> <&'_ Payload as IntoIterator>::IntoIter {
+    fn iter(&self) -> <&'_ Self as IntoIterator>::IntoIter {
         IntoIterator::into_iter(self)
     }
 

@@ -89,12 +89,13 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2019 Day 8 Part 2");
         let mut result = [[2; 25]; 6];
         for layer in pic.layers {
-            for (row, result_row) in result.iter_mut().enumerate() {
-                for (col, result_pixel) in result_row.iter_mut().enumerate() {
-                    if *result_pixel == 2 {
-                        *result_pixel = layer.pixels[row][col];
-                    }
-                }
+            for (result_row, layer_row) in result.iter_mut().zip(&layer.pixels) {
+                result_row
+                    .iter_mut()
+                    .zip(layer_row)
+                    .take(25)
+                    .filter(|(result_cell, _)| **result_cell == 2)
+                    .for_each(|(result_cell, layer_cell)| *result_cell = *layer_cell)
             }
         }
         for row in &result {

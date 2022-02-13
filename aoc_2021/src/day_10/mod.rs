@@ -109,7 +109,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u64> {
         })
         .filter(|score| !matches!(score, Ok(0)))
         .collect::<io::Result<Vec<_>>>()?;
-    scores.sort();
+    scores.sort_unstable();
     Ok(scores[scores.len() / 2])
 }
 
