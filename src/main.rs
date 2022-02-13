@@ -5,14 +5,14 @@ use clap::{App, Arg};
 
 use std::io;
 
-fn main() -> io::Result<()> {
-    let matches = App::new("Advent of Code")
+fn app() -> App<'static> {
+    App::new("Advent of Code")
         .version("0.1.0")
         .author("Kevin M. <dragonrider7225@gmail.com>")
         .about("Runs one day of one year of the Advent of Code <adventofcode.com>")
         .max_term_width(100)
         .arg(
-            Arg::with_name("year")
+            Arg::new("year")
                 .short('y')
                 .long("year")
                 .takes_value(true)
@@ -21,7 +21,7 @@ fn main() -> io::Result<()> {
                 .help("Selects the year to run"),
         )
         .arg(
-            Arg::with_name("day")
+            Arg::new("day")
                 .short('d')
                 .long("day")
                 .takes_value(true)
@@ -32,8 +32,21 @@ fn main() -> io::Result<()> {
                 ])
                 .help("Selects the day to run"),
         )
-        .get_matches();
+}
+
+fn main() -> io::Result<()> {
+    let matches = app().get_matches();
     let year = matches.value_of("year").and_then(|s| s.parse::<u32>().ok());
     let day = matches.value_of("day").and_then(|s| s.parse::<u32>().ok());
     aoc::run(year, day)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_app() {
+        app().debug_assert();
+    }
 }
