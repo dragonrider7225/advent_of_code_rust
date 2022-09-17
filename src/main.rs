@@ -13,7 +13,7 @@ fn main() -> io::Result<()> {
         .max_term_width(100)
         .arg(
             Arg::with_name("year")
-                .short("y")
+                .short('y')
                 .long("year")
                 .takes_value(true)
                 .value_name("YEAR")
@@ -22,7 +22,7 @@ fn main() -> io::Result<()> {
         )
         .arg(
             Arg::with_name("day")
-                .short("d")
+                .short('d')
                 .long("day")
                 .takes_value(true)
                 .value_name("DAY")

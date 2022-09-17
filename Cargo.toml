@@ -11,7 +11,7 @@ extended_io = { git = "https://github.com/dragonrider7225/extended_io.git", vers
 nom = "^7.0.0"
 aoc_iter = { path = "iter_extensions" }
 aoc_2021 = { path = "aoc_2021" }
-clap = "^2.33.3"
+clap = "^3.2.22"
 
 [workspace]
 members = ["iter_extensions", "aoc_2021", "aoc_util"]
