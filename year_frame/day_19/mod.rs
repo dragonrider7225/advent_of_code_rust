@@ -1,14 +1,30 @@
-use std::io;
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
-#[allow(unreachable_code)]
+fn part1(_input: &mut dyn BufRead) -> io::Result<()> {
+    todo!("Year ???? Day 19 Part 1")
+}
+
+fn part2(_input: &mut dyn BufRead) -> io::Result<()> {
+    todo!("Year ???? Day 19 Part 2")
+}
+
 pub(super) fn run() -> io::Result<()> {
     {
-        println!("Year ??? Day 19 Part 1");
-        todo!("Year ??? Day 19 Part 1");
+        println!("Year ???? Day 19 Part 1");
+        println!(
+            "{:?}",
+            part1(&mut BufReader::new(File::open("????_19.txt")?))?
+        );
     }
     {
-        println!("Year ??? Day 19 Part 2");
-        todo!("Year ??? Day 19 Part 2");
+        println!("Year ???? Day 19 Part 2");
+        println!(
+            "{:?}",
+            part2(&mut BufReader::new(File::open("????_19.txt")?))?
+        );
     }
     Ok(())
 }
