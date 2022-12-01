@@ -7,6 +7,7 @@ name = "advent_of_code"
 version = "0.1.1"
 dependencies = [
  "aoc_2021",
+ "aoc_2022",
  "aoc_iter",
  "clap",
  "extended_io",
@@ -15,6 +16,14 @@ dependencies = [
 
 [[package]]
 name = "aoc_2021"
+version = "0.1.0"
+dependencies = [
+ "aoc_util",
+ "nom",
+]
+
+[[package]]
+name = "aoc_2022"
 version = "0.1.0"
 dependencies = [
  "aoc_util",
