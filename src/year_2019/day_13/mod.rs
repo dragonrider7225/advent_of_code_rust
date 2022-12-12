@@ -28,7 +28,7 @@ impl Screen {
 
     fn set(&mut self, (x, y): (usize, usize), tile: u8) {
         if tile > 4 {
-            panic!("Invalid tile: {}", tile);
+            panic!("Invalid tile: {tile}");
         }
         if y >= self.tiles.len() {
             self.tiles
@@ -62,11 +62,11 @@ impl Display for Screen {
                         2 => 'B',
                         3 => 'P',
                         4 => 'o',
-                        n => panic!("Invalid tile: {}", n),
+                        n => panic!("Invalid tile: {n}"),
                     }
                 )?;
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -81,13 +81,13 @@ pub(super) fn run() -> io::Result<()> {
         prog.dup_with(screen_to_prog_read, prog_to_screen_write)
             .run_piped();
         let mut num_blocks = 0;
-        while let Ok(_) = eio::read_i64(&mut prog_to_screen_read) {
+        while eio::read_i64(&mut prog_to_screen_read).is_ok() {
             let _ = eio::read_i64(&mut prog_to_screen_read)?;
             if let Ok(2) = eio::read_i64(&mut prog_to_screen_read) {
                 num_blocks += 1;
             }
         }
-        println!("The game exits with {} blocks on screen", num_blocks);
+        println!("The game exits with {num_blocks} blocks on screen");
     }
     {
         println!("Year 2019 Day 12 Part 2");
@@ -125,7 +125,7 @@ pub(super) fn run() -> io::Result<()> {
             let tile = eio::read_i64(&mut prog_to_screen_read)?;
             if blanking {
                 screen.set_score(tile.try_into().expect("Invalid score"));
-                println!("{}", screen);
+                println!("{screen}");
                 eio::write_i64(
                     &mut screen_to_prog_write,
                     eio::prompt("Enter joystick position (left: -1, right: 1): ")?,
@@ -134,7 +134,7 @@ pub(super) fn run() -> io::Result<()> {
             } else {
                 screen.set((x, y), tile.try_into().expect("Invalid tile"));
                 if num_blocks > screen.num_blocks && screen.num_blocks == 0 {
-                    println!("{}", screen);
+                    println!("{screen}");
                     break;
                 }
             }

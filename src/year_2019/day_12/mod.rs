@@ -251,7 +251,7 @@ where
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::nom_parse(s)
             .map(|(_, x)| x)
-            .map_err(|e| format!("{:?}", e))
+            .map_err(|e| format!("{e:?}"))
     }
 }
 
@@ -265,15 +265,11 @@ pub(super) fn run() -> io::Result<()> {
         let mut xv1 = initial_xv.clone();
         for _ in 0..1000 {
             let xv2 = xv1.clone();
-            for i in 0..xv1.len() {
-                for j in 0..xv2.len() {
+            for (i, (ref moon1_x, moon1_v)) in xv1.iter_mut().enumerate() {
+                for (j, (moon2_x, _)) in xv2.iter().enumerate() {
                     if i == j {
                         continue;
                     }
-                    let moon1 = &mut xv1[i];
-                    let moon1_x = &moon1.0;
-                    let moon1_v = &mut moon1.1;
-                    let (moon2_x, _) = &xv2[j];
                     match moon1_x.x.cmp(&moon2_x.x) {
                         Ordering::Less => moon1_v.x += 1,
                         Ordering::Equal => {}
@@ -316,18 +312,14 @@ pub(super) fn run() -> io::Result<()> {
         let mut xv1 = initial_xv.clone();
         loop {
             if steps % 100_000 == 0 {
-                println!("Reached {} distinct states since last overflow", steps,);
+                println!("Reached {steps} distinct states since last overflow",);
             }
             let xv2 = xv1.clone();
-            for i in 0..xv1.len() {
-                for j in 0..xv2.len() {
+            for (i, (ref moon1_x, moon1_v)) in xv1.iter_mut().enumerate() {
+                for (j, (moon2_x, _)) in xv2.iter().enumerate() {
                     if i == j {
                         continue;
                     }
-                    let moon1 = &mut xv1[i];
-                    let moon1_x = &moon1.0;
-                    let moon1_v = &mut moon1.1;
-                    let (moon2_x, _) = &xv2[j];
                     match moon1_x.x.cmp(&moon2_x.x) {
                         Ordering::Less => moon1_v.x += 1,
                         Ordering::Equal => {}
@@ -352,10 +344,7 @@ pub(super) fn run() -> io::Result<()> {
             if overflowed {
                 overflows += 1;
                 steps = 1;
-                println!(
-                    "Overflowed {} times before returning to the initial state.",
-                    overflows,
-                );
+                println!("Overflowed {overflows} times before returning to the initial state.",);
                 continue;
             }
             steps = steps1;

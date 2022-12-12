@@ -43,17 +43,8 @@ struct Point(i32, i32);
 
 impl Point {
     fn manhattan_distance(&self, other: &Self) -> u64 {
-        // -2**31 <= self.0 <= 2**31 - 1
-        // -2**31 <= other.0 <= 2**31 - 1
-        // -2**32 + 1 <= self.0 - other.0 <= 2**32 - 1
-        // abs(self.0 - other.0) <= 2**32 - 1
-        let x_dist = (self.0 as i64 - other.0 as i64).abs() as u64;
-        // -2**31 <= self.1 <= 2**31 - 1
-        // -2**31 <= other.1 <= 2**31 - 1
-        // -2**32 + 1 <= self.1 - other.1 <= 2**32 - 1
-        // abs(self.1 - other.1) <= 2**32 - 1
-        let y_dist = (self.1 as i64 - other.1 as i64).abs() as u64;
-        // abs(self.0 - other.0) + abs(self.1 - other.1) <= 2**33 - 2
+        let x_dist = self.0.abs_diff(other.0) as u64;
+        let y_dist = self.1.abs_diff(other.1) as u64;
         x_dist + y_dist
     }
 
@@ -88,7 +79,7 @@ impl Wire {
     }
 
     fn steps(&self, p: &Point) -> Option<u32> {
-        self.points.get(p).map(|s| *s)
+        self.points.get(p).copied()
     }
 
     fn intersections(&self, other: &Self) -> HashSet<(Point, u32)> {
@@ -96,12 +87,7 @@ impl Wire {
             .keys()
             .collect::<HashSet<_>>()
             .intersection(&other.points.keys().collect())
-            .map(|p| {
-                (
-                    (*p).clone(),
-                    self.steps(p).unwrap() + other.steps(p).unwrap(),
-                )
-            })
+            .map(|&p| (*p, self.steps(p).unwrap() + other.steps(p).unwrap()))
             .collect()
     }
 

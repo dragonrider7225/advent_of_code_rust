@@ -45,7 +45,7 @@ impl FromStr for SpaceImageFormat {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::nom_parse(s)
             .map(|(_, x)| x)
-            .map_err(|e| format!("{:?}", e))
+            .map_err(|e| format!("{e:?}"))
     }
 }
 
@@ -89,10 +89,10 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2019 Day 8 Part 2");
         let mut result = [[2; 25]; 6];
         for layer in pic.layers {
-            for row in 0..6 {
-                for col in 0..25 {
-                    if result[row][col] == 2 {
-                        result[row][col] = layer.pixels[row][col];
+            for (row, result_row) in result.iter_mut().enumerate() {
+                for (col, result_pixel) in result_row.iter_mut().enumerate() {
+                    if *result_pixel == 2 {
+                        *result_pixel = layer.pixels[row][col];
                     }
                 }
             }
@@ -102,10 +102,10 @@ pub(super) fn run() -> io::Result<()> {
                 match pixel {
                     0 => print!(" "),
                     1 => print!("X"),
-                    _ => panic!("Invalid pixel: {}", pixel),
+                    _ => panic!("Invalid pixel: {pixel}"),
                 }
             }
-            println!("");
+            println!();
         }
     }
     Ok(())

@@ -35,9 +35,9 @@ impl Body {
             return ret;
         }
         for orbiter in self.orbiters.iter() {
-            if name1.filter(|&n| n == &orbiter.name).is_some() {
+            if name1.filter(|&n| n == orbiter.name).is_some() {
                 return (Some(0), None);
-            } else if name2.filter(|&n| n == &orbiter.name).is_some() {
+            } else if name2.filter(|&n| n == orbiter.name).is_some() {
                 return (None, Some(0));
             } else {
                 let (dist1, dist2) = orbiter.distances(name1, name2);
@@ -91,7 +91,7 @@ impl Default for Body {
 fn get_orbits() -> io::Result<Body> {
     let mut orbits: Box<dyn Iterator<Item = (String, String)>> =
         box crate::get_lines("2019_6.txt")?.map(|s| {
-            let mut strs = s.split(")").map(|s| s.to_owned());
+            let mut strs = s.split(')').map(|s| s.to_owned());
             let parent = strs.next().unwrap();
             let child = strs.next().unwrap();
             (parent, child)
@@ -104,7 +104,7 @@ fn get_orbits() -> io::Result<Body> {
                 missed.push((parent, child));
             }
         }
-        if missed.len() == 0 {
+        if missed.is_empty() {
             break;
         } else {
             orbits = box missed.into_iter();

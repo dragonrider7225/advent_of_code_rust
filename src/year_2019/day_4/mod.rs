@@ -63,7 +63,7 @@ pub(super) fn run() -> io::Result<()> {
                 num_pws += 1;
             }
         }
-        println!("The number of potential passwords is {}", num_pws);
+        println!("The number of potential passwords is {num_pws}");
     }
     {
         // Part 2
@@ -77,7 +77,7 @@ pub(super) fn run() -> io::Result<()> {
                 num_pws += 1;
             }
         }
-        println!("The number of potential passwords is {}", num_pws);
+        println!("The number of potential passwords is {num_pws}");
     }
     Ok(())
 }

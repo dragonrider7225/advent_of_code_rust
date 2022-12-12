@@ -7,7 +7,7 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .map(|mass| mass / 3 - 2)
             .sum();
-        println!("Total fuel requirement is {}", total_fuel);
+        println!("Total fuel requirement is {total_fuel}");
     }
     {
         // Part 2
@@ -23,7 +23,7 @@ pub(super) fn run() -> io::Result<()> {
                 ret
             })
             .sum();
-        println!("Total fuel requirement is {}", total_fuel);
+        println!("Total fuel requirement is {total_fuel}");
     }
     Ok(())
 }

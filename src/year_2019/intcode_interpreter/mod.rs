@@ -32,7 +32,7 @@ impl TryFrom<i64> for ParamMode {
             0 => Ok(ParamMode::Address),
             1 => Ok(ParamMode::Immediate),
             2 => Ok(ParamMode::Relative),
-            _ => Err(format!("Invalid parameter mode {}", value)),
+            _ => Err(format!("Invalid parameter mode {value}")),
         }
     }
 }
@@ -46,7 +46,7 @@ enum Instruction {
     JmpIfFalse(ParamMode, ParamMode),
     LessThan(ParamMode, ParamMode, ParamMode),
     Equal(ParamMode, ParamMode, ParamMode),
-    MRB(ParamMode),
+    Mrb(ParamMode),
     Halt,
 }
 
@@ -119,10 +119,10 @@ impl TryFrom<i64> for Instruction {
             }
             9 => {
                 let par_mode = ParamMode::try_from((value / 100) % 10)?;
-                Ok(Instruction::MRB(par_mode))
+                Ok(Instruction::Mrb(par_mode))
             }
             99 => Ok(Instruction::Halt),
-            opcode => Err(format!("Invalid opcode {}", opcode)),
+            opcode => Err(format!("Invalid opcode {opcode}")),
         }
     }
 }
@@ -159,7 +159,6 @@ impl Index<usize> for IntcodeProgram {
         if values.len() <= index {
             values.resize_with(index + 1, Default::default);
         }
-        std::mem::drop(values);
         &self.values[index]
     }
 }
@@ -235,7 +234,7 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                     self.output
                         .as_mut()
                         .map(|w| eio::write_i64(w, par).expect("Error on write"))
-                        .unwrap_or_else(|| println!("{}\n", par));
+                        .unwrap_or_else(|| println!("{par}\n"));
                     self.pc += 2;
                 }
                 Instruction::JmpIfTrue(par1_mode, par2_mode) => {
@@ -280,7 +279,7 @@ impl IntcodeInterpreter<PipeRead, PipeWrite> {
                     *out = if par1 == par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
-                Instruction::MRB(par_mode) => {
+                Instruction::Mrb(par_mode) => {
                     let par = self.prog[self.pc + 1];
                     let par = self.get_input_parameter(par_mode, par);
                     self.relative_base += par;
@@ -422,7 +421,7 @@ where
                         .map(|r| match r.read_line(&mut line) {
                             Ok(0) => panic!("Ran out of input"),
                             Ok(n) => n,
-                            Err(e) => panic!("Errored on read: {}", e),
+                            Err(e) => panic!("Errored on read: {e}"),
                         })
                         .unwrap_or_else(|| io::stdin().lock().read_line(&mut line).unwrap());
                     let out = self.prog[self.pc + 1];
@@ -433,10 +432,10 @@ where
                 Instruction::Write(par_mode) => {
                     let par = self.prog[self.pc + 1];
                     let par = self.get_input_parameter(par_mode, par);
-                    let args = format!("{}\n", par);
+                    let args = format!("{par}\n");
                     match self.output.as_mut() {
-                        Some(out) => write!(out, "{}", args),
-                        None => write!(io::stdout().lock(), "{}", args),
+                        Some(out) => write!(out, "{args}"),
+                        None => write!(io::stdout().lock(), "{args}"),
                     }
                     .unwrap();
                     self.pc += 2;
@@ -483,7 +482,7 @@ where
                     *out = if par1 == par2 { 1 } else { 0 };
                     self.pc += 4;
                 }
-                Instruction::MRB(par_mode) => {
+                Instruction::Mrb(par_mode) => {
                     let par = self.prog[self.pc + 1];
                     let par = self.get_input_parameter(par_mode, par);
                     self.relative_base += par;
@@ -543,6 +542,6 @@ where
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         comb::cut(Self::nom_parse)(s)
             .map(|(_, x)| x)
-            .map_err(|e| format!("{:?}", e))
+            .map_err(|e| format!("{e:?}"))
     }
 }

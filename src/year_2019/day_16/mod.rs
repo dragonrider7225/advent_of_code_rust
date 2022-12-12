@@ -129,7 +129,7 @@ pub(super) fn run() -> io::Result<()> {
         //         (i..=digits.len()).map(|j| calc_100_fft(i, j) * digits[j - 1]).sum::<i32>() % 10
         //     })
         //     .fold(0, |acc, x| acc * 10 + x);
-        println!("The first 8 digits after 100 iterations are {}", message);
+        println!("The first 8 digits after 100 iterations are {message}");
     }
     {
         println!("Year 2019 Day 16 Part 2");
@@ -184,7 +184,7 @@ pub(super) fn run() -> io::Result<()> {
         //     },
         // );
         // let message = digits.iter().skip(offset).take(7).fold(0, |acc, x| acc * 10 + x);
-        println!("The message is {}", message);
+        println!("The message is {message}");
     }
     Ok(())
 }

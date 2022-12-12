@@ -26,7 +26,7 @@ impl TryFrom<i64> for Rotation {
         match id {
             0 => Ok(Self::Left),
             1 => Ok(Self::Right),
-            _ => Err(format!("Invalid rotation id {}", id)),
+            _ => Err(format!("Invalid rotation id {id}")),
         }
     }
 }
@@ -43,9 +43,9 @@ impl Default for Color {
     }
 }
 
-impl Into<i64> for Color {
-    fn into(self) -> i64 {
-        match self {
+impl From<Color> for i64 {
+    fn from(val: Color) -> Self {
+        match val {
             Color::Black => 0,
             Color::White => 1,
         }
@@ -59,7 +59,7 @@ impl TryFrom<i64> for Color {
         match id {
             0 => Ok(Self::Black),
             1 => Ok(Self::White),
-            _ => Err(format!("Invalid color id {}", id)),
+            _ => Err(format!("Invalid color id {id}")),
         }
     }
 }
@@ -162,8 +162,8 @@ impl Robot {
         Self {
             pos: Default::default(),
             field: Default::default(),
-            input: input,
-            output: output,
+            input,
+            output,
             facing: Default::default(),
             painted: Default::default(),
         }

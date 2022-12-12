@@ -1,7 +1,7 @@
 use crate::year_2019::intcode_interpreter::IntcodeInterpreter;
 
 use std::{
-    io::{self, BufRead, Cursor, Seek, SeekFrom, Write},
+    io::{self, BufRead, Cursor, Seek, Write},
     ops::{Generator, GeneratorState},
     pin::Pin,
     thread,
@@ -27,13 +27,9 @@ pub(super) fn run() -> io::Result<()> {
                     while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
-                            for j in 0..i {
-                                res[j] = sub[j];
-                            }
+                            res[..i].copy_from_slice(&sub[..i]);
                             res[i] = 2;
-                            for j in i..2 {
-                                res[j + 1] = sub[j];
-                            }
+                            res[(i + 1)..3].copy_from_slice(&sub[i..2]);
                             yield res;
                         }
                     }
@@ -41,13 +37,9 @@ pub(super) fn run() -> io::Result<()> {
                 while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
-                        for j in 0..i {
-                            res[j] = sub[j];
-                        }
+                        res[..i].copy_from_slice(&sub[..i]);
                         res[i] = 1;
-                        for j in i..3 {
-                            res[j + 1] = sub[j];
-                        }
+                        res[(i + 1)..4].copy_from_slice(&sub[i..3]);
                         yield res;
                     }
                 }
@@ -55,13 +47,9 @@ pub(super) fn run() -> io::Result<()> {
             while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
-                    for j in 0..i {
-                        res[j] = sub[j];
-                    }
+                    res[..i].copy_from_slice(&sub[..i]);
                     res[i] = 0;
-                    for j in i..4 {
-                        res[j + 1] = sub[j];
-                    }
+                    res[(i + 1)..5].copy_from_slice(&sub[i..4]);
                     yield res;
                 }
             }
@@ -99,9 +87,9 @@ pub(super) fn run() -> io::Result<()> {
                 .run_piped();
 
             let result = eio::read_i64(&mut e_to_read)?;
-            writeln!(results, "Phase Sequence {:?}: {}", perm, result)?;
+            writeln!(results, "Phase Sequence {perm:?}: {result}")?;
         }
-        let _ = results.seek(SeekFrom::Start(0))?;
+        results.rewind()?;
         let mut lines = results
             .lines()
             .map(|s| s.expect("Ran into an error lines-ing `results`"))
@@ -114,7 +102,7 @@ pub(super) fn run() -> io::Result<()> {
             .collect::<Vec<_>>();
         lines[..].sort_by_key(|(_, speed)| std::u32::MAX - speed);
         let (fastest, speed) = &lines[0];
-        println!("{}: {}", fastest, speed);
+        println!("{fastest}: {speed}");
     }
     {
         println!("Year 2019 Day 7 Part 2");
@@ -128,13 +116,9 @@ pub(super) fn run() -> io::Result<()> {
                     while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
-                            for j in 0..i {
-                                res[j] = sub[j];
-                            }
+                            res[..i].copy_from_slice(&sub[..i]);
                             res[i] = 7;
-                            for j in i..2 {
-                                res[j + 1] = sub[j];
-                            }
+                            res[(i + 1)..3].copy_from_slice(&sub[i..2]);
                             yield res;
                         }
                     }
@@ -142,13 +126,9 @@ pub(super) fn run() -> io::Result<()> {
                 while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
-                        for j in 0..i {
-                            res[j] = sub[j];
-                        }
+                        res[..i].copy_from_slice(&sub[..i]);
                         res[i] = 6;
-                        for j in i..3 {
-                            res[j + 1] = sub[j];
-                        }
+                        res[(i + 1)..4].copy_from_slice(&sub[i..3]);
                         yield res;
                     }
                 }
@@ -156,13 +136,9 @@ pub(super) fn run() -> io::Result<()> {
             while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
-                    for j in 0..i {
-                        res[j] = sub[j];
-                    }
+                    res[..i].copy_from_slice(&sub[..i]);
                     res[i] = 5;
-                    for j in i..4 {
-                        res[j + 1] = sub[j];
-                    }
+                    res[(i + 1)..5].copy_from_slice(&sub[i..4]);
                     yield res;
                 }
             }
@@ -214,7 +190,7 @@ pub(super) fn run() -> io::Result<()> {
                     if e.is::<String>() {
                         panic!("[thread_a] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
-                        panic!("[thread_a] {:?}", e);
+                        panic!("[thread_a] {e:?}");
                     }
                 }
             }
@@ -224,7 +200,7 @@ pub(super) fn run() -> io::Result<()> {
                     if e.is::<String>() {
                         panic!("[thread_b] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
-                        panic!("[thread_b] {:?}", e);
+                        panic!("[thread_b] {e:?}");
                     }
                 }
             }
@@ -234,7 +210,7 @@ pub(super) fn run() -> io::Result<()> {
                     if e.is::<String>() {
                         panic!("[thread_c] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
-                        panic!("[thread_c] {:?}", e);
+                        panic!("[thread_c] {e:?}");
                     }
                 }
             }
@@ -244,7 +220,7 @@ pub(super) fn run() -> io::Result<()> {
                     if e.is::<String>() {
                         panic!("[thread_d] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
-                        panic!("[thread_d] {:?}", e);
+                        panic!("[thread_d] {e:?}");
                     }
                 }
             }
@@ -254,7 +230,7 @@ pub(super) fn run() -> io::Result<()> {
                     if e.is::<String>() {
                         panic!("[thread_e] {}", e.downcast_ref::<String>().unwrap(),);
                     } else {
-                        panic!("[thread_e] {:?}", e);
+                        panic!("[thread_e] {e:?}");
                     }
                 }
             }
@@ -279,7 +255,7 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .next_back()
             .expect("Ran at least one simulation");
-        println!("{:?}: {}", fastest, speed);
+        println!("{fastest:?}: {speed}");
     }
     Ok(())
 }

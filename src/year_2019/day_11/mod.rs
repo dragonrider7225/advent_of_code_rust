@@ -26,7 +26,7 @@ pub(super) fn run() -> io::Result<()> {
         prog_thread.join().unwrap();
         eio::write_i64(&mut prog_to_robot_write, 2)?;
         let num_panels = robot_thread.join().unwrap();
-        println!("The robot painted {} panels", num_panels);
+        println!("The robot painted {num_panels} panels");
     }
     {
         println!("Year 2019 Day 11 Part 2");

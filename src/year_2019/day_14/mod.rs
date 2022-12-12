@@ -180,16 +180,21 @@ pub(super) fn run() -> io::Result<()> {
         let mut materials = HashMap::<String, _>::new();
         let mut leftovers = HashMap::<String, _>::new();
         materials.insert("FUEL".to_string(), 1);
-        while materials.len() > 0 {
+        while !materials.is_empty() {
             // println!("Still need {:?} and {} ORE", materials, num_ore);
             // println!("Have {:?} extra", leftovers);
             let producing = materials.keys().next().unwrap().clone();
             let producing = Material(materials.remove(&producing).unwrap(), producing);
             // print!("Producing {} ", producing);
-            let reaction = reactions.get(producing.chemical()).expect(&format!(
-                "1 FUEL requires unproducable material {}",
-                producing.chemical()
-            ));
+            let reaction = reactions.get(producing.chemical()).ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!(
+                        "1 FUEL requires unproducable material {}",
+                        producing.chemical()
+                    ),
+                )
+            })?;
             let repeats = (producing.amount() as f32 / reaction.result().amount() as f32).ceil();
             let reaction = reaction * repeats as u64;
             // println!("by reaction {}", reaction);
@@ -234,7 +239,7 @@ pub(super) fn run() -> io::Result<()> {
                 Ordering::Greater => unsafe { unreachable_unchecked() },
             }
         }
-        println!("{} ORE is required to make 1 FUEL", num_ore);
+        println!("{num_ore} ORE is required to make 1 FUEL");
     }
     {
         println!("Year 2019 Day 14 Part 2");
@@ -258,17 +263,22 @@ pub(super) fn run() -> io::Result<()> {
             };
             materials.insert("FUEL".to_string(), trying);
             if num_fuel.is_power_of_two() {
-                println!("Can make {} FUEL from {} ORE", num_fuel, num_ore);
+                println!("Can make {num_fuel} FUEL from {num_ore} ORE");
             }
-            while materials.len() > 0 {
+            while !materials.is_empty() {
                 // println!("Still need {:?} and {} ORE", materials, num_ore);
                 // println!("Have {:?} extra", leftovers);
                 let producing = materials.keys().next().unwrap().clone();
                 let producing = Material(materials.remove(&producing).unwrap(), producing);
-                let reaction = reactions.get(producing.chemical()).expect(&format!(
-                    "1 FUEL requires unproducable material {}",
-                    producing.chemical(),
-                ));
+                let reaction = reactions.get(producing.chemical()).ok_or_else(|| {
+                    io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        format!(
+                            "1 FUEL requires unproducable material {}",
+                            producing.chemical()
+                        ),
+                    )
+                })?;
                 let repeats = {
                     // If the required amount of the chemical can be produced by a whole number of
                     // occurrences of the reaction, perform the reaction that many times. Otherwise,
@@ -339,7 +349,7 @@ pub(super) fn run() -> io::Result<()> {
                 break;
             }
         }
-        println!("1E12 ORE can produce up to {} FUEL", num_fuel);
+        println!("1E12 ORE can produce up to {num_fuel} FUEL");
     }
     Ok(())
 }

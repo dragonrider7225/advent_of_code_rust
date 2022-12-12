@@ -37,19 +37,20 @@ impl RatioGenerator {
             }
         }
         // `self.last_set` has at most one element,
-        self.last_set.pop().map(|x| self.current_set.push(x));
+        if let Some(x) = self.last_set.pop() {
+            self.current_set.push(x)
+        }
         // `self.last_set` is now empty.
         std::mem::swap(&mut self.current_set, &mut self.last_set);
         // `self.current_set` is now empty.
         for _ in 0..current_len {
-            if self.last_set.len() > 0 && !self.last_set[0].0 && !self.last_set[1].0 {
+            if !self.last_set.is_empty() && !self.last_set[0].0 && !self.last_set[1].0 {
                 return true;
             } else {
                 self.current_set.push(self.last_set.remove(0));
             }
         }
-        self.current_set
-            .extend(std::mem::replace(&mut self.last_set, vec![]));
+        self.current_set.extend(std::mem::take(&mut self.last_set));
         self.has_next = false;
         false
     }
@@ -59,7 +60,7 @@ impl RatioGenerator {
     }
 
     fn into_sorted(mut self) -> Vec<Point<usize>> {
-        while let Some(_) = self.next() {}
+        for _ in self.by_ref() {}
         self.current_set
             .into_iter()
             .filter_map(|x| Some(x.1).filter(|_| !x.0))
@@ -149,43 +150,34 @@ impl AsteroidField {
         let top_space = row;
         let bottom_space = self.asteroids.len() - row - 1;
         let upper_left_generator = RatioGenerator::new(left_space, top_space).filter_map(|p| {
-            Multiplier::new(p, left_space, top_space)
-                .filter_map(|p| {
-                    Some(Point::at(col - p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
-                })
-                .next()
+            Multiplier::new(p, left_space, top_space).find_map(|p| {
+                Some(Point::at(col - p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
+            })
         });
         let left_generator = (1..=left_space)
             .filter_map(|n| Some(Point::at(col - n, row)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let lower_left_generator = RatioGenerator::new(left_space, bottom_space).filter_map(|p| {
-            Multiplier::new(p, left_space, bottom_space)
-                .filter_map(|p| {
-                    Some(Point::at(col - p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
-                })
-                .next()
+            Multiplier::new(p, left_space, bottom_space).find_map(|p| {
+                Some(Point::at(col - p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
+            })
         });
         let bottom_generator = (1..=bottom_space)
             .filter_map(|n| Some(Point::at(col, row + n)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let lower_right_generator =
             RatioGenerator::new(right_space, bottom_space).filter_map(|p| {
-                Multiplier::new(p, right_space, bottom_space)
-                    .filter_map(|p| {
-                        Some(Point::at(col + p.x(), row + p.y()))
-                            .filter(|&p| self.has_asteroid_at(p))
-                    })
-                    .next()
+                Multiplier::new(p, right_space, bottom_space).find_map(|p| {
+                    Some(Point::at(col + p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
+                })
             });
         let right_generator = (1..=right_space)
             .filter_map(|n| Some(Point::at(col + n, row)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let upper_right_generator = RatioGenerator::new(right_space, top_space).filter_map(|p| {
-            Multiplier::new(p, right_space, top_space)
-                .filter_map(|p| {
-                    Some(Point::at(col + p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
-                })
-                .next()
+            Multiplier::new(p, right_space, top_space).find_map(|p| {
+                Some(Point::at(col + p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
+            })
         });
         let upper_generator = (1..=top_space)
             .filter_map(|n| Some(Point::at(col, row - n)).filter(|&p| self.has_asteroid_at(p)))
@@ -236,10 +228,8 @@ pub(super) fn run() -> io::Result<()> {
             }
         }
         println!(
-            "{} asteroids is {:?}, which can see {} asteroids",
-            "The location that can see the most",
+            "The location that can see the most asteroids is {:?}, which can see {most} asteroids",
             most_coords.unwrap(),
-            most,
         );
         most_coords.unwrap()
     };
@@ -261,12 +251,9 @@ pub(super) fn run() -> io::Result<()> {
             .into_sorted()
             .into_iter()
             .filter_map(|p| {
-                Multiplier::new(p, right_space, top_space)
-                    .filter_map(|p| {
-                        Some(Point::at(col + p.x(), row - p.y()))
-                            .filter(|&p| field.has_asteroid_at(p))
-                    })
-                    .next()
+                Multiplier::new(p, right_space, top_space).find_map(|p| {
+                    Some(Point::at(col + p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
+                })
             })
             .collect::<Vec<_>>();
         // let right = (1..=right_space)
@@ -280,12 +267,9 @@ pub(super) fn run() -> io::Result<()> {
             .into_sorted()
             .into_iter()
             .filter_map(|p| {
-                Multiplier::new(p, right_space, bottom_space)
-                    .filter_map(|p| {
-                        Some(Point::at(col + p.x(), row + p.y()))
-                            .filter(|&p| field.has_asteroid_at(p))
-                    })
-                    .next()
+                Multiplier::new(p, right_space, bottom_space).find_map(|p| {
+                    Some(Point::at(col + p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
+                })
             })
             .collect::<Vec<_>>();
         // let bottom = (1..=bottom_space)
@@ -299,12 +283,9 @@ pub(super) fn run() -> io::Result<()> {
             .into_sorted()
             .into_iter()
             .filter_map(|p| {
-                Multiplier::new(p, left_space, bottom_space)
-                    .filter_map(|p| {
-                        Some(Point::at(col - p.x(), row + p.y()))
-                            .filter(|&p| field.has_asteroid_at(p))
-                    })
-                    .next()
+                Multiplier::new(p, left_space, bottom_space).find_map(|p| {
+                    Some(Point::at(col - p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
+                })
             })
             .collect::<Vec<_>>();
         // let left = (1..=left_space)
@@ -318,12 +299,9 @@ pub(super) fn run() -> io::Result<()> {
             .into_sorted()
             .into_iter()
             .filter_map(|p| {
-                Multiplier::new(p, left_space, top_space)
-                    .filter_map(|p| {
-                        Some(Point::at(col - p.x(), row - p.y()))
-                            .filter(|&p| field.has_asteroid_at(p))
-                    })
-                    .next()
+                Multiplier::new(p, left_space, top_space).find_map(|p| {
+                    Some(Point::at(col - p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
+                })
             })
             .collect::<Vec<_>>();
         // This is missing 7 values, the cardinal direction iterators seem to
