@@ -77,11 +77,11 @@ where
         };
         completed_states.insert(best_state.clone(), (parent, current_distance.clone()));
         if heuristic.value(&best_state) == target_heuristic {
-            println!("Found goal at {}", best_state);
+            println!("Found goal at {best_state}");
             let mut s = best_state;
             while let Some((Some(parent), distance)) = completed_states.get(&s) {
-                println!("Total distance {:?}", distance);
-                println!("From {}", parent);
+                println!("Total distance {distance:?}");
+                println!("From {parent}");
                 s = parent.clone();
             }
             break Some(current_distance);

@@ -60,9 +60,9 @@ impl Aabb {
     pub fn except(&self, rhs: &Self) -> AabbSet {
         if !self.intersects(rhs) {
             #[cfg(test)]
-            println!("{:?} and {:?} do not intersect", self, rhs);
+            println!("{self:?} and {rhs:?} do not intersect");
             return AabbSet {
-                inner: AabbSetInner::Singleton(self.clone()),
+                inner: AabbSetInner::Singleton(*self),
             };
         }
         let modified_min_x = rhs.min_x.max(self.min_x);
@@ -134,15 +134,15 @@ impl Aabb {
         ]
         .into_iter()
         .filter(|piece| {
-            if !piece.is_empty() {
-                #[cfg(test)]
-                println!("Including piece {:?}", piece);
-                true
+            #[allow(clippy::let_and_return)]
+            let ret = !piece.is_empty();
+            #[cfg(test)]
+            if ret {
+                println!("Including piece {piece:?}");
             } else {
-                #[cfg(test)]
-                println!("Removing empty piece {:?}", piece);
-                false
+                println!("Removing empty piece {piece:?}");
             }
+            ret
         })
         .collect()
     }
@@ -173,11 +173,11 @@ impl AabbSetInner {
                 Self::Empty => {}
                 Self::Singleton(additional) => {
                     *self = Self::Multi {
-                        pieces: vec![current.clone(), additional],
+                        pieces: vec![*current, additional],
                     }
                 }
                 Self::Multi { mut pieces } => {
-                    pieces.push(current.clone());
+                    pieces.push(*current);
                     *self = Self::Multi { pieces };
                 }
             },
