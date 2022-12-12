@@ -44,7 +44,7 @@ where
     let lines = get_lines(path)?;
     Ok(lines.map(|s| {
         s.parse()
-            .map_err(|e| format!("Invalid line {:?}: {:?}", s, e))
+            .map_err(|e| format!("Invalid line {s:?}: {e:?}"))
             .unwrap()
     }))
 }
