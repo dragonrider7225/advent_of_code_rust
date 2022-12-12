@@ -183,7 +183,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
             let (_, output) = line.split_once(" | ").ok_or_else(|| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!("Line {:?} missing output", line),
+                    format!("Line {line:?} missing output"),
                 )
             })?;
             let count = output
@@ -203,7 +203,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
             let (digits, output) = line.split_once(" | ").ok_or_else(|| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!("Line {:?} missing output", line),
+                    format!("Line {line:?} missing output"),
                 )
             })?;
             let mut digits = digits

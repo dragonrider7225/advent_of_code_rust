@@ -56,7 +56,7 @@ impl BingoCard {
     fn unmarked_numbers(&self) -> Vec<u32> {
         self.numbers
             .iter()
-            .flat_map(|row| row.into_iter())
+            .flat_map(|row| row.iter())
             .filter_map(|space| Some(space.number).filter(|_| space.unmarked()))
             .collect()
     }
@@ -68,7 +68,7 @@ impl BingoCard {
             number: 0,
             marked: false,
         }; 5]; 5];
-        for i in 0..5 {
+        for (i, row) in numbers.iter_mut().enumerate() {
             let line = lines.next().ok_or(io::Error::new(
                 io::ErrorKind::InvalidData,
                 format!("Missing card line {}/5", i + 1),
@@ -77,16 +77,13 @@ impl BingoCard {
                 if j >= 5 {
                     Err(io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Got too many numbers on line {}", i),
+                        format!("Got too many numbers on line {i}"),
                     ))?;
                 }
-                numbers[i][j].number = number.parse().map_err(|e| {
+                row[j].number = number.parse().map_err(|e| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!(
-                            "Invalid number {:?} at row {} column {}: {}",
-                            number, i, j, e
-                        ),
+                        format!("Invalid number {number:?} at row {i} column {j}: {e}"),
                     )
                 })?;
             }
@@ -98,7 +95,7 @@ impl BingoCard {
         let mut cards = vec![];
         while let Some(line) = lines.next() {
             let line = line?;
-            if line != "" {
+            if !line.is_empty() {
                 Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     format!("Card {} is too tall", cards.len() + 1),
@@ -121,7 +118,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
         let number = number.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid drawn number {:?}: {}", number, e),
+                format!("Invalid drawn number {number:?}: {e}"),
             )
         })?;
         for card in cards.iter_mut() {
@@ -149,7 +146,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
         let number = number.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid drawn number {:?}: {}", number, e),
+                format!("Invalid drawn number {number:?}: {e}"),
             )
         })?;
         for card_idx in 0..cards.len() {

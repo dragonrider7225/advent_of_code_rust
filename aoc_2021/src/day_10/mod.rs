@@ -31,13 +31,13 @@ impl Delimiter {
     }
 
     fn matches(&self, rhs: &Self) -> bool {
-        match (self, rhs) {
+        matches!(
+            (self, rhs),
             (Self::Parenthesis(false), Self::Parenthesis(true))
-            | (Self::Bracket(false), Self::Bracket(true))
-            | (Self::Brace(false), Self::Brace(true))
-            | (Self::Angle(false), Self::Angle(true)) => true,
-            _ => false,
-        }
+                | (Self::Bracket(false), Self::Bracket(true))
+                | (Self::Brace(false), Self::Brace(true))
+                | (Self::Angle(false), Self::Angle(true))
+        )
     }
 }
 
@@ -56,7 +56,7 @@ impl TryFrom<char> for Delimiter {
             '>' => Ok(Self::Angle(true)),
             c => Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid chunk delimiter {:?}", c),
+                format!("Invalid chunk delimiter {c:?}"),
             )),
         }
     }
@@ -107,10 +107,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u64> {
                 .map(|d| d.autocomplete_value())
                 .try_fold(0, |acc, points| Ok(acc * 5 + points))
         })
-        .filter(|score| match score {
-            Ok(0) => false,
-            _ => true,
-        })
+        .filter(|score| !matches!(score, Ok(0)))
         .collect::<io::Result<Vec<_>>>()?;
     scores.sort();
     Ok(scores[scores.len() / 2])

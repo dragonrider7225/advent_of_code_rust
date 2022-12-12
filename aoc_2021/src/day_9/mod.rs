@@ -19,13 +19,11 @@ impl Display for HeightmapParseError {
         match self {
             Self::NarrowRow { expected, actual } => write!(
                 f,
-                "Row too narrow: expected {} cells but got {}",
-                expected, actual
+                "Row too narrow: expected {expected} cells but got {actual}"
             ),
             Self::WideRow { expected, actual } => write!(
                 f,
-                "Row too wide: expected {} cells but got {}",
-                expected, actual
+                "Row too wide: expected {expected} cells but got {actual}"
             ),
         }
     }
@@ -86,7 +84,7 @@ impl Heightmap {
 }
 
 impl Heightmap {
-    fn local_minima<'this>(&'this self) -> impl Iterator<Item = (usize, usize)> + 'this {
+    fn local_minima(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
         (0..self.height)
             .flat_map(|y| (0..self.width).map(move |x| (x, y)))
             .filter_map(|(x, y)| {
@@ -99,7 +97,7 @@ impl Heightmap {
                 ];
                 let neighbor_heights = neighbors
                     .into_iter()
-                    .filter_map(|x| x)
+                    .flatten()
                     .map(|(y, x)| self[(x, y)])
                     .collect::<Vec<_>>();
                 let is_lowpoint = neighbor_heights
@@ -121,7 +119,7 @@ impl Heightmap {
             Some(y + 1).filter(|&y| y < self.height).map(|y| (x, y)),
         ]
         .into_iter()
-        .filter_map(|x| x)
+        .flatten()
     }
 
     fn basin_size_at(&self, pos: (usize, usize)) -> usize {
@@ -185,7 +183,7 @@ fn read_heightmap(input: &mut dyn BufRead) -> io::Result<Heightmap> {
                 c.to_digit(10).ok_or_else(|| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Got non-digit {:?} in line {:?}", c, line),
+                        format!("Got non-digit {c:?} in line {line:?}"),
                     )
                 })
             })
@@ -205,7 +203,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
         .map(|point| heightmap.basin_size_at(point))
         .collect::<Vec<_>>();
     basin_sizes.sort_by(|left, right| left.cmp(right).reverse());
-    Ok(basin_sizes[..3].into_iter().product())
+    Ok(basin_sizes[..3].iter().product())
 }
 
 pub(super) fn run() -> io::Result<()> {

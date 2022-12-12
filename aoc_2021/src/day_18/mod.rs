@@ -36,7 +36,7 @@ impl Number {
 
 impl Number {
     fn take(&mut self, path: &[Branch]) -> Option<Self> {
-        if path.len() == 0 {
+        if path.is_empty() {
             Some(std::mem::replace(self, Self::Literal(0)))
         } else {
             match path[0] {
@@ -47,11 +47,8 @@ impl Number {
     }
 
     fn split(&mut self) {
-        match self {
-            &mut Self::Literal(n) => {
-                *self = Self::from(SnailfishNumber(Self::from(n / 2), Self::from((n + 1) / 2)));
-            }
-            _ => {}
+        if let &mut Self::Literal(n) = self {
+            *self = Self::from(SnailfishNumber(Self::from(n / 2), Self::from((n + 1) / 2)));
         }
     }
 
@@ -71,8 +68,8 @@ impl Number {
 impl Display for Number {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Literal(n) => write!(f, "{}", n),
-            Self::SN(inner) => write!(f, "{}", inner),
+            Self::Literal(n) => write!(f, "{n}"),
+            Self::SN(inner) => write!(f, "{inner}"),
         }
     }
 }
@@ -144,42 +141,36 @@ impl SnailfishNumber {
                 Self(Number::Literal(left), Number::Literal(right)) => (left, right),
                 _ => panic!("Can't explode pair which contains a snailfish number"),
             };
-            match (0..path.len())
+            if let Some(idx) = (0..path.len())
                 .rev()
                 .find(|&idx| path[idx] == Branch::Right)
             {
-                Some(idx) => {
-                    let mut target = &mut *self;
-                    for &branch in &path[..idx] {
-                        target = target[branch].unwrap_snailfish_mut();
-                    }
-                    let mut target = &mut target[Branch::Left];
-                    while let Number::SN(sn) = target {
-                        target = &mut sn[Branch::Right];
-                    }
-                    match target {
-                        Number::Literal(x) => *x += removed_left,
-                        Number::SN(_) => unreachable!(),
-                    }
+                let mut target = &mut *self;
+                for &branch in &path[..idx] {
+                    target = target[branch].unwrap_snailfish_mut();
                 }
-                None => {}
+                let mut target = &mut target[Branch::Left];
+                while let Number::SN(sn) = target {
+                    target = &mut sn[Branch::Right];
+                }
+                match target {
+                    Number::Literal(x) => *x += removed_left,
+                    Number::SN(_) => unreachable!(),
+                }
             }
-            match (0..path.len()).rev().find(|&idx| path[idx] == Branch::Left) {
-                Some(idx) => {
-                    let mut target = self;
-                    for &branch in &path[..idx] {
-                        target = target[branch].unwrap_snailfish_mut();
-                    }
-                    let mut target = &mut target[Branch::Right];
-                    while let Number::SN(sn) = target {
-                        target = &mut sn[Branch::Left];
-                    }
-                    match target {
-                        Number::Literal(x) => *x += removed_right,
-                        Number::SN(_) => unreachable!(),
-                    }
+            if let Some(idx) = (0..path.len()).rev().find(|&idx| path[idx] == Branch::Left) {
+                let mut target = self;
+                for &branch in &path[..idx] {
+                    target = target[branch].unwrap_snailfish_mut();
                 }
-                None => {}
+                let mut target = &mut target[Branch::Right];
+                while let Number::SN(sn) = target {
+                    target = &mut sn[Branch::Left];
+                }
+                match target {
+                    Number::Literal(x) => *x += removed_right,
+                    Number::SN(_) => unreachable!(),
+                }
             }
             true
         } else {
@@ -196,7 +187,7 @@ impl SnailfishNumber {
     }
 
     fn take(&mut self, path: &[Branch]) -> Option<Self> {
-        if path.len() == 0 {
+        if path.is_empty() {
             None
         } else {
             match path[0] {
@@ -373,7 +364,6 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
         .map(|line| SnailfishNumber::read(&mut Cursor::new(line?)))
         .collect::<io::Result<Vec<_>>>()?;
     (0..numbers.len())
-        .clone()
         .flat_map(|i| (0..numbers.len()).map(move |j| (i, j)))
         .filter(|(i, j)| i != j)
         .map(|(i, j)| {

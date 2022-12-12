@@ -20,7 +20,7 @@ fn read_positions(input: &mut dyn BufRead) -> io::Result<Vec<usize>> {
 
 fn count_fuel(positions: &[usize], position: usize) -> usize {
     positions
-        .into_iter()
+        .iter()
         .map(|&crab| {
             if crab < position {
                 position - crab
@@ -41,7 +41,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
 fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     fn calculate_fuel(positions: &[usize], position: usize) -> usize {
         positions
-            .into_iter()
+            .iter()
             .map(|&crab| {
                 let distance = if crab < position {
                     position - crab

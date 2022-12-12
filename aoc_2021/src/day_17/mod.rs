@@ -131,9 +131,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
             while x < *target.target_x.end() && (dy > 0 || y > *target.target_y.start()) {
                 x += dx;
                 y += dy;
-                if dx > 0 {
-                    dx -= 1;
-                }
+                dx = dx.saturating_sub(1);
                 dy -= 1;
                 if target.target_x.contains(&x) && target.target_y.contains(&y) {
                     return true;

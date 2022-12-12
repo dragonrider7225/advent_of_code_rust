@@ -152,14 +152,10 @@ impl Image {
 
         let mut this = ((self.min_row - 1)..=(self.max_row + 1))
             .flat_map(|row| ((self.min_col - 1)..=(self.max_col + 1)).map(move |col| (col, row)))
-            .filter_map(|pos| {
+            .filter(|&pos| {
                 let idx = neighbors(pos)
                     .fold(0, |acc, pos| acc * 2 + usize::from(self.intensity_at(pos)));
-                if PixelIntensity::Light == filter(idx) {
-                    Some(pos)
-                } else {
-                    None
-                }
+                PixelIntensity::Light == filter(idx)
             })
             .collect::<Image>();
         match self.background {
@@ -188,7 +184,7 @@ impl Display for Image {
                     write!(f, ".")?;
                 }
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         Ok(())
     }

@@ -40,7 +40,7 @@ impl Polymer {
                 let mk_error = || {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Invalid pair insertion rule: {:?}", line),
+                        format!("Invalid pair insertion rule: {line:?}"),
                     )
                 };
                 let (pair, result) = line.trim().split_once(" -> ").ok_or_else(mk_error)?;
@@ -134,7 +134,7 @@ mod tests {
 
     use super::*;
 
-    const TEST_DATA: &'static str = concat!(
+    const TEST_DATA: &str = concat!(
         "NNCB\n",
         "\n",
         "CH -> B\n",

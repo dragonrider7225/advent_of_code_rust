@@ -36,9 +36,7 @@ fn aabb_nom_parse(s: &str) -> IResult<&str, Aabb> {
     )(s)
 }
 
-fn read_boxes<'i>(
-    input: &'i mut dyn BufRead,
-) -> impl Iterator<Item = io::Result<(bool, Aabb)>> + 'i {
+fn read_boxes(input: &mut dyn BufRead) -> impl Iterator<Item = io::Result<(bool, Aabb)>> + '_ {
     input.lines().map(|line| {
         let line = line?;
         let parsed = sequence::separated_pair(

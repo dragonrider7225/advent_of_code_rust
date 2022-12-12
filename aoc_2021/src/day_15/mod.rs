@@ -35,7 +35,7 @@ impl Grid {
                     c.to_digit(10).ok_or_else(|| {
                         io::Error::new(
                             io::ErrorKind::InvalidData,
-                            format!("Invalid risk level {:?} in line {:?}", c, line),
+                            format!("Invalid risk level {c:?} in line {line:?}"),
                         )
                     })
                 })
@@ -58,7 +58,7 @@ impl Grid {
             Some(y + 1).filter(|&y| y < self.height()).map(|y| (x, y)),
         ]
         .into_iter()
-        .filter_map(|x| x)
+        .flatten()
     }
 
     fn is_empty(&self) -> bool {
@@ -78,12 +78,10 @@ impl Grid {
             } else {
                 Some(risk)
             }
+        } else if x < self.width && y < self.height {
+            Some(self.risk[y * self.width + x])
         } else {
-            if x < self.width && y < self.height {
-                Some(self.risk[y * self.width + x])
-            } else {
-                None
-            }
+            None
         }
     }
 
@@ -199,7 +197,7 @@ mod tests {
 
     use super::*;
 
-    const TEST_DATA: &'static str = concat!(
+    const TEST_DATA: &str = concat!(
         "1163751742\n",
         "1381373672\n",
         "2136511328\n",

@@ -76,7 +76,7 @@ impl TryFrom<u8> for LeftoverBits {
             b'F' => ret.bits = [true, true, true, true],
             _ => Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid hex digit {:?}", value),
+                format!("Invalid hex digit {value:?}"),
             ))?,
         }
         ret.idx = 0;
@@ -97,7 +97,7 @@ enum Payload {
 }
 
 impl Payload {
-    fn iter<'a>(&'a self) -> <&'a Payload as IntoIterator>::IntoIter {
+    fn iter(&self) -> <&'_ Payload as IntoIterator>::IntoIter {
         IntoIterator::into_iter(self)
     }
 
@@ -121,32 +121,32 @@ impl Display for Payload {
             Self::Sum(packets) => {
                 write!(f, "{}", packets[0])?;
                 for packet in packets.iter().skip(1) {
-                    write!(f, " + {}", packet)?;
+                    write!(f, " + {packet}")?;
                 }
                 Ok(())
             }
             Self::Product(packets) => {
                 write!(f, "{}", packets[0])?;
                 for packet in packets.iter().skip(1) {
-                    write!(f, " * {}", packet)?;
+                    write!(f, " * {packet}")?;
                 }
                 Ok(())
             }
             Self::Minimum(packets) => {
                 write!(f, "min({}", packets[0])?;
                 for packet in packets.iter().skip(1) {
-                    write!(f, ", {}", packet)?;
+                    write!(f, ", {packet}")?;
                 }
                 write!(f, ")")
             }
             Self::Maximum(packets) => {
                 write!(f, "max({}", packets[0])?;
                 for packet in packets.iter().skip(1) {
-                    write!(f, ", {}", packet)?;
+                    write!(f, ", {packet}")?;
                 }
                 write!(f, ")")
             }
-            Self::Literal(value) => write!(f, "{}", value),
+            Self::Literal(value) => write!(f, "{value}"),
             Self::GreaterThan(packets) => {
                 write!(f, "{} > {}", packets[0], packets[1])
             }
@@ -368,7 +368,7 @@ impl Display for Packet {
 
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     let root = Packet::read(input)?;
-    println!("{}", root);
+    println!("{root}");
     Ok(root.version_sum())
 }
 

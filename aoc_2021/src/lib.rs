@@ -56,7 +56,7 @@ pub fn run_day(day: u32) -> io::Result<()> {
         24 => day_24::run(),
         25 => day_25::run(),
         day => {
-            let msg = format!("Invalid day: {}", day);
+            let msg = format!("Invalid day: {day}");
             Err(io::Error::new(io::ErrorKind::InvalidInput, msg))
         }
     }

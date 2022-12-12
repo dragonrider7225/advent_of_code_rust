@@ -30,7 +30,7 @@ impl Octopuses {
             next_row.and_then(|row_idx| Some((row_idx, next_col?))),
         ]
         .into_iter()
-        .filter_map(|x| x)
+        .flatten()
     }
 }
 
@@ -44,7 +44,7 @@ impl Octopuses {
                 row[col_idx] = c.to_digit(10).ok_or_else(|| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Invalid energy level in row {}: {:?}", row_idx, c),
+                        format!("Invalid energy level in row {row_idx}: {c:?}"),
                     )
                 })?;
             }

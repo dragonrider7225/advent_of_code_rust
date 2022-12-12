@@ -345,14 +345,14 @@ impl Display for State {
         for cell in self.hallway.iter() {
             match cell {
                 None => write!(f, ".")?,
-                Some(amphipod) => write!(f, "{}", amphipod)?,
+                Some(amphipod) => write!(f, "{amphipod}")?,
             }
         }
         writeln!(f, "#")?;
         write!(f, "###")?;
         for room in self.rooms.iter() {
             match room.contents {
-                RoomContents::Double { front, .. } => write!(f, "{}#", front)?,
+                RoomContents::Double { front, .. } => write!(f, "{front}#")?,
                 _ => write!(f, ".#")?,
             }
         }
@@ -361,7 +361,7 @@ impl Display for State {
         for room in self.rooms.iter() {
             match room.contents {
                 RoomContents::Single(back) | RoomContents::Double { back, .. } => {
-                    write!(f, "{}#", back)?
+                    write!(f, "{back}#")?
                 }
                 _ => write!(f, ".#")?,
             }

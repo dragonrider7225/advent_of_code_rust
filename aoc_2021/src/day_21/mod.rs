@@ -136,7 +136,7 @@ impl DiracGameState {
         let mut states = std::mem::take(&mut self.states);
         for ((p1, p2), count) in states.drain() {
             for (distance, freq) in potential_rolls.iter().copied() {
-                let mut p1 = p1.clone();
+                let mut p1 = p1;
                 if p1.take_turn(distance, 21) {
                     *self.completed_games.entry(PlayerId::Player1).or_default() += count * freq;
                     continue;
@@ -146,7 +146,7 @@ impl DiracGameState {
                     .copied()
                     .map(|(dist, freq2)| (dist, freq * freq2))
                 {
-                    let mut p2 = p2.clone();
+                    let mut p2 = p2;
                     if p2.take_turn(distance, 21) {
                         *self.completed_games.entry(PlayerId::Player2).or_default() += count * freq;
                     } else {

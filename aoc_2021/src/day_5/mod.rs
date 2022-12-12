@@ -17,18 +17,18 @@ impl FromStr for Point {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (x, y) = s.split_once(',').ok_or(io::Error::new(
             io::ErrorKind::InvalidData,
-            format!("Point {:?} missing comma", s),
+            format!("Point {s:?} missing comma"),
         ))?;
         let x = x.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid x coordinate {:?}: {}", x, e),
+                format!("Invalid x coordinate {x:?}: {e}"),
             )
         })?;
         let y = y.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid y coordinate {:?}: {}", y, e),
+                format!("Invalid y coordinate {y:?}: {e}"),
             )
         })?;
         Ok(Self { x, y })
@@ -57,7 +57,7 @@ impl FromStr for Line {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (from, to) = s.split_once(" -> ").ok_or(io::Error::new(
             io::ErrorKind::InvalidData,
-            format!("Line {:?} missing arrow", s),
+            format!("Line {s:?} missing arrow"),
         ))?;
         let from = from.parse()?;
         let to = to.parse()?;
@@ -66,9 +66,7 @@ impl FromStr for Line {
     }
 }
 
-fn read_lines<'input>(
-    input: &'input mut dyn BufRead,
-) -> impl Iterator<Item = io::Result<Line>> + 'input {
+fn read_lines(input: &mut dyn BufRead) -> impl Iterator<Item = io::Result<Line>> + '_ {
     input.lines().map(|line| {
         line?
             .parse::<Line>()
@@ -128,7 +126,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
         };
         Some(line)
             .filter(|line| line.is_horizontal() || line.is_vertical())
-            .map(|line| Ok(line))
+            .map(Ok)
     }))
 }
 

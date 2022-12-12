@@ -19,7 +19,7 @@ impl Connections {
                     let (left, right) = line.split_once('-').ok_or_else(|| {
                         io::Error::new(
                             io::ErrorKind::InvalidData,
-                            format!("Invalid connection: {:?}", line),
+                            format!("Invalid connection: {line:?}"),
                         )
                     })?;
                     let left = left.to_owned();
@@ -137,8 +137,8 @@ mod tests {
 
     use super::*;
 
-    const SHORT_EXAMPLE: &'static str = "start-A\nstart-b\nA-c\nA-b\nb-d\nA-end\nb-end\n";
-    const MEDIUM_EXAMPLE: &'static str = concat!(
+    const SHORT_EXAMPLE: &str = "start-A\nstart-b\nA-c\nA-b\nb-d\nA-end\nb-end\n";
+    const MEDIUM_EXAMPLE: &str = concat!(
         "dc-end\n",
         "HN-start\n",
         "start-kj\n",
@@ -150,7 +150,7 @@ mod tests {
         "kj-HN\n",
         "kj-dc\n"
     );
-    const LONG_EXAMPLE: &'static str = concat!(
+    const LONG_EXAMPLE: &str = concat!(
         "fs-end\n",
         "he-DX\n",
         "fs-he\n",

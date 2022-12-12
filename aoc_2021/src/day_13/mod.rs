@@ -23,20 +23,20 @@ impl Dots {
             let (x, y) = buf.trim().split_once(',').ok_or_else(|| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!("Invalid point: {:?}", buf),
+                    format!("Invalid point: {buf:?}"),
                 )
             })?;
             ret.positions.insert((
                 x.parse().map_err(|e| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Invalid x-coordinate: {:?}: {:?}", x, e),
+                        format!("Invalid x-coordinate: {x:?}: {e:?}"),
                     )
                 })?,
                 y.parse().map_err(|e| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!("Invalid y-coordinate: {:?}: {:?}", y, e),
+                        format!("Invalid y-coordinate: {y:?}: {e:?}"),
                     )
                 })?,
             ));
@@ -86,9 +86,9 @@ impl Display for Dots {
         for y in 0..=max_y {
             for x in 0..=max_x {
                 if self.positions.contains(&(x, y)) {
-                    write!(f, "{}", '\u{2588}')?;
+                    write!(f, "\u{2588}")?;
                 } else {
-                    write!(f, "{}", ' ')?;
+                    write!(f, " ")?;
                 }
             }
             writeln!(f)?;
@@ -102,15 +102,13 @@ enum Axis {
     Y,
 }
 
-fn folds<'input>(
-    input: &'input mut dyn BufRead,
-) -> impl Iterator<Item = io::Result<(Axis, usize)>> + 'input {
+fn folds(input: &mut dyn BufRead) -> impl Iterator<Item = io::Result<(Axis, usize)>> + '_ {
     input.lines().map(|fold| {
         let fold = fold?;
         let line = fold.strip_prefix("fold along ").ok_or_else(|| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid fold direction: {:?}", fold),
+                format!("Invalid fold direction: {fold:?}"),
             )
         })?;
         let (axis, value) = line.trim().split_once('=').ok_or_else(|| {
@@ -122,7 +120,7 @@ fn folds<'input>(
         let value = value.parse().map_err(|e| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid position {:?} in fold{:?}: {:?}", value, fold, e),
+                format!("Invalid position {value:?} in fold{fold:?}: {e:?}"),
             )
         })?;
         match axis {
@@ -130,7 +128,7 @@ fn folds<'input>(
             "y" => Ok((Axis::Y, value)),
             axis => Err(io::Error::new(
                 io::ErrorKind::InvalidData,
-                format!("Invalid axis {:?} in fold {:?}", axis, fold),
+                format!("Invalid axis {axis:?} in fold {fold:?}"),
             )),
         }
     })
@@ -159,7 +157,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<String> {
             (Axis::Y, value) => page_1.fold_up(value),
         }
     }
-    Ok(format!("{}", page_1))
+    Ok(format!("{page_1}"))
 }
 
 pub(super) fn run() -> io::Result<()> {
@@ -187,7 +185,7 @@ mod tests {
 
     use super::*;
 
-    const TEST_DATA: &'static str = concat!(
+    const TEST_DATA: &str = concat!(
         "6,10\n",
         "0,14\n",
         "9,10\n",

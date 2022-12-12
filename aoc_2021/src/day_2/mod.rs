@@ -17,14 +17,12 @@ impl FromStr for Motion {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let to_string = |e: ParseIntError| e.to_string();
-        let (direction, distance) = s
-            .split_once(' ')
-            .ok_or(format!("Missing space in {:?}", s))?;
+        let (direction, distance) = s.split_once(' ').ok_or(format!("Missing space in {s:?}"))?;
         match direction {
             "forward" => Ok(Self::Forward(distance.parse().map_err(to_string)?)),
             "up" => Ok(Self::Up(distance.parse().map_err(to_string)?)),
             "down" => Ok(Self::Down(distance.parse().map_err(to_string)?)),
-            direction => Err(format!("Unknown direction: {:?}", direction)),
+            direction => Err(format!("Unknown direction: {direction:?}")),
         }
     }
 }
@@ -55,9 +53,8 @@ fn part1(input: &mut dyn BufRead) -> io::Result<Position> {
     input
         .lines()
         .map(|e| {
-            Ok(e?
-                .parse::<Motion>()
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?)
+            e?.parse::<Motion>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
         })
         .collect()
 }

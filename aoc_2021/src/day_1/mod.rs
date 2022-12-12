@@ -42,13 +42,13 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2021 Day 1 Part 1");
         let input = File::open("2021_01.txt")?;
         let num_increases = part1(&mut BufReader::new(input))?;
-        println!("{}", num_increases);
+        println!("{num_increases}");
     }
     {
         println!("Year 2021 Day 1 Part 2");
         let input = File::open("2021_01.txt")?;
         let num_increases = part2(&mut BufReader::new(input))?;
-        println!("{}", num_increases);
+        println!("{num_increases}");
     }
     Ok(())
 }
