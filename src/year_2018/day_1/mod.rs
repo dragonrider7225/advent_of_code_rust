@@ -4,7 +4,7 @@ pub fn run() -> io::Result<()> {
     {
         // Part 1
         let freq: i32 = super::super::parse_lines::<i32, _>("1.txt")?.sum();
-        println!("Final frequency is {}", freq);
+        println!("Final frequency is {freq}");
     }
     {
         // Part 2
@@ -15,7 +15,7 @@ pub fn run() -> io::Result<()> {
         while freqs.insert(freq) {
             freq += changes.next().expect("Can't get None from non-empty cycle");
         }
-        println!("First doubled frequency is {}", freq);
+        println!("First doubled frequency is {freq}");
     }
     Ok(())
 }

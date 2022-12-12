@@ -281,8 +281,7 @@ impl RectSet {
 
     /// Create a new RectSet from a single Rect.
     fn just(r: Rect) -> RectSet {
-        let mut ret = Vec::new();
-        ret.push(r);
+        let ret = vec![r];
         // Invariant upheld because any sequence of a single element is
         // guaranteed to be monotonically increasing.
         RectSet(ret)
@@ -315,7 +314,7 @@ impl RectSet {
 
     /// Compute the union of `self` and `other` in place.
     fn union_mut(&mut self, other: &RectSet) {
-        if other.0.len() == 0 || self.0.len() == 0 {
+        if other.0.is_empty() || self.0.is_empty() {
             self.0.extend(other.0.clone().into_iter());
             // Invariant upheld because `self` now contains exactly the same
             // `Rect`s in exactly the same order as `other`.
@@ -342,8 +341,8 @@ impl RectSet {
         }
         // All remaining Rects are greater than or equal to the last Rect in
         // self. If any Rects remain, push them to the end of the wrapped Vec.
-        if other_next.is_some() {
-            self.0.push(other_next.unwrap());
+        if let Some(other_next) = other_next {
+            self.0.push(other_next);
             self.0.extend(other_iter);
         }
         // Invariant upheld because all `Rect`s from `other` are inserted

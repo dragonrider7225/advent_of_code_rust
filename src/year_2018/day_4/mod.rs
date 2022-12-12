@@ -75,15 +75,15 @@ impl Display for Time {
 
 macro_rules! impl_into_integer_for_time {
     ($($t:ty)*) => ($(
-        impl Into<$t> for Time {
-            fn into(self) -> $t {
-                60 * self.hour() as $t + self.minute() as $t
+        impl From<Time> for $t {
+            fn from(this: Time) -> $t {
+                60 * this.hour() as $t + this.minute() as $t
             }
         }
 
-        impl Into<$t> for &'_ Time {
-            fn into(self) -> $t {
-                (*self).into()
+        impl From<&'_ Time> for $t {
+            fn from(this: &Time) -> $t {
+                (*this).into()
             }
         }
     )*)
@@ -170,7 +170,7 @@ impl Display for Day4Event {
         match self {
             Day4Event::WakesUp => write!(f, "wakes up"),
             Day4Event::FallsAsleep => write!(f, "falls asleep"),
-            Day4Event::BeginsShift(g) => write!(f, "Guard #{} begins shift", g),
+            Day4Event::BeginsShift(g) => write!(f, "Guard #{g} begins shift"),
         }
     }
 }
@@ -186,7 +186,7 @@ impl<'s> NomParse<'s> for Day4Event {
                     u32::nom_parse, // Parse guard_num ("{u32}")
                     bytes::tag(" begins shift"),
                 ), // Parse guard_num ("Guard #{u32} begins shift")
-                |n| Day4Event::BeginsShift(n),
+                Day4Event::BeginsShift,
             ),
         ))(s)
     }
@@ -266,7 +266,7 @@ impl IntoIterator for ReposeRecord {
 
 fn get_entries() -> io::Result<Vec<Day4Entry>> {
     let mut ret: Vec<Day4Entry> = super::super::parse_lines("4.txt")?.collect();
-    (&mut ret[..]).sort_by_key(|entry| entry.datetime());
+    ret.sort_by_key(|entry| entry.datetime());
     Ok(ret)
 }
 
@@ -284,25 +284,19 @@ fn build_repose_record() -> io::Result<ReposeRecord> {
                 sleep_time = None;
             }
             Day4Event::WakesUp => {
-                panic!("Nonexistent or awake guard {:?} can't wake up", guard);
+                panic!("Nonexistent or awake guard {guard:?} can't wake up");
             }
             Day4Event::FallsAsleep if sleep_time.is_none() && guard.is_some() => {
                 sleep_time = Some(entry.datetime().time());
             }
             Day4Event::FallsAsleep => {
-                panic!(
-                    "Nonexistent or sleeping guard {:?} can't fall asleep",
-                    guard
-                );
+                panic!("Nonexistent or sleeping guard {guard:?} can't fall asleep");
             }
             Day4Event::BeginsShift(g) if sleep_time.is_none() => {
                 guard = Some(g);
             }
             Day4Event::BeginsShift(g) => {
-                panic!(
-                    "New guard {} can't start shift while old guard {:?} is asleep",
-                    g, guard,
-                );
+                panic!("New guard {g} can't start shift while old guard {guard:?} is asleep",);
             }
         }
     }
@@ -330,19 +324,16 @@ pub fn run() -> io::Result<()> {
             .into_iter()
             .max_by_key(|(_, guard_counts)| {
                 guard_counts
-                    .into_iter()
+                    .iter()
                     .map(|(_, &count)| count as u64)
                     .sum::<u64>()
             })
             .unwrap();
         let (minute, count) = guard_counts
             .into_iter()
-            .max_by_key(|(_, count)| count.clone())
+            .max_by_key(|&(_, count)| count)
             .unwrap();
-        println!(
-            "Guard #{} slept the most with {} minutes at minute {}",
-            guard, count, minute
-        );
+        println!("Guard #{guard} slept the most with {count} minutes at minute {minute}");
         println!("Key is {}", guard * minute as u32);
     }
     {
@@ -350,17 +341,13 @@ pub fn run() -> io::Result<()> {
         let (guard, minute, count) = build_counts()?
             .into_iter()
             .map(|(guard, counts)| {
-                let (minute, count) = counts
-                    .into_iter()
-                    .max_by_key(|(_, count)| count.clone())
-                    .unwrap();
+                let (minute, count) = counts.into_iter().max_by_key(|&(_, count)| count).unwrap();
                 (guard, minute, count)
             })
-            .max_by_key(|(_, _, count)| count.clone())
+            .max_by_key(|&(_, _, count)| count)
             .unwrap();
         println!(
-            "Guard #{} slept the most consistently with {} minutes at minute {}",
-            guard, count, minute
+            "Guard #{guard} slept the most consistently with {count} minutes at minute {minute}"
         );
         println!("Key is {}", guard * minute as u32);
     }

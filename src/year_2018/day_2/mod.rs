@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io};
+use std::{cmp::Ordering, collections::HashMap, io};
 
 pub fn run() -> io::Result<()> {
     fn get_line_bytes() -> io::Result<impl Iterator<Item = Vec<u8>>> {
@@ -44,26 +44,23 @@ pub fn run() -> io::Result<()> {
                 let mut diff = None;
                 for i in 0..a.len() {
                     if a[i] != b[i] {
-                        if diff != None {
+                        if diff.is_some() {
                             continue 'lv1;
                         }
                         diff = Some(i);
                     }
                 }
-                match diff {
-                    Some(i) => {
-                        let mut common = Vec::with_capacity(a.len() - 1);
-                        for j in 0..a.len() {
-                            if j < i {
-                                common.push(a[j]);
-                            } else if j > i {
-                                common.push(a[j - 1]);
-                            }
+                if let Some(i) = diff {
+                    let mut common = Vec::with_capacity(a.len() - 1);
+                    for j in 0..a.len() {
+                        match j.cmp(&i) {
+                            Ordering::Less => common.push(a[j]),
+                            Ordering::Greater => common.push(a[j - 1]),
+                            Ordering::Equal => {}
                         }
-                        println!("Common letters are {}", String::from_utf8_lossy(&common));
-                        break 'lv0;
                     }
-                    None => {}
+                    println!("Common letters are {}", String::from_utf8_lossy(&common));
+                    break 'lv0;
                 }
             }
         }

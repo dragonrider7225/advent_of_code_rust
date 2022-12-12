@@ -79,12 +79,10 @@ pub fn run() -> io::Result<()> {
         }
         let (component, length) = stripped_lengths
             .into_iter()
-            .min_by_key(|(_, length)| length.clone())
+            .min_by_key(|&(_, length)| length)
             .unwrap();
         println!(
-            "The component which most significantly expands the suit is {} which, when removed, allows it to shrink down to {} elements",
-            component,
-            length,
+            "The component which most significantly expands the suit is {component} which, when removed, allows it to shrink down to {length} elements",
         );
     }
     Ok(())
