@@ -38,6 +38,7 @@ impl Add for Answers {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
+        #[allow(clippy::suspicious_arithmetic_impl)]
         Self(self.0 | rhs.0)
     }
 }
@@ -71,6 +72,7 @@ impl Mul for Answers {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
+        #[allow(clippy::suspicious_arithmetic_impl)]
         Self(self.0 & rhs.0)
     }
 }
@@ -136,8 +138,7 @@ pub(super) fn run() -> io::Result<()> {
             .map(GroupAnswers::count_distinct_answers)
             .sum::<usize>();
         println!(
-            "The total number of answers, counting each answer only once within each group, is {}",
-            distinct_answers,
+            "The total number of answers, counting each answer only once within each group, is {distinct_answers}",
         );
     }
     {
@@ -147,8 +148,7 @@ pub(super) fn run() -> io::Result<()> {
             .map(GroupAnswers::count_shared_answers)
             .sum::<usize>();
         println!(
-            "The total number of answers, counting each answer for a group only if {}, is {}",
-            "all members of that group answered that question", shared_answers,
+            "The total number of answers, counting each answer for a group only if all members of that group answered that question, is {shared_answers}",
         );
     }
     Ok(())

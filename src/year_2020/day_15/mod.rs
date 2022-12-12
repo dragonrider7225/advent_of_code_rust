@@ -98,12 +98,13 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2020 Day 15 Part 1");
         let value = initial_values.clone().run_to(Turn(2020));
-        println!("The 2020th number is {}", value);
+        println!("The 2020th number is {value}");
     }
     {
         println!("Year 2020 Day 15 Part 2");
-        let value = initial_values.clone().run_to(Turn(30_000_000));
-        println!("The 30,000,000th number is {}", value);
+        let mut initial_values = initial_values;
+        let value = initial_values.run_to(Turn(30_000_000));
+        println!("The 30,000,000th number is {value}");
     }
     Ok(())
 }

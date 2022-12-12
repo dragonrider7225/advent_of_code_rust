@@ -27,10 +27,10 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2020 Day 9 Part 1");
         let invalid_follower = xmas_stream
             .windows(PREAMBLE_LENGTH + 1)
-            .filter_map(|window| {
-                for (idx, &first_value) in window[..PREAMBLE_LENGTH].into_iter().enumerate() {
+            .find_map(|window| {
+                for (idx, &first_value) in window[..PREAMBLE_LENGTH].iter().enumerate() {
                     if window[(idx + 1)..PREAMBLE_LENGTH]
-                        .into_iter()
+                        .iter()
                         .any(|&second_value| first_value + second_value == window[PREAMBLE_LENGTH])
                     {
                         return None;
@@ -38,12 +38,8 @@ pub(super) fn run() -> io::Result<()> {
                 }
                 Some(window[PREAMBLE_LENGTH])
             })
-            .next()
             .expect("All values in XMAS stream are valid");
-        println!(
-            "The first invalid number in the XMAS stream is {}",
-            invalid_follower
-        );
+        println!("The first invalid number in the XMAS stream is {invalid_follower}");
         invalid_follower
     };
     {
@@ -56,11 +52,11 @@ pub(super) fn run() -> io::Result<()> {
                         Weakness(_) | Overflow => acc,
                         Incomplete => {
                             let window = &xmas_stream[start..end];
-                            match window.into_iter().sum::<u64>().cmp(&invalid_follower) {
+                            match window.iter().sum::<u64>().cmp(&invalid_follower) {
                                 Ordering::Less => Incomplete,
                                 Ordering::Equal => {
-                                    let least = window.into_iter().min().unwrap();
-                                    let most = window.into_iter().max().unwrap();
+                                    let least = window.iter().min().unwrap();
+                                    let most = window.iter().max().unwrap();
                                     Weakness(least + most)
                                 }
                                 Ordering::Greater => Overflow,
@@ -70,7 +66,7 @@ pub(super) fn run() -> io::Result<()> {
                 }
             })
             .expect("Couldn't find weakness");
-        println!("Weakness is {}", encryption_weakness);
+        println!("Weakness is {encryption_weakness}");
     }
     Ok(())
 }

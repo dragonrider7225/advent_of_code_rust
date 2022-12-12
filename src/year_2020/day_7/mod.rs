@@ -18,20 +18,14 @@ impl<'color> Display for BagColor<'color> {
     }
 }
 
-impl<'color, 's> NomParse<'s> for BagColor<'color>
-where
-    's: 'color,
-{
+impl<'s> NomParse<'s> for BagColor<'s> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             comb::recognize(multi::separated_list1(
                 bytes::tag(" "),
-                comb::verify(character::alpha1, |s| match s {
-                    "bag" | "bags" => false,
-                    _ => true,
-                }),
+                comb::verify(character::alpha1, |s| !matches!(s, "bag" | "bags")),
             )),
-            |s: &'s str| Self(s),
+            Self,
         )(s)
     }
 }
@@ -160,7 +154,7 @@ pub(super) fn run() -> io::Result<()> {
     let file_contents = fs::read_to_string("2020_07.txt")?;
     let bag_rules = BagRules::nom_parse(&file_contents)
         .finish()
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{:?}", e)))?
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))?
         .1;
     {
         println!("Year 2020 Day 7 Part 1");

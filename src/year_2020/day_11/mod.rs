@@ -113,7 +113,7 @@ impl OccupationBehavior<Vec<Tile>> for BasicOccupationBehavior {
             let num_occupied_neighbors = neighbors
                 .iter()
                 .copied()
-                .filter_map(|x| x)
+                .flatten()
                 .map(|(row, column)| tiles[row][column])
                 .filter(Tile::is_occupied)
                 .count();
@@ -195,16 +195,19 @@ impl<'behavior> GameOfLife<'behavior> {
     fn step(&mut self) -> bool {
         let mut new_tiles = self.tiles.clone();
         let mut changed = false;
-        for i in 0..self.tiles.len() {
-            for j in 0..self.tiles[i].len() {
-                if self.occupation_behavior.update_tile(i, j, &self.tiles) {
-                    if self.tiles[i][j].is_occupied() {
-                        new_tiles[i][j].leave();
-                    } else {
-                        new_tiles[i][j].occupy();
-                    }
-                    changed = true;
+        for (i, new_tile_row) in new_tiles.iter_mut().enumerate().take(self.tiles.len()) {
+            for (j, new_tile) in new_tile_row
+                .iter_mut()
+                .enumerate()
+                .take(self.tiles[i].len())
+                .filter(|&(j, _)| self.occupation_behavior.update_tile(i, j, &self.tiles))
+            {
+                if self.tiles[i][j].is_occupied() {
+                    new_tile.leave();
+                } else {
+                    new_tile.occupy();
                 }
+                changed = true;
             }
         }
         self.tiles = new_tiles;

@@ -18,11 +18,11 @@ enum ExprToken {
 impl Display for ExprToken {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            Self::LeftParen => write!(f, "{}", '('),
-            Self::RightParen => write!(f, "{}", ')'),
-            Self::Add => write!(f, "{}", '+'),
-            Self::Mul => write!(f, "{}", '*'),
-            Self::Val(v) => write!(f, "{}", v),
+            Self::LeftParen => write!(f, "("),
+            Self::RightParen => write!(f, ")"),
+            Self::Add => write!(f, "+"),
+            Self::Mul => write!(f, "*"),
+            Self::Val(v) => write!(f, "{v}"),
         }
     }
 }
@@ -57,7 +57,7 @@ impl<'s> Iterator for ExprTokens<'s> {
     type Item = ExprToken;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.s.len() == 0 {
+        if self.s.is_empty() {
             None
         } else {
             let (remaining, token) =
@@ -171,13 +171,10 @@ impl Expr {
                 .iter()
                 .copied()
                 .enumerate()
-                .find(|&(_idx, token)| match token {
-                    ExprToken::LeftParen => true,
-                    _ => false,
-                })?
+                .find(|&(_idx, token)| matches!(token, ExprToken::LeftParen))?
                 .0;
-            for i in paren..tokens.len() {
-                match tokens[i] {
+            for (i, token) in tokens.iter().enumerate().skip(paren) {
+                match token {
                     ExprToken::LeftParen => paren = i,
                     ExprToken::RightParen => return Some((paren, i)),
                     _ => {}
@@ -191,10 +188,7 @@ impl Expr {
                 .iter()
                 .copied()
                 .enumerate()
-                .find(|&(_, token)| match token {
-                    ExprToken::Add => true,
-                    _ => false,
-                })
+                .find(|&(_, token)| matches!(token, ExprToken::Add))
                 .map(|(idx, _)| idx)
         }
 
@@ -203,19 +197,13 @@ impl Expr {
                 .iter()
                 .copied()
                 .enumerate()
-                .find(|&(_, token)| match token {
-                    ExprToken::Mul => true,
-                    _ => false,
-                })
+                .find(|&(_, token)| matches!(token, ExprToken::Mul))
                 .map(|(idx, _)| idx)
         }
 
         while tokens.len() > 1 {
             if let Some(paren_indices) = find_paren(&tokens) {
-                let sub_expr = tokens[(paren_indices.0 + 1)..=(paren_indices.1 - 1)]
-                    .iter()
-                    .copied()
-                    .collect();
+                let sub_expr = tokens[(paren_indices.0 + 1)..=(paren_indices.1 - 1)].to_vec();
                 let total = Self::eval_advanced(sub_expr);
                 tokens.splice(
                     paren_indices.0..=paren_indices.1,
@@ -253,7 +241,7 @@ impl Expr {
             }
         }
         match &*tokens {
-            &[] => unreachable!("Need at least token to evaluate"),
+            [] => unreachable!("Need at least token to evaluate"),
             &[ExprToken::Val(v)] => v,
             _ => unreachable!(),
         }
@@ -279,18 +267,18 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2020 Day 18 Part 1");
         let total = token_streams
             .iter()
-            .filter_map(|line| Expr::from_tokens(&*line))
+            .filter_map(|line| Expr::from_tokens(line))
             .map(|expr| expr.eval())
             .sum::<u64>();
-        println!("The total of all expressions is {}", total);
+        println!("The total of all expressions is {total}");
     }
     {
         println!("Year 2020 Day 18 Part 2");
         let total = token_streams
             .into_iter()
-            .map(|line| Expr::eval_advanced(line))
+            .map(Expr::eval_advanced)
             .sum::<u64>();
-        println!("The total of all expressions is {}", total);
+        println!("The total of all expressions is {total}");
     }
     Ok(())
 }

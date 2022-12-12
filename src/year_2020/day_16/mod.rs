@@ -59,16 +59,14 @@ impl<'field> TicketRules<'field> {
         for ticket in tickets {
             intermediate.iter_mut().for_each(|(&field, indices)| {
                 indices.retain(|&idx| {
-                    if self.rules[&field].is_satisfied_by(ticket.fields[idx]) {
-                        true
-                    } else {
+                    let ret = self.rules[&field].is_satisfied_by(ticket.fields[idx]);
+                    if !ret {
                         #[cfg(test)]
                         println!(
-                            "Removing index {} for field {:?} because it is not satisfied by {:?}",
-                            idx, field, ticket,
+                            "Removing index {idx} for field {field:?} because it is not satisfied by {ticket:?}",
                         );
-                        false
                     }
+                    ret
                 });
             });
         }
@@ -89,8 +87,7 @@ impl<'field> TicketRules<'field> {
                     if indices.remove(&index) {
                         #[cfg(test)]
                         println!(
-                            "Removing index {} for field {:?} because it has been assigned to {:?}",
-                            index, _edit_field, field,
+                            "Removing index {index} for field {_edit_field:?} because it has been assigned to {field:?}",
                         );
                     }
                 });
@@ -170,7 +167,7 @@ pub(super) fn run() -> io::Result<()> {
     let file_contents = fs::read_to_string("2020_16.txt")?;
     let (rules, (my_ticket, nearby_tickets)) = parse_rules_and_tickets(&file_contents)
         .finish()
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{}", e)))?
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e}")))?
         .1;
     {
         println!("Year 2020 Day 16 Part 1");
@@ -191,7 +188,7 @@ pub(super) fn run() -> io::Result<()> {
             .filter(|&(field, _)| field.starts_with("departure"))
             .map(|(_, idx)| my_ticket.fields[idx])
             .product::<u64>();
-        println!("The product of the six departure fields is {}", result);
+        println!("The product of the six departure fields is {result}");
     }
     Ok(())
 }

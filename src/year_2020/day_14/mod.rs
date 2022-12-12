@@ -253,16 +253,14 @@ pub(super) fn run() -> io::Result<()> {
         println!("Year 2020 Day 14 Part 1");
         let total = program.clone().run().total();
         println!(
-            "The total of all values remaining after running the initialization program is {}",
-            total,
+            "The total of all values remaining after running the initialization program is {total}",
         );
     }
     {
         println!("Year 2020 Day 14 Part 2");
         let total = program.run_v2().total();
         println!(
-            "The total of all values remaining after running the initialization program v2 is {}",
-            total,
+            "The total of all values remaining after running the initialization program v2 is {total}",
         );
     }
     Ok(())

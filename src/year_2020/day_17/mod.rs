@@ -240,7 +240,7 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         println!("Year 2020 Day 17 Part 2");
-        let mut state = state.clone();
+        let mut state = state;
         state.use_w = true;
         println!(
             "After the boot sequence, there are {} active cubes",

@@ -155,7 +155,7 @@ impl BusSchedule {
             .iter()
             .map(|&(_, bus_number)| bus_number.0)
             .fold(1, lcm);
-        println!("The time between diagonals is {}", max_step);
+        println!("The time between diagonals is {max_step}");
         let mut buses_satisfied = 1;
         let mut step = self.buses[0].0;
         let mut time = Timestamp(0u128);
@@ -216,16 +216,13 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2020 Day 13 Part 1");
         let (first_bus, delay) = schedule.next_bus(time);
-        println!("The first available bus is {}", first_bus);
+        println!("The first available bus is {first_bus}");
         println!("The result is {}", delay.0 * first_bus.0);
     }
     {
         println!("Year 2020 Day 13 Part 2");
         let first_diagonal = schedule.first_diagonal();
-        println!(
-            "The first time that starts a diagonal is {}",
-            first_diagonal
-        );
+        println!("The first time that starts a diagonal is {first_diagonal}");
     }
     Ok(())
 }

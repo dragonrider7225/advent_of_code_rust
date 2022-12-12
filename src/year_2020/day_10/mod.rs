@@ -66,10 +66,7 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2020 Day 10 Part 2");
         let num_sets = count_arrangements(&adapters);
-        println!(
-            "There are {} sets of adapters which can charge the device",
-            num_sets
-        );
+        println!("There are {num_sets} sets of adapters which can charge the device");
     }
     Ok(())
 }

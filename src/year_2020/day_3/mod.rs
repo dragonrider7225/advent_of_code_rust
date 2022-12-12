@@ -55,7 +55,7 @@ pub(super) fn run() -> io::Result<()> {
     let three = {
         println!("Year 2020 Day 3 Part 1");
         let three = tree_map.count_trees(3, 1);
-        println!("There are {} trees on the path with slope -1/3", three);
+        println!("There are {three} trees on the path with slope -1/3");
         three
     };
     {
@@ -67,7 +67,7 @@ pub(super) fn run() -> io::Result<()> {
                     .map(|&(delta_x, delta_y)| tree_map.count_trees(delta_x, delta_y)),
             )
             .product::<usize>();
-        println!("The product is {} trees**5", total);
+        println!("The product is {total} trees**5");
     }
     Ok(())
 }

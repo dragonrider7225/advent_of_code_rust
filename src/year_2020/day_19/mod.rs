@@ -43,7 +43,7 @@ impl UnnamedRule {
                     for part in parts {
                         let part_length =
                             part.length(rules, lengths, max_length.saturating_sub(min_consumed));
-                        if part_length.len() == 0 {
+                        if part_length.is_empty() {
                             return HashSet::new();
                         } else {
                             min_consumed += part_length.iter().min().unwrap();
@@ -90,7 +90,7 @@ impl UnnamedRule {
                     let max_length = s.len();
                     match parts {
                         &[] => max_length == 0,
-                        &[ref first, ..] => {
+                        [first, ..] => {
                             for length in first.length(rules, lengths, max_length) {
                                 if first.matches(&s[..length], rules, lengths)
                                     && slice_matches(&parts[1..], &s[length..], rules, lengths)
@@ -103,7 +103,7 @@ impl UnnamedRule {
                     }
                 }
 
-                slice_matches(&parts[..], s, rules, lengths)
+                slice_matches(parts, s, rules, lengths)
             }
             Self::Proxy(id) => rules[id].matches(s, rules, lengths),
         }
@@ -259,7 +259,7 @@ pub(super) fn run() -> io::Result<()> {
         &fs::read_to_string("2020_19.txt")?,
     )
     .finish()
-    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{:?}", e)))?
+    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))?
     .1;
     {
         println!("Year 2020 Day 19 Part 1");
@@ -273,7 +273,7 @@ pub(super) fn run() -> io::Result<()> {
             .iter()
             .filter(|s| rule_0.matches(s, &rules, &mut lengths))
             .count();
-        println!("There are {} strings that match rule 0", num_matches);
+        println!("There are {num_matches} strings that match rule 0");
     }
     {
         println!("Year 2020 Day 19 Part 2");
@@ -333,7 +333,7 @@ pub(super) fn run() -> io::Result<()> {
             .iter()
             .filter(|s| rule_0.matches(s, &rules, &mut lengths))
             .count();
-        println!("There are {} strings that match rule 0", num_matches);
+        println!("There are {num_matches} strings that match rule 0");
     }
     Ok(())
 }
@@ -577,7 +577,7 @@ mod test {
             .collect::<HashSet<_>>();
         let actual = strings
             .into_iter()
-            .filter(|s| rules[&RuleId(0)].matches(&*s, &rules, &mut HashMap::new()))
+            .filter(|s| rules[&RuleId(0)].matches(s, &rules, &mut HashMap::new()))
             .collect::<HashSet<_>>();
         assert_eq!(expected, actual);
     }
@@ -636,7 +636,7 @@ mod test {
         .collect::<HashSet<_>>();
         let actual = strings
             .into_iter()
-            .filter(|s| rules[&RuleId(0)].matches(&*s, &rules, &mut HashMap::new()))
+            .filter(|s| rules[&RuleId(0)].matches(s, &rules, &mut HashMap::new()))
             .collect::<HashSet<_>>();
         assert_eq!(expected, actual);
     }

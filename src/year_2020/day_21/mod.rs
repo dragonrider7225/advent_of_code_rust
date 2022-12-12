@@ -137,12 +137,12 @@ fn separate_allergens(
         for (allergen, possible_ingredients) in &potential_sources {
             match possible_ingredients.len() {
                 0 => {
-                    println!("{} has no more potential sources, removing it", allergen);
+                    println!("{allergen} has no more potential sources, removing it");
                     allergens_to_remove.insert(allergen.to_owned());
                 }
                 1 => {
                     let ingredient = possible_ingredients.iter().next().unwrap().to_owned();
-                    println!("Found out that {} contains {}", ingredient, allergen);
+                    println!("Found out that {ingredient} contains {allergen}");
                     actual_sources.insert(allergen.clone(), ingredient.clone());
                     ingredients_to_remove.insert(ingredient);
                 }

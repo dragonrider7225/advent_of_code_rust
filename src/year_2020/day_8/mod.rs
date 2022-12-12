@@ -172,7 +172,7 @@ pub(super) fn run() -> io::Result<()> {
                 })
             })
             .expect("No single no-op or jump instruction found to remove the infinite loop");
-        println!("The program terminates with {} in the accumulator", res);
+        println!("The program terminates with {res} in the accumulator");
     }
     Ok(())
 }

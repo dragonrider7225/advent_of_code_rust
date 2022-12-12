@@ -49,11 +49,13 @@ impl<'s> Passport<'s> {
             .birth_year
             .and_then(|s| Some((1920..=2002).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        // if !res {
-        //     println!("{:?} is not a valid birth year", self.birth_year);
-        // } else {
-        //     println!("{:?} is a valid birth year", self.birth_year);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid birth year", self.birth_year);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid birth year", self.birth_year);
+        }
         res
     }
 
@@ -62,11 +64,13 @@ impl<'s> Passport<'s> {
             .issue_year
             .and_then(|s| Some((2010..=2020).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        // if !res {
-        //     println!("{:?} is not a valid issue year", self.issue_year);
-        // } else {
-        //     println!("{:?} is a valid issue year", self.issue_year);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid issue year", self.issue_year);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid issue year", self.issue_year);
+        }
         res
     }
 
@@ -75,11 +79,13 @@ impl<'s> Passport<'s> {
             .expiration_year
             .and_then(|s| Some((2020..=2030).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        // if !res {
-        //     println!("{:?} is not a valid expiration year", self.expiration_year);
-        // } else {
-        //     println!("{:?} is a valid expiration year", self.expiration_year);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid expiration year", self.expiration_year);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid expiration year", self.expiration_year);
+        }
         res
     }
 
@@ -99,11 +105,13 @@ impl<'s> Passport<'s> {
                 }
             })
             .is_some();
-        // if !res {
-        //     println!("{:?} is not a valid height", self.height);
-        // } else {
-        //     println!("{:?} is a valid height", self.height);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid height", self.height);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid height", self.height);
+        }
         res
     }
 
@@ -114,24 +122,28 @@ impl<'s> Passport<'s> {
                 Some(s.chars().next()? == '#' && u32::from_str_radix(&s[1..], 16).is_ok())
             })
             .unwrap_or(false);
-        // if !res {
-        //     println!("{:?} is not a valid hair color", self.hair_color);
-        // } else {
-        //     println!("{:?} is a valid hair color", self.hair_color);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid hair color", self.hair_color);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid hair color", self.hair_color);
+        }
         res
     }
 
     fn has_valid_eye_color(&self) -> bool {
         let res = self
             .eye_color
-            .filter(|s| ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&s))
+            .filter(|s| ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(s))
             .is_some();
-        // if !res {
-        //     println!("{:?} is not a valid eye color", self.eye_color);
-        // } else {
-        //     println!("{:?} is a valid eye color", self.eye_color);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid eye color", self.eye_color);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid eye color", self.eye_color);
+        }
         res
     }
 
@@ -145,11 +157,13 @@ impl<'s> Passport<'s> {
             })
             .unwrap_or(0)
             == 9;
-        // if !res {
-        //     println!("{:?} is not a valid passport id", self.passport_id);
-        // } else {
-        //     println!("{:?} is a valid passport id", self.passport_id);
-        // }
+        if !res {
+            #[cfg(test)]
+            println!("{:?} is not a valid passport id", self.passport_id);
+        } else {
+            #[cfg(test)]
+            println!("{:?} is a valid passport id", self.passport_id);
+        }
         res
     }
 }
@@ -235,7 +249,7 @@ pub(super) fn run() -> io::Result<()> {
             // println!("Parsing {:?}", s);
             Passport::nom_parse(s)
                 .map(|(_, res)| res)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{:?}", e)))
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))
         })
         .collect::<Result<Vec<Passport<'_>>, _>>()?;
     {

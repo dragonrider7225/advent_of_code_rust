@@ -13,7 +13,7 @@ impl<'s> NomParse<'s> for Row {
                 s.chars().fold(Ok(0), |acc, c| match (acc?, c) {
                     (acc, 'F') => Ok(acc * 2),
                     (acc, 'B') => Ok(acc * 2 + 1),
-                    (_, c) => Err(format!("Invalid row character: {:?}", c)),
+                    (_, c) => Err(format!("Invalid row character: {c:?}")),
                 })
             }),
             Row,
@@ -34,7 +34,7 @@ impl<'s> NomParse<'s> for Column {
                 s.chars().fold(Ok(0), |acc, c| match (acc?, c) {
                     (acc, 'L') => Ok(acc * 2),
                     (acc, 'R') => Ok(acc * 2 + 1),
-                    (_, c) => Err(format!("Invalid column character: {:?}", c)),
+                    (_, c) => Err(format!("Invalid column character: {c:?}")),
                 })
             }),
             Column,
@@ -102,7 +102,7 @@ pub(super) fn run() -> io::Result<()> {
                 Some(left_seat + 1).filter(|&seat| seat == right_seat - 1)
             })
             .expect("No pair of seats with exactly one seat between them");
-        println!("The only empty seat is ID {}", seat);
+        println!("The only empty seat is ID {seat}");
     }
     Ok(())
 }
