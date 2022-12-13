@@ -39,7 +39,7 @@ fn count_arrangements(adapters: &[u32]) -> u64 {
 
 pub(super) fn run() -> io::Result<()> {
     let adapters = {
-        let mut res = crate::parse_lines("2020_10.txt")?.collect::<Vec<u32>>();
+        let mut res = aoc_util::parse_lines("2020_10.txt")?.collect::<Vec<u32>>();
         res.push(0);
         res.sort_unstable();
         res.push(res.last().unwrap() + 3);

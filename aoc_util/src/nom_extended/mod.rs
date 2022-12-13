@@ -1,4 +1,4 @@
-use nom::{character::complete as character, IResult};
+use nom::{character::complete as character, combinator, multi, IResult};
 
 /// Recognizes both `\n` and `\r\n`.
 #[deprecated = "Use character::line_ending"]
@@ -66,10 +66,53 @@ pub fn recognize_i128(s: &str) -> IResult<&str, i128> {
     character::i128(s)
 }
 
-/// Represents a type which can be parsed using `nom`.
+/// The one true parser for values of type `Self` from values of type `I` using nom.
 pub trait NomParse<I>: Sized {
-    /// Parse `input` into a value of type `Self` using `nom`.
+    /// Parse a `Self` from a prefix of `i`. If Rust's orphan rules are ignored, [`FromStr`] can be
+    /// trivially implemented for all types T that implement `NomParse<&str> where <Self as
+    /// NomParse<_>>::Error: Debug` as
+    ///
+    /// ```rust.ignore
+    /// use nom::{
+    ///     self,
+    ///     combinator as comb,
+    /// };
+    ///
+    /// impl<T: NomParse<&str>> FromStr for T {
+    ///     type Err = String;
+    ///
+    ///     fn from_str(s: &str) -> Result<T, <Self as FromStr>::Err> {
+    ///         Self::nom_parse(s)
+    ///             .finish()
+    ///             .map(|(_, res)| res)
+    ///             .map_err(|e| e.to_string())
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// [`FromStr`]: /std/str/trait.FromStr.html
     fn nom_parse(input: I) -> IResult<I, Self>;
+}
+
+/// A wrapper around a `Vec` that can be parsed from a sequence of `T`s concatenated without any
+/// separator.
+#[derive(Clone, Debug)]
+pub struct ConcatenatedList<T>(pub Vec<T>);
+
+impl<T> ConcatenatedList<T> {
+    /// Converts into the inner `Vec` in a more self-descriptive way than just `parsed.0`.
+    pub fn unwrap(self) -> Vec<T> {
+        self.0
+    }
+}
+
+impl<'input, T> NomParse<&'input str> for ConcatenatedList<T>
+where
+    T: NomParse<&'input str>,
+{
+    fn nom_parse(s: &'input str) -> IResult<&'input str, Self> {
+        combinator::map(multi::many0(T::nom_parse), Self)(s)
+    }
 }
 
 /// Generate a basic `FromStr` impl using `NomParse<&str>`. The parser fails if the input does not

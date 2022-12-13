@@ -7,7 +7,7 @@ struct Expenses {
 impl Expenses {
     fn read_from_file(filename: impl AsRef<Path>) -> io::Result<Self> {
         let mut ends = vec![vec![]; 10];
-        let values = crate::parse_lines(filename)?;
+        let values = aoc_util::parse_lines(filename)?;
         for value in values {
             match value % 10 {
                 digit @ 0..=9 => &mut ends[digit as usize],

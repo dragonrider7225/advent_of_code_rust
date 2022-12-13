@@ -1,4 +1,4 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, multi,
     sequence, IResult,
@@ -7,6 +7,7 @@ use std::{
     collections::HashMap,
     fs, io,
     ops::{Add, Sub},
+    str::FromStr,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
@@ -76,10 +77,27 @@ impl History {
     }
 }
 
-impl_from_str_for_nom_parse!(History);
+// TODO: impl_from_str_for_nom_parse!(History);
+impl FromStr for History
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for History {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for History {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
                 multi::separated_list1(bytes::tag(","), u64::nom_parse),

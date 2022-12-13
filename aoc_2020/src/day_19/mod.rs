@@ -1,4 +1,4 @@
-use crate::parse::NomParse;
+use aoc_util::{impl_from_str_for_nom_parse, nom_parse::NomParse};
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb,
     error::ParseError, multi, sequence, AsChar, Finish, IResult, InputIter, InputLength, Offset,
@@ -112,8 +112,10 @@ impl UnnamedRule {
 
 impl_from_str_for_nom_parse!(UnnamedRule);
 
-impl<'s> NomParse<'s> for UnnamedRule {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for UnnamedRule {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn satisfy_many1<I, E>(f: impl Fn(char) -> bool) -> impl FnMut(I) -> IResult<I, I, E>
         where
             E: ParseError<I>,
@@ -163,8 +165,10 @@ impl<'s> NomParse<'s> for UnnamedRule {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct RuleId(u32);
 
-impl<'s> NomParse<'s> for RuleId {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for RuleId {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(u32::nom_parse, Self)(s)
     }
 }
@@ -204,8 +208,10 @@ impl Rule {
 
 impl_from_str_for_nom_parse!(Rule);
 
-impl<'s> NomParse<'s> for Rule {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for Rule {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
                 sequence::separated_pair(
@@ -220,26 +226,43 @@ impl<'s> NomParse<'s> for Rule {
     }
 }
 
-impl<'s> NomParse<'s> for HashMap<RuleId, Rule> {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+struct Rules(HashMap<RuleId, Rule>);
+
+impl<'s> NomParse<'s, &'s str> for Rules {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(multi::many1(Rule::nom_parse), |rules| {
-            rules.into_iter().map(|rule| (rule.id, rule)).collect()
+            Self(rules.into_iter().map(|rule| (rule.id, rule)).collect())
         })(s)
     }
 }
 
-impl<'s> NomParse<'s> for (HashMap<RuleId, Rule>, Vec<String>) {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
-        sequence::separated_pair(
-            HashMap::<RuleId, Rule>::nom_parse,
-            character::line_ending,
-            comb::map(
-                multi::many1(sequence::terminated(
-                    character::not_line_ending,
-                    character::line_ending,
-                )),
-                |strings| strings.into_iter().map(String::from).collect(),
+struct RulesAndStrings {
+    rules: HashMap<RuleId, Rule>,
+    strings: Vec<String>,
+}
+
+impl<'s> NomParse<'s, &'s str> for RulesAndStrings {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
+        comb::map(
+            sequence::separated_pair(
+                Rules::nom_parse,
+                character::line_ending,
+                comb::map(
+                    multi::many1(sequence::terminated(
+                        character::not_line_ending,
+                        character::line_ending,
+                    )),
+                    |strings| strings.into_iter().map(String::from).collect(),
+                ),
             ),
+            |(rules, strings): (Rules, _)| Self {
+                rules: rules.0,
+                strings,
+            },
         )(s)
     }
 }
@@ -255,12 +278,11 @@ pub(super) fn run() -> io::Result<()> {
         rule_0.length(rules, &mut res, max_length);
         res
     }
-    let (rules, strings) = <(HashMap<RuleId, Rule>, Vec<String>) as NomParse<'_>>::nom_parse(
-        &fs::read_to_string("2020_19.txt")?,
-    )
-    .finish()
-    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))?
-    .1;
+    let RulesAndStrings { rules, strings } =
+        <RulesAndStrings as NomParse<'_, _>>::nom_parse(&fs::read_to_string("2020_19.txt")?)
+            .finish()
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))?
+            .1;
     {
         println!("Year 2020 Day 19 Part 1");
         let rule_0 = &rules[&RuleId(0)];
@@ -394,7 +416,7 @@ mod test {
             "aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba",
         ];
         (
-            HashMap::<RuleId, Rule>::nom_parse(rules_str).unwrap().1,
+            Rules::nom_parse(rules_str).unwrap().1 .0,
             strings.iter().copied().map(String::from).collect(),
         )
     }
@@ -488,7 +510,7 @@ mod test {
         .iter()
         .map(|rule| (rule.id, rule.clone()))
         .collect::<HashMap<_, _>>());
-        let actual = HashMap::<RuleId, Rule>::nom_parse(rule_str).map(|(_, actual)| actual);
+        let actual = Rules::nom_parse(rule_str).map(|(_, actual)| actual.0);
         assert_eq!(expected, actual);
     }
 

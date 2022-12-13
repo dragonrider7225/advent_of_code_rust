@@ -1,10 +1,11 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult};
 use std::{
     collections::HashSet,
     convert::TryFrom,
     fmt::{self, Debug, Formatter},
     fs, io,
+    str::FromStr,
 };
 
 #[derive(Clone, Default, Eq, PartialEq)]
@@ -195,10 +196,27 @@ impl Debug for ConwayCubes {
     }
 }
 
-impl_from_str_for_nom_parse!(ConwayCubes);
+// TODO: impl_from_str_for_nom_parse!(ConwayCubes);
+impl FromStr for ConwayCubes
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for ConwayCubes {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for ConwayCubes {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::many0(sequence::terminated(
                 multi::many0(branch::alt((

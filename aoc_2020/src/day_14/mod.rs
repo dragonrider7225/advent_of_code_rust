@@ -1,4 +1,4 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
     sequence, IResult,
@@ -8,6 +8,7 @@ use std::{
     convert::{TryFrom, TryInto},
     fs, io, iter,
     ops::{BitAnd, BitOr, BitXor, Not},
+    str::FromStr,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -53,8 +54,10 @@ impl BitXor for Value {
     }
 }
 
-impl<'s> NomParse<'s> for Value {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for Value {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map_res(u64::nom_parse, Self::try_from)(s)
     }
 }
@@ -106,10 +109,10 @@ impl Mask {
     }
 }
 
-impl_from_str_for_nom_parse!(Mask);
+impl<'s> NomParse<'s, &'s str> for Mask {
+    type Error = nom::error::Error<&'s str>;
 
-impl<'s> NomParse<'s> for Mask {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn build(bits: Vec<char>) -> Result<Mask, <Value as TryFrom<u64>>::Error> {
             let (bits_set, bits_unset) =
                 bits.into_iter()
@@ -131,6 +134,23 @@ impl<'s> NomParse<'s> for Mask {
         }
 
         comb::map_res(multi::many_m_n(36, 36, character::one_of("X01")), build)(s)
+    }
+}
+
+// TODO: impl_from_str_for_nom_parse!(Mask);
+impl FromStr for Mask
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
     }
 }
 
@@ -160,10 +180,10 @@ impl Instruction {
     }
 }
 
-impl_from_str_for_nom_parse!(Instruction);
+impl<'s> NomParse<'s, &'s str> for Instruction {
+    type Error = nom::error::Error<&'s str>;
 
-impl<'s> NomParse<'s> for Instruction {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::map(
                 sequence::preceded(bytes::tag("mask = "), Mask::nom_parse),
@@ -181,6 +201,23 @@ impl<'s> NomParse<'s> for Instruction {
                 |(idx, value)| Self::SetValue { idx, value },
             ),
         ))(s)
+    }
+}
+
+// TODO: impl_from_str_for_nom_parse!(Instruction);
+impl FromStr for Instruction
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
     }
 }
 
@@ -231,10 +268,10 @@ impl Program {
     }
 }
 
-impl_from_str_for_nom_parse!(Program);
+impl<'s> NomParse<'s, &'s str> for Program {
+    type Error = nom::error::Error<&'s str>;
 
-impl<'s> NomParse<'s> for Program {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
                 multi::separated_list0(character::line_ending, Instruction::nom_parse),
@@ -242,6 +279,23 @@ impl<'s> NomParse<'s> for Program {
             ),
             |instructions| Self { instructions },
         )(s)
+    }
+}
+
+// TODO: impl_from_str_for_nom_parse!(Program);
+impl FromStr for Program
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -168,7 +168,9 @@ impl<'s> Passport<'s> {
     }
 }
 
-impl<'s> NomParse<'s> for Passport<'s> {
+impl<'s> NomParse<'s, &'s str> for Passport<'s> {
+    type Error = nom::error::Error<&'s str>;
+
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn parse_field(
             field_name: &'static str,

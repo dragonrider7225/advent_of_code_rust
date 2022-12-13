@@ -1,4 +1,4 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{branch, character::complete as character, combinator as comb, sequence, IResult};
 use std::{
     fmt::{self, Display, Formatter},
@@ -27,8 +27,10 @@ impl Display for ExprToken {
     }
 }
 
-impl<'s> NomParse<'s> for ExprToken {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for ExprToken {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         sequence::delimited(
             character::space0,
             branch::alt((
