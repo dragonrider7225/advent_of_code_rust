@@ -1,9 +1,9 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb,
     sequence, IResult,
 };
-use std::{collections::HashSet, convert::TryFrom, fs, io};
+use std::{collections::HashSet, convert::TryFrom, fs, io, str::FromStr};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Instruction {
@@ -12,10 +12,27 @@ enum Instruction {
     Jump(isize),
 }
 
-impl_from_str_for_nom_parse!(Instruction);
+// TODO: impl_from_str_for_nom_parse!(Instruction);
+impl FromStr for Instruction
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for Instruction {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for Instruction {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::map(
                 sequence::pair(

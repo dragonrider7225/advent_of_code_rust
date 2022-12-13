@@ -22,7 +22,7 @@ use SumResult::{Incomplete, Overflow, Weakness};
 
 pub(super) fn run() -> io::Result<()> {
     const PREAMBLE_LENGTH: usize = 25;
-    let xmas_stream = crate::parse_lines("2020_09.txt")?.collect::<Vec<u64>>();
+    let xmas_stream = aoc_util::parse_lines("2020_09.txt")?.collect::<Vec<u64>>();
     let invalid_follower = {
         println!("Year 2020 Day 9 Part 1");
         let invalid_follower = xmas_stream

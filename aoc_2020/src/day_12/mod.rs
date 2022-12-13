@@ -1,6 +1,6 @@
-use crate::{parse::NomParse, util::Point};
+use aoc_util::{geometry::Point2D as Point, nom_parse::NomParse};
 use nom::{character::complete as character, combinator as comb, sequence, IResult};
-use std::io;
+use std::{io, str::FromStr};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Facing {
@@ -146,10 +146,27 @@ impl From<(Facing, i32)> for Instruction {
     }
 }
 
-impl_from_str_for_nom_parse!(Instruction);
+// TODO: impl_from_str_for_nom_parse!(Instruction);
+impl FromStr for Instruction
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for Instruction {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for Instruction {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::pair(character::one_of("NSEWLRF"), u16::nom_parse),
             |(c, distance)| match c {
@@ -167,7 +184,7 @@ impl<'s> NomParse<'s> for Instruction {
 }
 
 pub(super) fn run() -> io::Result<()> {
-    let directions = crate::parse_lines::<Instruction, _>("2020_12.txt")?.collect::<Vec<_>>();
+    let directions = aoc_util::parse_lines::<Instruction, _>("2020_12.txt")?.collect::<Vec<_>>();
     {
         println!("Year 2020 Day 12 Part 1");
         let mut ship = Ship::default();

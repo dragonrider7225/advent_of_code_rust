@@ -1,9 +1,10 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult};
 use std::{
     fmt::{self, Debug, Formatter},
     fs, io,
     ops::Deref,
+    str::FromStr,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -63,8 +64,10 @@ impl Debug for Tile {
     }
 }
 
-impl<'s> NomParse<'s> for Tile {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for Tile {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::value(Self::Floor, character::char('.')),
             comb::value(Self::EmptyChair, character::char('L')),
@@ -141,17 +144,24 @@ impl OccupationBehavior<Vec<Tile>> for LosOccupationBehavior {
             let max_right_distance = tiles[0].len() - 1 - column;
             let max_down_distance = tiles.len() - 1 - row;
 
-            let mut left_los = |distance| tiles[row][column - distance];
-            let mut upper_left_los = |distance: usize| tiles[row - distance][column - distance];
-            let mut upper_los = |distance: usize| tiles[row - distance][column];
-            let mut upper_right_los = |distance: usize| tiles[row - distance][column + distance];
-            let mut right_los = |distance| tiles[row][column + distance];
-            let mut lower_right_los = |distance: usize| tiles[row + distance][column + distance];
-            let mut lower_los = |distance: usize| tiles[row + distance][column];
-            let mut lower_left_los = |distance: usize| tiles[row + distance][column - distance];
+            let mut left_los: Box<dyn FnMut(_) -> _> = box |distance| tiles[row][column - distance];
+            let mut upper_left_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row - distance][column - distance];
+            let mut upper_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row - distance][column];
+            let mut upper_right_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row - distance][column + distance];
+            let mut right_los: Box<dyn FnMut(_) -> _> =
+                box |distance| tiles[row][column + distance];
+            let mut lower_right_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row + distance][column + distance];
+            let mut lower_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row + distance][column];
+            let mut lower_left_los: Box<dyn FnMut(usize) -> _> =
+                box |distance| tiles[row + distance][column - distance];
 
             let mut lines_of_sight = [
-                (1..=max_left_distance).map::<_, &mut dyn FnMut(_) -> _>(&mut left_los),
+                (1..=max_left_distance).map(&mut left_los),
                 (1..=Ord::min(max_left_distance, max_up_distance)).map(&mut upper_left_los),
                 (1..=max_up_distance).map(&mut upper_los),
                 (1..=Ord::min(max_right_distance, max_up_distance)).map(&mut upper_right_los),
@@ -218,10 +228,10 @@ impl<'behavior> GameOfLife<'behavior> {
 
 impl<'behavior> Eq for GameOfLife<'behavior> {}
 
-impl_from_str_for_nom_parse!(GameOfLife<'static>);
+impl<'s> NomParse<'s, &'s str> for GameOfLife<'static> {
+    type Error = nom::error::Error<&'s str>;
 
-impl<'s> NomParse<'s> for GameOfLife<'static> {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         let (s, first_line) =
             sequence::terminated(multi::many0(Tile::nom_parse), character::line_ending)(s)?;
         let (s, mut remaining_lines) = sequence::terminated(
@@ -239,6 +249,23 @@ impl<'s> NomParse<'s> for GameOfLife<'static> {
                 occupation_behavior: &BasicOccupationBehavior,
             },
         ))
+    }
+}
+
+// TODO: impl_from_str_for_nom_parse!(GameOfLife<'static>);
+impl FromStr for GameOfLife<'static>
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
     }
 }
 

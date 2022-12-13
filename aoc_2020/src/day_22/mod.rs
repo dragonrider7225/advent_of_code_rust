@@ -6,6 +6,7 @@ use std::{
 type Card = u32;
 
 fn part1(input: &mut dyn BufRead) -> io::Result<()> {
+    let mut lines = input.lines();
     todo!("Year 2020 Day 22 Part 1")
 }
 

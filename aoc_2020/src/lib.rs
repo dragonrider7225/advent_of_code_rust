@@ -1,3 +1,5 @@
+#![feature(box_syntax, box_patterns)]
+#![feature(hash_drain_filter)]
 use std::io;
 
 mod day_1;

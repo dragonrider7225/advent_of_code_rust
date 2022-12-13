@@ -18,34 +18,11 @@ use std::{
 use extended_io as eio;
 
 #[macro_use]
+#[deprecated = "Use aoc_util::nom_parse instead"]
 mod parse;
 mod util;
 mod year_2018;
 mod year_2019;
-
-fn get_lines<P>(path: P) -> io::Result<impl Iterator<Item = String>>
-where
-    P: AsRef<Path>,
-{
-    let ret = BufReader::new(File::open(path)?)
-        .lines()
-        .map(|res| res.expect("Failed to read line"));
-    Ok(ret)
-}
-
-fn parse_lines<I, P>(path: P) -> io::Result<impl Iterator<Item = I>>
-where
-    I: FromStr,
-    <I as FromStr>::Err: Debug,
-    P: AsRef<Path>,
-{
-    let lines = get_lines(path)?;
-    Ok(lines.map(|s| {
-        s.parse()
-            .map_err(|e| format!("Invalid line {s:?}: {e:?}"))
-            .unwrap()
-    }))
-}
 
 fn run_year(year: u32, day: Option<u32>) -> io::Result<()> {
     let day_prompt = move || day.ok_or(()).or_else(|_| eio::prompt("Enter day to run: "));

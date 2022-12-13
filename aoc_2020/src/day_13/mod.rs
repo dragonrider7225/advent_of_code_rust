@@ -1,10 +1,11 @@
-use crate::parse::NomParse;
+use aoc_util::nom_parse::NomParse;
 use nom::{branch, character::complete as character, combinator as comb, multi, IResult};
 use std::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
     fs, io, mem,
     ops::{Add, AddAssign, Rem, Sub},
+    str::FromStr,
 };
 
 fn gcd(mut a: u128, mut b: u128) -> u128 {
@@ -76,10 +77,27 @@ impl Display for Timestamp {
     }
 }
 
-impl_from_str_for_nom_parse!(Timestamp);
+// TODO: impl_from_str_for_nom_parse!(Timestamp);
+impl FromStr for Timestamp
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for Timestamp {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for Timestamp {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(u128::nom_parse, Self)(s)
     }
 }
@@ -122,8 +140,10 @@ impl Display for BusNumber {
     }
 }
 
-impl<'s> NomParse<'s> for BusNumber {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<'s, &'s str> for BusNumber {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(u128::nom_parse, Self)(s)
     }
 }
@@ -183,10 +203,27 @@ impl BusSchedule {
     }
 }
 
-impl_from_str_for_nom_parse!(BusSchedule);
+// TODO: impl_from_str_for_nom_parse!(BusSchedule);
+impl FromStr for BusSchedule
+where
+    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
+{
+    type Err = String;
 
-impl<'s> NomParse<'s> for BusSchedule {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use ::nom::Finish;
+
+        Self::nom_parse(s)
+            .finish()
+            .map(|(_, res)| res)
+            .map_err(|error| format!("{error:?}"))
+    }
+}
+
+impl<'s> NomParse<'s, &'s str> for BusSchedule {
+    type Error = nom::error::Error<&'s str>;
+
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::separated_list1(
                 character::char(','),
