@@ -6,11 +6,20 @@ version = 3
 name = "advent_of_code"
 version = "0.1.2"
 dependencies = [
+ "aoc_2020",
  "aoc_2021",
  "aoc_2022",
  "aoc_iter",
  "clap",
  "extended_io",
+ "nom",
+]
+
+[[package]]
+name = "aoc_2020"
+version = "0.1.0"
+dependencies = [
+ "aoc_util",
  "nom",
 ]
 
