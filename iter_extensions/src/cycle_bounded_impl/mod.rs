@@ -113,7 +113,7 @@ where
             }
             2 => {
                 self.num_cycles = 1;
-                self.inner = self.back.take();
+                self.back.take();
             }
             _ => {
                 self.num_cycles -= 1;
