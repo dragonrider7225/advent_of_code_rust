@@ -21,11 +21,11 @@ impl Value {
     }
 
     fn low_bits(value: u64) -> u32 {
-        (value & u32::MAX.into(): u64).try_into().unwrap()
+        (value & u64::from(u32::MAX)).try_into().unwrap()
     }
 
     fn unwrap(self) -> u64 {
-        ((self.0.into(): u64) << 32) + (self.1.into(): u64)
+        (u64::from(self.0) << 32) + u64::from(self.1)
     }
 }
 
