@@ -95,11 +95,11 @@ impl Mask {
             vec![value & !bit, value | bit].into_iter()
         }
 
-        let mut res: Box<dyn Iterator<Item = Value>> = box iter::once(idx | self.bits_set);
+        let mut res: Box<dyn Iterator<Item = Value>> = Box::new(iter::once(idx | self.bits_set));
         for i in 0..36 {
             let bit = Value::try_from(1 << i).unwrap();
             if (self.bits_set | self.bits_unset) & bit == Value(0, 0) {
-                res = box res.flat_map(move |value| float_bit(value, bit));
+                res = Box::new(res.flat_map(move |value| float_bit(value, bit)));
             }
         }
         res

@@ -154,7 +154,7 @@ impl<'s> NomParse<'s> for UnnamedRule {
             ),
             |(first, second)| match second {
                 None => first,
-                Some(second) => Self::Branch(box [first, second]),
+                Some(second) => Self::Branch(Box::new([first, second])),
             },
         )(s)
     }
@@ -283,13 +283,13 @@ pub(super) fn run() -> io::Result<()> {
                 RuleId(8),
                 Rule {
                     id: RuleId(8),
-                    inner: UnnamedRule::Branch(box [
+                    inner: UnnamedRule::Branch(Box::new([
                         UnnamedRule::Proxy(RuleId(42)),
-                        UnnamedRule::Sequence(box [
+                        UnnamedRule::Sequence(Box::new([
                             UnnamedRule::Proxy(RuleId(42)),
                             UnnamedRule::Proxy(RuleId(8)),
-                        ]),
-                    ]),
+                        ])),
+                    ])),
                 },
             ),
             Some(Rule {
@@ -302,25 +302,25 @@ pub(super) fn run() -> io::Result<()> {
                 RuleId(11),
                 Rule {
                     id: RuleId(11),
-                    inner: UnnamedRule::Branch(box [
-                        UnnamedRule::Sequence(box [
+                    inner: UnnamedRule::Branch(Box::new([
+                        UnnamedRule::Sequence(Box::new([
                             UnnamedRule::Proxy(RuleId(42)),
                             UnnamedRule::Proxy(RuleId(31)),
-                        ]),
-                        UnnamedRule::Sequence(box [
+                        ])),
+                        UnnamedRule::Sequence(Box::new([
                             UnnamedRule::Proxy(RuleId(42)),
                             UnnamedRule::Proxy(RuleId(11)),
                             UnnamedRule::Proxy(RuleId(31)),
-                        ]),
-                    ]),
+                        ])),
+                    ])),
                 },
             ),
             Some(Rule {
                 id: RuleId(11),
-                inner: UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Sequence(Box::new([
                     UnnamedRule::Proxy(RuleId(42)),
                     UnnamedRule::Proxy(RuleId(31)),
-                ]),
+                ])),
             })
         );
         let rule_0 = &rules[&RuleId(0)];
@@ -403,16 +403,16 @@ mod test {
     #[ignore]
     fn parses_branch() {
         let rule_str = "2 3 | 3 2";
-        let expected = Ok(UnnamedRule::Branch(box [
-            UnnamedRule::Sequence(box [
+        let expected = Ok(UnnamedRule::Branch(Box::new([
+            UnnamedRule::Sequence(Box::new([
                 UnnamedRule::Proxy(RuleId(2)),
                 UnnamedRule::Proxy(RuleId(3)),
-            ]),
-            UnnamedRule::Sequence(box [
+            ])),
+            UnnamedRule::Sequence(Box::new([
                 UnnamedRule::Proxy(RuleId(3)),
                 UnnamedRule::Proxy(RuleId(2)),
-            ]),
-        ]));
+            ])),
+        ])));
         let actual = rule_str.parse::<UnnamedRule>();
         assert_eq!(expected, actual);
     }
@@ -431,50 +431,50 @@ mod test {
         let expected = Ok([
             Rule {
                 id: RuleId(0),
-                inner: UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Sequence(Box::new([
                     UnnamedRule::Proxy(RuleId(4)),
                     UnnamedRule::Proxy(RuleId(1)),
                     UnnamedRule::Proxy(RuleId(5)),
-                ]),
+                ])),
             },
             Rule {
                 id: RuleId(1),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(2)),
                         UnnamedRule::Proxy(RuleId(3)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(3)),
                         UnnamedRule::Proxy(RuleId(2)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(2),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(4)),
                         UnnamedRule::Proxy(RuleId(4)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(5)),
                         UnnamedRule::Proxy(RuleId(5)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(3),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(4)),
                         UnnamedRule::Proxy(RuleId(5)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(5)),
                         UnnamedRule::Proxy(RuleId(4)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(4),
@@ -498,50 +498,50 @@ mod test {
         let rules = [
             Rule {
                 id: RuleId(0),
-                inner: UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Sequence(Box::new([
                     UnnamedRule::Proxy(RuleId(4)),
                     UnnamedRule::Proxy(RuleId(1)),
                     UnnamedRule::Proxy(RuleId(5)),
-                ]),
+                ])),
             },
             Rule {
                 id: RuleId(1),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(2)),
                         UnnamedRule::Proxy(RuleId(3)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(3)),
                         UnnamedRule::Proxy(RuleId(2)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(2),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(4)),
                         UnnamedRule::Proxy(RuleId(4)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(5)),
                         UnnamedRule::Proxy(RuleId(5)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(3),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(4)),
                         UnnamedRule::Proxy(RuleId(5)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(5)),
                         UnnamedRule::Proxy(RuleId(4)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
             Rule {
                 id: RuleId(4),
@@ -590,30 +590,30 @@ mod test {
             RuleId(8),
             Rule {
                 id: RuleId(8),
-                inner: UnnamedRule::Branch(box [
+                inner: UnnamedRule::Branch(Box::new([
                     UnnamedRule::Proxy(RuleId(42)),
-                    UnnamedRule::Sequence(box [
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(42)),
                         UnnamedRule::Proxy(RuleId(8)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
         );
         rules.insert(
             RuleId(11),
             Rule {
                 id: RuleId(11),
-                inner: UnnamedRule::Branch(box [
-                    UnnamedRule::Sequence(box [
+                inner: UnnamedRule::Branch(Box::new([
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(42)),
                         UnnamedRule::Proxy(RuleId(31)),
-                    ]),
-                    UnnamedRule::Sequence(box [
+                    ])),
+                    UnnamedRule::Sequence(Box::new([
                         UnnamedRule::Proxy(RuleId(42)),
                         UnnamedRule::Proxy(RuleId(11)),
                         UnnamedRule::Proxy(RuleId(31)),
-                    ]),
-                ]),
+                    ])),
+                ])),
             },
         );
         let expected = [
