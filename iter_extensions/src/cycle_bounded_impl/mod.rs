@@ -309,3 +309,90 @@ where
 // SAFETY: A `CycleBounded<I>` has an accurate `size_hint` whenever `I` is `TrustedLen`, since
 //         `CycleBounded<I>::size_hint` calculates its result exactly from `I::size_hint`.
 unsafe impl<I> TrustedLen for CycleBounded<I> where I: Clone + TrustedLen {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_cycles_is_empty() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(0, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(0, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn one_cycle_is_transparent() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(1, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(1, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn multiple_cycles_work() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn advance_by_works_between_cycles() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.advance_by(2), Ok(()));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.advance_back_by(2), Ok(()));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+}
