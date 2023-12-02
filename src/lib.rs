@@ -5,7 +5,6 @@
 #![feature(coroutines, coroutine_trait)]
 #![feature(hash_extract_if)]
 #![feature(step_trait)]
-#![feature(type_ascription)]
 
 use std::{
     convert::AsRef,
