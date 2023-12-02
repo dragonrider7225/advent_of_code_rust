@@ -2,7 +2,7 @@ use crate::year_2019::intcode_interpreter::IntcodeInterpreter;
 
 use std::{
     io::{self, BufRead, Cursor, Seek, Write},
-    ops::{Generator, GeneratorState},
+    ops::{Coroutine, CoroutineState},
     pin::Pin,
     thread,
 };
@@ -24,7 +24,7 @@ pub(super) fn run() -> io::Result<()> {
                         yield [3, 4];
                         yield [4, 3];
                     };
-                    while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+                    while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
                             res[..i].copy_from_slice(&sub[..i]);
@@ -34,7 +34,7 @@ pub(super) fn run() -> io::Result<()> {
                         }
                     }
                 };
-                while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+                while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
                         res[..i].copy_from_slice(&sub[..i]);
@@ -44,7 +44,7 @@ pub(super) fn run() -> io::Result<()> {
                     }
                 }
             };
-            while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+            while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
                     res[..i].copy_from_slice(&sub[..i]);
@@ -55,7 +55,7 @@ pub(super) fn run() -> io::Result<()> {
             }
         };
         let mut results = Cursor::new(vec![]);
-        while let GeneratorState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
+        while let CoroutineState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
             let (to_a_read, mut to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();
@@ -113,7 +113,7 @@ pub(super) fn run() -> io::Result<()> {
                         yield [8, 9];
                         yield [9, 8];
                     };
-                    while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+                    while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                         for i in 0..3 {
                             let mut res = [0; 3];
                             res[..i].copy_from_slice(&sub[..i]);
@@ -123,7 +123,7 @@ pub(super) fn run() -> io::Result<()> {
                         }
                     }
                 };
-                while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+                while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                     for i in 0..4 {
                         let mut res = [0; 4];
                         res[..i].copy_from_slice(&sub[..i]);
@@ -133,7 +133,7 @@ pub(super) fn run() -> io::Result<()> {
                     }
                 }
             };
-            while let GeneratorState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
+            while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
                 for i in 0..5 {
                     let mut res: [i64; 5] = [0; 5];
                     res[..i].copy_from_slice(&sub[..i]);
@@ -144,7 +144,7 @@ pub(super) fn run() -> io::Result<()> {
             }
         };
         let mut results = vec![];
-        while let GeneratorState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
+        while let CoroutineState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
             let (mut e_to_a_read, mut e_to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();

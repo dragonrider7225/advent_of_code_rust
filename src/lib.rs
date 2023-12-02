@@ -2,7 +2,7 @@
 
 #![warn(rust_2018_idioms)]
 #![feature(box_syntax, box_patterns)]
-#![feature(generators, generator_trait)]
+#![feature(coroutines, coroutine_trait)]
 #![feature(hash_extract_if)]
 #![feature(step_trait)]
 #![feature(type_ascription)]
