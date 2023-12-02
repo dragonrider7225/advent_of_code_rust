@@ -17,7 +17,7 @@ fn app() -> App<'static> {
                 .long("year")
                 .takes_value(true)
                 .value_name("YEAR")
-                .possible_values(["2018", "2019", "2020", "2021", "2022"])
+                .possible_values(["2018", "2019", "2020", "2021", "2022", "2023"])
                 .help("Selects the year to run"),
         )
         .arg(
