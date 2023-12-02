@@ -1,8 +1,15 @@
 use std::{
+    convert::TryFrom,
     iter::{FusedIterator, TrustedLen},
+    num::NonZeroUsize,
     ops::Try,
 };
 
+/// Like [`cycle()`].[`take()`] except that the number of elements is guaranteed to be exactly
+/// `num_cycles` times the length of `base`, even when the length of `base` is not already known.
+///
+/// [`cycle()`]: std::iter::Iterator.html#method.cycle
+/// [`take()`]: std::iter::Iterator.html#method.take
 pub fn cycle_bounded<I>(num_cycles: usize, base: I) -> CycleBounded<I>
 where
     I: Clone,
@@ -33,14 +40,18 @@ pub struct CycleBounded<I> {
 }
 
 impl<I> CycleBounded<I> {
+    /// A shared reference to the clone of `base` that should be operated on by `Iterator::next`.
     fn front_iter(&self) -> Option<&I> {
         self.inner.as_ref()
     }
 
+    /// A mutable reference to the clone of `base` that should be operated on by `Iterator::next`.
     fn front_iter_mut(&mut self) -> Option<&mut I> {
         self.inner.as_mut()
     }
 
+    /// A shared reference to the clone of `base` that should be operated on by
+    /// `DoubleEndedIterator::next_back`.
     fn back_iter(&self) -> Option<&I> {
         match self.num_cycles {
             1 => self.inner.as_ref(),
@@ -48,6 +59,8 @@ impl<I> CycleBounded<I> {
         }
     }
 
+    /// A mutable reference to the clone of `base` that should be operated on by
+    /// `DoubleEndedIterator::next_back`.
     fn back_iter_mut(&mut self) -> Option<&mut I> {
         match self.num_cycles {
             1 => self.inner.as_mut(),
@@ -58,8 +71,13 @@ impl<I> CycleBounded<I> {
 
 impl<I> CycleBounded<I>
 where
-    I: Clone,
+    I: Clone + Iterator,
 {
+    /// Discards the current clone of `base` used by `Iterator::next` and replaces it. If the
+    /// iterator is already on the last cycle, the replacement will be `None`. If calling this
+    /// function will cause the iterator to be on its last cycle, the replacement will be the clone
+    /// that is already being used by `DoubleEndedIterator::next_back` (if applicable). Otherwise,
+    /// the replacement will be a new clone.
     fn next_cycle(&mut self) {
         match self.num_cycles {
             0 => {}
@@ -77,7 +95,17 @@ where
             }
         }
     }
+}
 
+impl<I> CycleBounded<I>
+where
+    I: Clone + DoubleEndedIterator,
+{
+    /// Discards the current clone of `base` used by `DoubleEndedIterator::next_back` and replaces
+    /// it. If the iterator is already on the last cycle, the replacement will be `None`. If calling
+    /// this function will cause the iterator to be on its last cycle, the replacement will be the
+    /// clone that is already being used by `Iterator::next`. Otherwise, the replacement will be a
+    /// new clone.
     fn next_cycle_back(&mut self) {
         match self.num_cycles {
             0 => {}
@@ -87,7 +115,7 @@ where
             }
             2 => {
                 self.num_cycles = 1;
-                self.inner = self.back.take();
+                self.back.take();
             }
             _ => {
                 self.num_cycles -= 1;
@@ -97,12 +125,26 @@ where
     }
 }
 
-impl<I> DoubleEndedIterator for CycleBounded<I>
+impl<I> Clone for CycleBounded<I>
 where
     I: Clone,
-    I: DoubleEndedIterator,
+{
+    fn clone(&self) -> Self {
+        Self {
+            num_cycles: self.num_cycles.clone(),
+            inner: self.inner.clone(),
+            back: self.back.clone(),
+            base: self.base.clone(),
+        }
+    }
+}
+
+impl<I> DoubleEndedIterator for CycleBounded<I>
+where
+    I: Clone + DoubleEndedIterator,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         if let Some(back_iter) = self.back_iter_mut() {
             back_iter.next_back().or_else(|| {
                 self.next_cycle_back();
@@ -113,24 +155,27 @@ where
         }
     }
 
-    fn advance_back_by(&mut self, n: usize) -> Result<(), usize> {
-        let mut res = 0;
+    fn advance_back_by(&mut self, mut n: usize) -> Result<(), NonZeroUsize> {
+        if self.back_iter().is_none() {
+            self.next_cycle_back();
+        }
+        if n == 0 {
+            return Ok(());
+        }
         while let Some(back_iter) = self.back_iter_mut() {
-            if let Err(skipped) = back_iter.advance_back_by(n - res) {
+            if let Err(steps_remaining) = back_iter.advance_back_by(n) {
                 self.next_cycle_back();
-                res += skipped
+                n = steps_remaining.get();
             } else {
-                res = n;
-                break;
+                return Ok(());
             }
         }
-        if res == n {
-            Ok(())
-        } else {
-            debug_assert!(res < n);
-            debug_assert!(self.back_iter().is_none());
-            Err(res)
-        }
+        debug_assert_eq!(
+            self.num_cycles, 0,
+            "Ran out of elements before running out of cycles"
+        );
+        debug_assert!(self.back_iter().is_none());
+        Err(NonZeroUsize::try_from(n).unwrap())
     }
 
     fn try_rfold<B, F, R>(&mut self, init: B, mut f: F) -> R
@@ -139,6 +184,7 @@ where
         R: Try<Output = B>,
     {
         let mut res = init;
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         while let Some(back_iter) = self.back_iter_mut() {
             res = back_iter.try_rfold(res, &mut f)?;
             self.next_cycle_back();
@@ -158,6 +204,7 @@ where
     where
         P: FnMut(&Self::Item) -> bool,
     {
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         while let Some(back_iter) = self.back_iter_mut() {
             if let Some(value) = back_iter.rfind(|item| predicate(item)) {
                 return Some(value);
@@ -181,6 +228,7 @@ where
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         if let Some(front_iter) = self.front_iter_mut() {
             front_iter.next().or_else(|| {
                 self.next_cycle();
@@ -222,25 +270,27 @@ where
         }
     }
 
-    fn advance_by(&mut self, n: usize) -> Result<(), usize> {
-        let mut res = 0;
+    fn advance_by(&mut self, mut n: usize) -> Result<(), NonZeroUsize> {
+        if self.front_iter().is_none() {
+            self.next_cycle();
+        }
+        if n == 0 {
+            return Ok(());
+        }
         while let Some(front_iter) = self.front_iter_mut() {
-            if let Err(skipped) = front_iter.advance_by(n - res) {
-                res += skipped;
+            if let Err(steps_remaining) = front_iter.advance_by(n) {
                 self.next_cycle();
+                n = steps_remaining.get();
             } else {
-                res = n;
-                break;
+                return Ok(());
             }
         }
-        if res == n {
-            Ok(())
-        } else {
-            debug_assert!(res < n);
-            debug_assert!(self.num_cycles == 0);
-            debug_assert!(self.back.is_none());
-            Err(res)
-        }
+        debug_assert_eq!(
+            self.num_cycles, 0,
+            "Ran out of elements before running out of cycles"
+        );
+        debug_assert!(self.front_iter().is_none());
+        Err(NonZeroUsize::try_from(n).unwrap())
     }
 
     fn try_fold<B, F, R>(&mut self, mut init: B, mut f: F) -> R
@@ -248,6 +298,7 @@ where
         F: FnMut(B, Self::Item) -> R,
         R: Try<Output = B>,
     {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         while let Some(front_iter) = self.front_iter_mut() {
             init = front_iter.try_fold(init, &mut f)?;
             self.next_cycle();
@@ -259,6 +310,7 @@ where
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         while let Some(front_iter) = self.front_iter_mut() {
             init = front_iter.fold(init, &mut f);
             self.next_cycle();
@@ -270,3 +322,90 @@ where
 // SAFETY: A `CycleBounded<I>` has an accurate `size_hint` whenever `I` is `TrustedLen`, since
 //         `CycleBounded<I>::size_hint` calculates its result exactly from `I::size_hint`.
 unsafe impl<I> TrustedLen for CycleBounded<I> where I: Clone + TrustedLen {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zero_cycles_is_empty() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(0, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(0, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn one_cycle_is_transparent() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(1, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(1, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn multiple_cycles_work() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+
+    #[test]
+    fn advance_by_works_between_cycles() {
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next(), Some(1));
+        assert_eq!(it.next(), Some(2));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.advance_by(2), Ok(()));
+        assert_eq!(it.next(), Some(3));
+        assert_eq!(it.next(), Some(4));
+        assert_eq!(it.next(), None);
+
+        let vals = [1, 2, 3, 4];
+        let mut it = cycle_bounded(2, IntoIterator::into_iter(vals));
+        assert_eq!(it.next_back(), Some(4));
+        assert_eq!(it.next_back(), Some(3));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.advance_back_by(2), Ok(()));
+        assert_eq!(it.next_back(), Some(2));
+        assert_eq!(it.next_back(), Some(1));
+        assert_eq!(it.next_back(), None);
+    }
+}
