@@ -3,6 +3,11 @@ use std::{
     ops::Try,
 };
 
+/// Like [`cycle()`].[`take()`] except that the number of elements is guaranteed to be exactly
+/// `num_cycles` times the length of `base`, even when the length of `base` is not already known.
+///
+/// [`cycle()`]: std::iter::Iterator.html#method.cycle
+/// [`take()`]: std::iter::Iterator.html#method.take
 pub fn cycle_bounded<I>(num_cycles: usize, base: I) -> CycleBounded<I>
 where
     I: Clone,
@@ -33,14 +38,18 @@ pub struct CycleBounded<I> {
 }
 
 impl<I> CycleBounded<I> {
+    /// A shared reference to the clone of `base` that should be operated on by `Iterator::next`.
     fn front_iter(&self) -> Option<&I> {
         self.inner.as_ref()
     }
 
+    /// A mutable reference to the clone of `base` that should be operated on by `Iterator::next`.
     fn front_iter_mut(&mut self) -> Option<&mut I> {
         self.inner.as_mut()
     }
 
+    /// A shared reference to the clone of `base` that should be operated on by
+    /// `DoubleEndedIterator::next_back`.
     fn back_iter(&self) -> Option<&I> {
         match self.num_cycles {
             1 => self.inner.as_ref(),
@@ -48,6 +57,8 @@ impl<I> CycleBounded<I> {
         }
     }
 
+    /// A mutable reference to the clone of `base` that should be operated on by
+    /// `DoubleEndedIterator::next_back`.
     fn back_iter_mut(&mut self) -> Option<&mut I> {
         match self.num_cycles {
             1 => self.inner.as_mut(),
@@ -58,8 +69,13 @@ impl<I> CycleBounded<I> {
 
 impl<I> CycleBounded<I>
 where
-    I: Clone,
+    I: Clone + Iterator,
 {
+    /// Discards the current clone of `base` used by `Iterator::next` and replaces it. If the
+    /// iterator is already on the last cycle, the replacement will be `None`. If calling this
+    /// function will cause the iterator to be on its last cycle, the replacement will be the clone
+    /// that is already being used by `DoubleEndedIterator::next_back` (if applicable). Otherwise,
+    /// the replacement will be a new clone.
     fn next_cycle(&mut self) {
         match self.num_cycles {
             0 => {}
@@ -77,7 +93,17 @@ where
             }
         }
     }
+}
 
+impl<I> CycleBounded<I>
+where
+    I: Clone + DoubleEndedIterator,
+{
+    /// Discards the current clone of `base` used by `DoubleEndedIterator::next_back` and replaces
+    /// it. If the iterator is already on the last cycle, the replacement will be `None`. If calling
+    /// this function will cause the iterator to be on its last cycle, the replacement will be the
+    /// clone that is already being used by `Iterator::next`. Otherwise, the replacement will be a
+    /// new clone.
     fn next_cycle_back(&mut self) {
         match self.num_cycles {
             0 => {}
@@ -97,10 +123,23 @@ where
     }
 }
 
-impl<I> DoubleEndedIterator for CycleBounded<I>
+impl<I> Clone for CycleBounded<I>
 where
     I: Clone,
-    I: DoubleEndedIterator,
+{
+    fn clone(&self) -> Self {
+        Self {
+            num_cycles: self.num_cycles.clone(),
+            inner: self.inner.clone(),
+            back: self.back.clone(),
+            base: self.base.clone(),
+        }
+    }
+}
+
+impl<I> DoubleEndedIterator for CycleBounded<I>
+where
+    I: Clone + DoubleEndedIterator,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some(back_iter) = self.back_iter_mut() {
