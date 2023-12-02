@@ -126,7 +126,7 @@ impl Expr {
                         delegate(&tokens[1..], None, parenthesized)?;
                     assert_eq!(parenthesized, new_parenthesized);
                     Some((
-                        Expr::Add(box [argument, right_expr]),
+                        Expr::Add(Box::new([argument, right_expr])),
                         unparsed,
                         parenthesized,
                     ))
@@ -138,7 +138,7 @@ impl Expr {
                         delegate(&tokens[1..], None, parenthesized)?;
                     assert_eq!(parenthesized, new_parenthesized);
                     Some((
-                        Expr::Mul(box [argument, right_expr]),
+                        Expr::Mul(Box::new([argument, right_expr])),
                         unparsed,
                         parenthesized,
                     ))
@@ -349,16 +349,19 @@ mod test {
             ExprToken::Add,
             ExprToken::Val(6),
         ];
-        let expected = Some(Expr::Add(box [
-            Expr::Mul(box [
-                Expr::Add(box [
-                    Expr::Mul(box [Expr::Add(box [Expr::Val(1), Expr::Val(2)]), Expr::Val(3)]),
+        let expected = Some(Expr::Add(Box::new([
+            Expr::Mul(Box::new([
+                Expr::Add(Box::new([
+                    Expr::Mul(Box::new([
+                        Expr::Add(Box::new([Expr::Val(1), Expr::Val(2)])),
+                        Expr::Val(3),
+                    ])),
                     Expr::Val(4),
-                ]),
+                ])),
                 Expr::Val(5),
-            ]),
+            ])),
             Expr::Val(6),
-        ]));
+        ])));
         let actual = Expr::from_tokens(&tokens);
         assert_eq!(expected, actual);
     }
@@ -385,10 +388,16 @@ mod test {
             ExprToken::RightParen,
             ExprToken::RightParen,
         ];
-        let expected = Some(Expr::Add(box [
-            Expr::Add(box [Expr::Val(1), Expr::Mul(box [Expr::Val(2), Expr::Val(3)])]),
-            Expr::Mul(box [Expr::Val(4), Expr::Add(box [Expr::Val(5), Expr::Val(6)])]),
-        ]));
+        let expected = Some(Expr::Add(Box::new([
+            Expr::Add(Box::new([
+                Expr::Val(1),
+                Expr::Mul(Box::new([Expr::Val(2), Expr::Val(3)])),
+            ])),
+            Expr::Mul(Box::new([
+                Expr::Val(4),
+                Expr::Add(Box::new([Expr::Val(5), Expr::Val(6)])),
+            ])),
+        ])));
         let actual = Expr::from_tokens(&tokens);
         assert_eq!(expected, actual);
     }
@@ -396,16 +405,19 @@ mod test {
     #[ignore]
     #[test]
     fn eval_works_correctly() {
-        let expr = Expr::Add(box [
-            Expr::Mul(box [
-                Expr::Add(box [
-                    Expr::Mul(box [Expr::Add(box [Expr::Val(1), Expr::Val(2)]), Expr::Val(3)]),
+        let expr = Expr::Add(Box::new([
+            Expr::Mul(Box::new([
+                Expr::Add(Box::new([
+                    Expr::Mul(Box::new([
+                        Expr::Add(Box::new([Expr::Val(1), Expr::Val(2)])),
+                        Expr::Val(3),
+                    ])),
                     Expr::Val(4),
-                ]),
+                ])),
                 Expr::Val(5),
-            ]),
+            ])),
             Expr::Val(6),
-        ]);
+        ]));
         let expected = 71;
         let actual = expr.eval();
         assert_eq!(expected, actual);

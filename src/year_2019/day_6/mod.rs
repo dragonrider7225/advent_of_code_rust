@@ -90,12 +90,12 @@ impl Default for Body {
 
 fn get_orbits() -> io::Result<Body> {
     let mut orbits: Box<dyn Iterator<Item = (String, String)>> =
-        box crate::get_lines("2019_6.txt")?.map(|s| {
+        Box::new(crate::get_lines("2019_6.txt")?.map(|s| {
             let mut strs = s.split(')').map(|s| s.to_owned());
             let parent = strs.next().unwrap();
             let child = strs.next().unwrap();
             (parent, child)
-        });
+        }));
     let mut com = Body::default();
     loop {
         let mut missed = vec![];
@@ -107,7 +107,7 @@ fn get_orbits() -> io::Result<Body> {
         if missed.is_empty() {
             break;
         } else {
-            orbits = box missed.into_iter();
+            orbits = Box::new(missed.into_iter());
         }
     }
     Ok(com)

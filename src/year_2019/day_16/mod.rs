@@ -144,15 +144,15 @@ pub(super) fn run() -> io::Result<()> {
             (0..100)
                 .into_iter()
                 .fold::<Box<dyn DoubleEndedIterator<Item = i32>>, _>(
-                    box aoc_iter::cycle_bounded(10_000, digits.into_iter()).skip(offset),
+                    Box::new(aoc_iter::cycle_bounded(10_000, digits.into_iter()).skip(offset)),
                     |acc_digits, _| {
                         acc_digits
                             .rev()
                             .fold::<(Box<dyn DoubleEndedIterator<Item = i32>>, i32), _>(
-                                (box iter::empty(), 0),
+                                (Box::new(iter::empty()), 0),
                                 |(acc, sum), digit| {
                                     let sum = (sum + digit) % 10;
-                                    (box iter::once(sum).chain(acc), sum)
+                                    (Box::new(iter::once(sum).chain(acc)), sum)
                                 },
                             )
                             .0
