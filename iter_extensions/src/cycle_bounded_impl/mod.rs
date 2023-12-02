@@ -1,5 +1,7 @@
 use std::{
+    convert::TryFrom,
     iter::{FusedIterator, TrustedLen},
+    num::NonZeroUsize,
     ops::Try,
 };
 
@@ -142,6 +144,7 @@ where
     I: Clone + DoubleEndedIterator,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         if let Some(back_iter) = self.back_iter_mut() {
             back_iter.next_back().or_else(|| {
                 self.next_cycle_back();
@@ -152,24 +155,27 @@ where
         }
     }
 
-    fn advance_back_by(&mut self, n: usize) -> Result<(), usize> {
-        let mut res = 0;
+    fn advance_back_by(&mut self, mut n: usize) -> Result<(), NonZeroUsize> {
+        if self.back_iter().is_none() {
+            self.next_cycle_back();
+        }
+        if n == 0 {
+            return Ok(());
+        }
         while let Some(back_iter) = self.back_iter_mut() {
-            if let Err(skipped) = back_iter.advance_back_by(n - res) {
+            if let Err(steps_remaining) = back_iter.advance_back_by(n) {
                 self.next_cycle_back();
-                res += skipped
+                n = steps_remaining.get();
             } else {
-                res = n;
-                break;
+                return Ok(());
             }
         }
-        if res == n {
-            Ok(())
-        } else {
-            debug_assert!(res < n);
-            debug_assert!(self.back_iter().is_none());
-            Err(res)
-        }
+        debug_assert_eq!(
+            self.num_cycles, 0,
+            "Ran out of elements before running out of cycles"
+        );
+        debug_assert!(self.back_iter().is_none());
+        Err(NonZeroUsize::try_from(n).unwrap())
     }
 
     fn try_rfold<B, F, R>(&mut self, init: B, mut f: F) -> R
@@ -178,6 +184,7 @@ where
         R: Try<Output = B>,
     {
         let mut res = init;
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         while let Some(back_iter) = self.back_iter_mut() {
             res = back_iter.try_rfold(res, &mut f)?;
             self.next_cycle_back();
@@ -197,6 +204,7 @@ where
     where
         P: FnMut(&Self::Item) -> bool,
     {
+        debug_assert_eq!(Ok(()), self.advance_back_by(0));
         while let Some(back_iter) = self.back_iter_mut() {
             if let Some(value) = back_iter.rfind(|item| predicate(item)) {
                 return Some(value);
@@ -220,6 +228,7 @@ where
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         if let Some(front_iter) = self.front_iter_mut() {
             front_iter.next().or_else(|| {
                 self.next_cycle();
@@ -261,25 +270,27 @@ where
         }
     }
 
-    fn advance_by(&mut self, n: usize) -> Result<(), usize> {
-        let mut res = 0;
+    fn advance_by(&mut self, mut n: usize) -> Result<(), NonZeroUsize> {
+        if self.front_iter().is_none() {
+            self.next_cycle();
+        }
+        if n == 0 {
+            return Ok(());
+        }
         while let Some(front_iter) = self.front_iter_mut() {
-            if let Err(skipped) = front_iter.advance_by(n - res) {
-                res += skipped;
+            if let Err(steps_remaining) = front_iter.advance_by(n) {
                 self.next_cycle();
+                n = steps_remaining.get();
             } else {
-                res = n;
-                break;
+                return Ok(());
             }
         }
-        if res == n {
-            Ok(())
-        } else {
-            debug_assert!(res < n);
-            debug_assert!(self.num_cycles == 0);
-            debug_assert!(self.back.is_none());
-            Err(res)
-        }
+        debug_assert_eq!(
+            self.num_cycles, 0,
+            "Ran out of elements before running out of cycles"
+        );
+        debug_assert!(self.front_iter().is_none());
+        Err(NonZeroUsize::try_from(n).unwrap())
     }
 
     fn try_fold<B, F, R>(&mut self, mut init: B, mut f: F) -> R
@@ -287,6 +298,7 @@ where
         F: FnMut(B, Self::Item) -> R,
         R: Try<Output = B>,
     {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         while let Some(front_iter) = self.front_iter_mut() {
             init = front_iter.try_fold(init, &mut f)?;
             self.next_cycle();
@@ -298,6 +310,7 @@ where
     where
         F: FnMut(B, Self::Item) -> B,
     {
+        debug_assert_eq!(Ok(()), self.advance_by(0));
         while let Some(front_iter) = self.front_iter_mut() {
             init = front_iter.fold(init, &mut f);
             self.next_cycle();
