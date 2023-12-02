@@ -169,7 +169,7 @@ fn separate_allergens(
                 .into_iter()
                 .flat_map(|(_, ingredients)| ingredients)
                 .collect::<HashSet<_>>();
-            ingredients.drain_filter(|ingredient| remaining_potentials.contains(ingredient));
+            ingredients.extract_if(|ingredient| remaining_potentials.contains(ingredient));
             break;
         }
     }
