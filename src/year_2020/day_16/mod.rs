@@ -72,7 +72,7 @@ impl<'field> TicketRules<'field> {
         }
         while !intermediate.is_empty() {
             let singletons = intermediate
-                .drain_filter(|_, indices| indices.len() == 1)
+                .extract_if(|_, indices| indices.len() == 1)
                 .map(|(field, indices)| (field, indices.into_iter().next().unwrap()))
                 .collect::<Vec<_>>();
             assert_ne!(
