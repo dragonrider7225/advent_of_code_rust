@@ -1,3 +1,5 @@
+// Feature isqrt used in day 8
+#![feature(isqrt)]
 use std::io;
 
 mod day_1;
