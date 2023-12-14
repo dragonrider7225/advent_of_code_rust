@@ -4,7 +4,7 @@
 #![warn(missing_copy_implementations, missing_docs, rust_2018_idioms)]
 #![deny(unsafe_op_in_unsafe_fn, missing_debug_implementations)]
 
-use nom::{character::complete as character, combinator as comb, multi, sequence, IResult};
+use nom::{branch, bytes::complete as bytes, character::complete as character, IResult};
 
 /// Utilities for axis-aligned bounding boxes.
 pub mod aabb;
@@ -13,73 +13,67 @@ pub mod aabb;
 #[doc(hidden)]
 pub mod a_star;
 
-macro_rules! digits {
-    () => {
-        multi::many1(character::one_of("0123456789"))
-    };
-}
-
-macro_rules! recognize_num_unsigned {
-    () => {
-        comb::map(comb::recognize(digits!()), |s: &str| s.parse().unwrap())
-    };
-}
-
-macro_rules! recognize_num_signed {
-    () => {
-        comb::map(
-            comb::recognize(sequence::pair(comb::opt(character::char('-')), digits!())),
-            |s: &str| s.parse().unwrap(),
-        )
-    };
+/// Recognizes both `\n` and `\r\n`.
+pub fn newline(s: &str) -> IResult<&str, &str> {
+    branch::alt((bytes::tag("\n"), bytes::tag("\r\n")))(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::u8"]
 pub fn recognize_u8(s: &str) -> IResult<&str, u8> {
-    recognize_num_unsigned!()(s)
+    character::u8(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::u16"]
 pub fn recognize_u16(s: &str) -> IResult<&str, u16> {
-    recognize_num_unsigned!()(s)
+    character::u16(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::u32"]
 pub fn recognize_u32(s: &str) -> IResult<&str, u32> {
-    recognize_num_unsigned!()(s)
+    character::u32(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::u64"]
 pub fn recognize_u64(s: &str) -> IResult<&str, u64> {
-    recognize_num_unsigned!()(s)
+    character::u64(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::u128"]
 pub fn recognize_u128(s: &str) -> IResult<&str, u128> {
-    recognize_num_unsigned!()(s)
+    character::u128(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::i8"]
 pub fn recognize_i8(s: &str) -> IResult<&str, i8> {
-    recognize_num_signed!()(s)
+    character::i8(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::i16"]
 pub fn recognize_i16(s: &str) -> IResult<&str, i16> {
-    recognize_num_signed!()(s)
+    character::i16(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::i32"]
 pub fn recognize_i32(s: &str) -> IResult<&str, i32> {
-    recognize_num_signed!()(s)
+    character::i32(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::i64"]
 pub fn recognize_i64(s: &str) -> IResult<&str, i64> {
-    recognize_num_signed!()(s)
+    character::i64(s)
 }
 
 /// Parses a decimal number from `s`.
+#[deprecated = "Use character::{complete, streaming}::i128"]
 pub fn recognize_i128(s: &str) -> IResult<&str, i128> {
-    recognize_num_signed!()(s)
+    character::i128(s)
 }
