@@ -6,10 +6,6 @@ use std::{
 
 use nom::{branch, bytes::complete as bytes, combinator, multi, sequence, IResult};
 
-fn newline(s: &str) -> IResult<&str, ()> {
-    combinator::value((), branch::alt((bytes::tag("\n"), bytes::tag("\r\n"))))(s)
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Tile {
     Ash,
@@ -42,7 +38,10 @@ struct Array {
 impl Array {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         combinator::map(
-            multi::many1(sequence::terminated(multi::many1(Tile::nom_parse), newline)),
+            multi::many1(sequence::terminated(
+                multi::many1(Tile::nom_parse),
+                aoc_util::newline,
+            )),
             |rows| Self { rows },
         )(s)
     }
@@ -115,7 +114,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
         input.read_to_string(&mut s)?;
         s
     };
-    let arrays = multi::separated_list1(newline, Array::nom_parse)(&input)
+    let arrays = multi::separated_list1(aoc_util::newline, Array::nom_parse)(&input)
         .map(|(_, arrays)| arrays)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
     Ok(arrays.into_iter().map(|array| array.find_mirror()).sum())
@@ -127,7 +126,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
         input.read_to_string(&mut s)?;
         s
     };
-    let arrays = multi::separated_list1(newline, Array::nom_parse)(&input)
+    let arrays = multi::separated_list1(aoc_util::newline, Array::nom_parse)(&input)
         .map(|(_, arrays)| arrays)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
     Ok(arrays
