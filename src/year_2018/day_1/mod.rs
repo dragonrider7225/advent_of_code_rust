@@ -1,14 +1,32 @@
-use std::{collections::HashSet, io};
+use std::{
+    collections::HashSet,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 pub fn run() -> io::Result<()> {
     {
         // Part 1
-        let freq: i32 = super::super::parse_lines::<i32, _>("1.txt")?.sum();
+        let freq = BufReader::new(File::open("2018_01.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse::<i32>()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            })
+            .sum::<io::Result<i32>>()?;
         println!("Final frequency is {freq}");
     }
     {
         // Part 2
-        let changes_vec: Vec<_> = super::super::parse_lines("1.txt")?.collect();
+        let changes_vec = BufReader::new(File::open("2018_01.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse::<i32>()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            })
+            .collect::<io::Result<Vec<_>>>()?;
         let mut changes = changes_vec.iter().cycle();
         let mut freqs = HashSet::new();
         let mut freq = 0i32;

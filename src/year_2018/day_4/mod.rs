@@ -1,15 +1,18 @@
-use nom::{branch, bytes::complete as bytes, combinator as comb, sequence, IResult};
+use nom::{
+    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+    sequence, IResult,
+};
 
 use std::{
     collections::HashMap,
     convert::TryFrom,
     fmt::{self, Display, Formatter},
-    io,
+    fs::File,
+    io::{self, BufRead, BufReader},
     ops::Range,
-    str::FromStr,
 };
 
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy)]
 struct Date {
@@ -25,21 +28,21 @@ impl Date {
 }
 
 impl Display for Date {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}-{}-{}", self.year, self.month, self.day)
     }
 }
 
-impl<'s> NomParse<'s> for Date {
-    fn nom_parse(s: &str) -> IResult<&str, Date> {
+impl<'s> NomParse<&'s str> for Date {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Date> {
         comb::map(
             sequence::separated_pair(
-                u32::nom_parse, // Parse year ("{u32}")
+                character::u32, // Parse year ("{u32}")
                 bytes::tag("-"),
                 sequence::separated_pair(
-                    u8::nom_parse, // Parse month ("{u8}")
+                    character::u8, // Parse month ("{u8}")
                     bytes::tag("-"),
-                    u8::nom_parse, // Parse day ("{u8}")
+                    character::u8, // Parse day ("{u8}")
                 ), // Parse (month, day) ("{u8}-{u8}")
             ), // Parse (year, (month, day)) ("{u32}-{u8}-{u8}")
             |(year, (month, day))| Date::new(year, month, day),
@@ -68,7 +71,7 @@ impl Time {
 }
 
 impl Display for Time {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.hour, self.minute)
     }
 }
@@ -109,13 +112,13 @@ macro_rules! impl_try_from_integer_for_time {
 
 impl_try_from_integer_for_time!(u16 u32 u64 u128 usize i16 i32 i64 i128 isize);
 
-impl<'s> NomParse<'s> for Time {
-    fn nom_parse(s: &str) -> IResult<&str, Time> {
+impl<'s> NomParse<&'s str> for Time {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Time> {
         comb::map(
             sequence::separated_pair(
-                u8::nom_parse, // Parse hour ("{u8}")
+                character::u8, // Parse hour ("{u8}")
                 bytes::tag(":"),
-                u8::nom_parse, // Parse minute ("{u8}")
+                character::u8, // Parse minute ("{u8}")
             ), // Parse (hour, minute) ("{u8}:{u8}")
             |(hour, minute)| Time::new(hour, minute),
         )(s)
@@ -143,13 +146,13 @@ impl Datetime {
 }
 
 impl Display for Datetime {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{} {}", self.date, self.time)
     }
 }
 
-impl<'s> NomParse<'s> for Datetime {
-    fn nom_parse(s: &str) -> IResult<&str, Datetime> {
+impl<'s> NomParse<&'s str> for Datetime {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Datetime> {
         comb::map(
             // Parse (date, time) ("{u32}-{u8}-{u8} {u8}:{u8}")
             sequence::separated_pair(Date::nom_parse, bytes::tag(" "), Time::nom_parse),
@@ -166,7 +169,7 @@ enum Day4Event {
 }
 
 impl Display for Day4Event {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Day4Event::WakesUp => write!(f, "wakes up"),
             Day4Event::FallsAsleep => write!(f, "falls asleep"),
@@ -175,15 +178,15 @@ impl Display for Day4Event {
     }
 }
 
-impl<'s> NomParse<'s> for Day4Event {
-    fn nom_parse(s: &str) -> IResult<&str, Day4Event> {
+impl<'s> NomParse<&'s str> for Day4Event {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Day4Event> {
         branch::alt((
             comb::value(Day4Event::WakesUp, bytes::tag("wakes up")),
             comb::value(Day4Event::FallsAsleep, bytes::tag("falls asleep")),
             comb::map(
                 sequence::delimited(
                     bytes::tag("Guard #"),
-                    u32::nom_parse, // Parse guard_num ("{u32}")
+                    character::u32, // Parse guard_num ("{u32}")
                     bytes::tag(" begins shift"),
                 ), // Parse guard_num ("Guard #{u32} begins shift")
                 Day4Event::BeginsShift,
@@ -212,13 +215,13 @@ impl Day4Entry {
 }
 
 impl Display for Day4Entry {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "[{}] {}", self.datetime, self.event)
     }
 }
 
-impl<'s> NomParse<'s> for Day4Entry {
-    fn nom_parse(s: &str) -> IResult<&str, Day4Entry> {
+impl<'s> NomParse<&'s str> for Day4Entry {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Day4Entry> {
         comb::map(
             sequence::pair(
                 sequence::delimited(bytes::tag("["), Datetime::nom_parse, bytes::tag("] ")),
@@ -229,15 +232,7 @@ impl<'s> NomParse<'s> for Day4Entry {
     }
 }
 
-impl FromStr for Day4Entry {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Day4Entry, ()> {
-        comb::all_consuming(Day4Entry::nom_parse)(s)
-            .map(|(_, entry)| entry)
-            .map_err(|_| ())
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Day4Entry);
 
 struct ReposeRecord {
     sleep_times: HashMap<u32, Vec<Range<u16>>>,
@@ -265,7 +260,14 @@ impl IntoIterator for ReposeRecord {
 }
 
 fn get_entries() -> io::Result<Vec<Day4Entry>> {
-    let mut ret: Vec<Day4Entry> = super::super::parse_lines("4.txt")?.collect();
+    let mut ret = BufReader::new(File::open("2018_04.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse::<Day4Entry>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
     ret.sort_by_key(|entry| entry.datetime());
     Ok(ret)
 }
