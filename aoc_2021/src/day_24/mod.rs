@@ -4,12 +4,12 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-use aoc_util::{
-    impl_from_str_for_nom_parse,
-    nom_extended::{self, NomParse},
-};
+use aoc_util::{impl_from_str_for_nom_parse, nom_extended::NomParse};
 
-use nom::{branch, bytes::complete as bytes, combinator as comb, sequence, IResult};
+use nom::{
+    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+    sequence, IResult,
+};
 
 #[derive(Clone, Debug, Default)]
 struct Alu {
@@ -101,7 +101,7 @@ impl NomParse<&'_ str> for Value {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
             comb::map(Variable::nom_parse, Self::Variable),
-            comb::map(nom_extended::recognize_i128, Self::Literal),
+            comb::map(character::i128, Self::Literal),
         ))(s)
     }
 }

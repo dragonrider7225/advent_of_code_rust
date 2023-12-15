@@ -5,11 +5,9 @@ use std::{
     mem,
 };
 
-use aoc_util::nom_extended;
-
 use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    Finish,
+    IResult,
 };
 
 trait Rng {
@@ -164,33 +162,30 @@ impl DiracGameState {
     }
 }
 
-fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
-    let mut buf = String::new();
-    input.read_line(&mut buf)?;
-    input.read_line(&mut buf)?;
-    let (p1, p2) = sequence::terminated(
+fn parse_players(s: &str) -> IResult<&str, (Player, Player)> {
+    sequence::terminated(
         sequence::separated_pair(
             comb::map(
-                sequence::preceded(
-                    bytes::tag("Player 1 starting position: "),
-                    nom_extended::recognize_u32,
-                ),
+                sequence::preceded(bytes::tag("Player 1 starting position: "), character::u32),
                 Player::at,
             ),
             character::line_ending,
             comb::map(
-                sequence::preceded(
-                    bytes::tag("Player 2 starting position: "),
-                    nom_extended::recognize_u32,
-                ),
+                sequence::preceded(bytes::tag("Player 2 starting position: "), character::u32),
                 Player::at,
             ),
         ),
         comb::opt(character::line_ending),
-    )(&buf)
-    .finish()
-    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?
-    .1;
+    )(s)
+}
+
+fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
+    let mut buf = String::new();
+    input.read_line(&mut buf)?;
+    input.read_line(&mut buf)?;
+    let (p1, p2) = parse_players(&buf)
+        .map(|(_, players)| players)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     let mut game = DeterministicGameState {
         p1,
         p2,
@@ -210,29 +205,9 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u64> {
     let mut buf = String::new();
     input.read_line(&mut buf)?;
     input.read_line(&mut buf)?;
-    let (p1, p2) = sequence::terminated(
-        sequence::separated_pair(
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("Player 1 starting position: "),
-                    nom_extended::recognize_u32,
-                ),
-                Player::at,
-            ),
-            character::line_ending,
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("Player 2 starting position: "),
-                    nom_extended::recognize_u32,
-                ),
-                Player::at,
-            ),
-        ),
-        comb::opt(character::line_ending),
-    )(&buf)
-    .finish()
-    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?
-    .1;
+    let (p1, p2) = parse_players(&buf)
+        .map(|(_, players)| players)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     let mut game = DiracGameState::starting_at(p1, p2);
     let mut scores = HashMap::new();
     for i in 0.. {
