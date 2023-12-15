@@ -131,7 +131,7 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            num_cycles: self.num_cycles.clone(),
+            num_cycles: self.num_cycles,
             inner: self.inner.clone(),
             back: self.back.clone(),
             base: self.base.clone(),
