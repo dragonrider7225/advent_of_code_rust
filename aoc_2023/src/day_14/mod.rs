@@ -5,7 +5,10 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-use nom::{branch, bytes::complete as bytes, combinator, multi, sequence, IResult};
+use nom::{
+    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
+    sequence, IResult,
+};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum Tile {
@@ -42,7 +45,7 @@ impl Platform {
         combinator::map(
             multi::many1(sequence::terminated(
                 multi::many1(Tile::nom_parse),
-                aoc_util::newline,
+                character::newline,
             )),
             Self,
         )(s)

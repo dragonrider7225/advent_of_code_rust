@@ -24,7 +24,7 @@ impl SeedList {
             sequence::delimited(
                 bytes::tag("seeds: "),
                 multi::separated_list1(bytes::tag(" "), id_nom_parse),
-                aoc_util::newline,
+                character::newline,
             ),
             Self,
         )(s)
@@ -44,7 +44,7 @@ impl MapRange {
             sequence::tuple((
                 sequence::terminated(id_nom_parse, bytes::tag(" ")),
                 sequence::terminated(id_nom_parse, bytes::tag(" ")),
-                sequence::terminated(id_nom_parse, aoc_util::newline),
+                sequence::terminated(id_nom_parse, character::newline),
             )),
             |(to, from, len)| Self { to, from, len },
         )(s)
@@ -117,7 +117,7 @@ macro_rules! mk_maps {
                         sequence::preceded(
                             sequence::pair(
                                 bytes::tag(concat!($header, " map:")),
-                                aoc_util::newline,
+                                character::newline,
                             ),
                             Map::nom_parse,
                         ),
@@ -166,13 +166,13 @@ impl Almanac {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         combinator::map(
             sequence::tuple((
-                sequence::terminated(SeedList::nom_parse, aoc_util::newline),
-                sequence::terminated(SeedToSoilMap::nom_parse, aoc_util::newline),
-                sequence::terminated(SoilToFertilizerMap::nom_parse, aoc_util::newline),
-                sequence::terminated(FertilizerToWaterMap::nom_parse, aoc_util::newline),
-                sequence::terminated(WaterToLightMap::nom_parse, aoc_util::newline),
-                sequence::terminated(LightToTemperatureMap::nom_parse, aoc_util::newline),
-                sequence::terminated(TemperatureToHumidityMap::nom_parse, aoc_util::newline),
+                sequence::terminated(SeedList::nom_parse, character::newline),
+                sequence::terminated(SeedToSoilMap::nom_parse, character::newline),
+                sequence::terminated(SoilToFertilizerMap::nom_parse, character::newline),
+                sequence::terminated(FertilizerToWaterMap::nom_parse, character::newline),
+                sequence::terminated(WaterToLightMap::nom_parse, character::newline),
+                sequence::terminated(LightToTemperatureMap::nom_parse, character::newline),
+                sequence::terminated(TemperatureToHumidityMap::nom_parse, character::newline),
                 HumidityToLocationMap::nom_parse,
             )),
             |almanac| Self {
