@@ -1,8 +1,9 @@
-use nom::{branch, bytes::complete as bytes, character::complete as character, IResult};
+use nom::{character::complete as character, IResult};
 
 /// Recognizes both `\n` and `\r\n`.
+#[deprecated = "Use character::line_ending"]
 pub fn newline(s: &str) -> IResult<&str, &str> {
-    branch::alt((bytes::tag("\n"), bytes::tag("\r\n")))(s)
+    character::line_ending(s)
 }
 
 /// Parses a decimal number from `s`.
