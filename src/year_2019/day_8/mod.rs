@@ -1,6 +1,6 @@
-use std::{io, str::FromStr};
+use std::io;
 
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use nom::{character::complete as character, combinator as comb, multi, IResult};
 
@@ -9,8 +9,8 @@ struct SIFLayer {
     pixels: [[u8; 25]; 6],
 }
 
-impl<'s> NomParse<'s> for SIFLayer {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for SIFLayer {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::count(multi::count(character::one_of("0123456789"), 25), 6),
             |pixels_vec| {
@@ -33,21 +33,13 @@ struct SpaceImageFormat {
     layers: Vec<SIFLayer>,
 }
 
-impl<'s> NomParse<'s> for SpaceImageFormat {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for SpaceImageFormat {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(multi::many1(SIFLayer::nom_parse), |layers| Self { layers })(s)
     }
 }
 
-impl FromStr for SpaceImageFormat {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::nom_parse(s)
-            .map(|(_, x)| x)
-            .map_err(|e| format!("{e:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(SpaceImageFormat);
 
 pub(super) fn run() -> io::Result<()> {
     let pic = String::from_utf8(std::fs::read("2019_8.txt")?)

@@ -1,12 +1,11 @@
-use crate::{parse::NomParse, util::Point};
-
 use std::{io, mem};
 
+use aoc_util::{geometry::Point2D, nom_extended::NomParse};
 use nom::{branch, character::complete as character, combinator as comb, multi, IResult};
 
 struct RatioGenerator {
-    last_set: Vec<(bool, Point<usize>)>,
-    current_set: Vec<(bool, Point<usize>)>,
+    last_set: Vec<(bool, Point2D<usize>)>,
+    current_set: Vec<(bool, Point2D<usize>)>,
     max_x: usize,
     max_y: usize,
     has_next: bool,
@@ -14,7 +13,7 @@ struct RatioGenerator {
 
 impl RatioGenerator {
     fn new(max_x: usize, max_y: usize) -> Self {
-        let last_set = vec![(false, Point::at(0, 1)), (false, Point::at(1, 0))];
+        let last_set = vec![(false, Point2D::at(0, 1)), (false, Point2D::at(1, 0))];
         Self {
             last_set,
             current_set: vec![],
@@ -55,11 +54,11 @@ impl RatioGenerator {
         false
     }
 
-    fn is_too_large(&self, ratio: Point<usize>) -> bool {
+    fn is_too_large(&self, ratio: Point2D<usize>) -> bool {
         ratio.x() > &self.max_x || ratio.y() > &self.max_y
     }
 
-    fn into_sorted(mut self) -> Vec<Point<usize>> {
+    fn into_sorted(mut self) -> Vec<Point2D<usize>> {
         for _ in self.by_ref() {}
         self.current_set
             .into_iter()
@@ -69,7 +68,7 @@ impl RatioGenerator {
 }
 
 impl Iterator for RatioGenerator {
-    type Item = Point<usize>;
+    type Item = Point2D<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.might_have_next() {
@@ -96,14 +95,14 @@ impl Iterator for RatioGenerator {
 }
 
 struct Multiplier {
-    base: Point<usize>,
-    next: Option<Point<usize>>,
+    base: Point2D<usize>,
+    next: Option<Point2D<usize>>,
     max_x: usize,
     max_y: usize,
 }
 
 impl Multiplier {
-    fn new(base: Point<usize>, max_x: usize, max_y: usize) -> Self {
+    fn new(base: Point2D<usize>, max_x: usize, max_y: usize) -> Self {
         Self {
             base,
             next: Some(base),
@@ -112,13 +111,13 @@ impl Multiplier {
         }
     }
 
-    fn is_too_large(&self, p: Point<usize>) -> bool {
+    fn is_too_large(&self, p: Point2D<usize>) -> bool {
         p.x() > &self.max_x || p.y() > &self.max_y
     }
 }
 
 impl Iterator for Multiplier {
-    type Item = Point<usize>;
+    type Item = Point2D<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.next.take() {
@@ -151,36 +150,36 @@ impl AsteroidField {
         let bottom_space = self.asteroids.len() - row - 1;
         let upper_left_generator = RatioGenerator::new(left_space, top_space).filter_map(|p| {
             Multiplier::new(p, left_space, top_space).find_map(|p| {
-                Some(Point::at(col - p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
+                Some(Point2D::at(col - p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
             })
         });
         let left_generator = (1..=left_space)
-            .filter_map(|n| Some(Point::at(col - n, row)).filter(|&p| self.has_asteroid_at(p)))
+            .filter_map(|n| Some(Point2D::at(col - n, row)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let lower_left_generator = RatioGenerator::new(left_space, bottom_space).filter_map(|p| {
             Multiplier::new(p, left_space, bottom_space).find_map(|p| {
-                Some(Point::at(col - p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
+                Some(Point2D::at(col - p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
             })
         });
         let bottom_generator = (1..=bottom_space)
-            .filter_map(|n| Some(Point::at(col, row + n)).filter(|&p| self.has_asteroid_at(p)))
+            .filter_map(|n| Some(Point2D::at(col, row + n)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let lower_right_generator =
             RatioGenerator::new(right_space, bottom_space).filter_map(|p| {
                 Multiplier::new(p, right_space, bottom_space).find_map(|p| {
-                    Some(Point::at(col + p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
+                    Some(Point2D::at(col + p.x(), row + p.y())).filter(|&p| self.has_asteroid_at(p))
                 })
             });
         let right_generator = (1..=right_space)
-            .filter_map(|n| Some(Point::at(col + n, row)).filter(|&p| self.has_asteroid_at(p)))
+            .filter_map(|n| Some(Point2D::at(col + n, row)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let upper_right_generator = RatioGenerator::new(right_space, top_space).filter_map(|p| {
             Multiplier::new(p, right_space, top_space).find_map(|p| {
-                Some(Point::at(col + p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
+                Some(Point2D::at(col + p.x(), row - p.y())).filter(|&p| self.has_asteroid_at(p))
             })
         });
         let upper_generator = (1..=top_space)
-            .filter_map(|n| Some(Point::at(col, row - n)).filter(|&p| self.has_asteroid_at(p)))
+            .filter_map(|n| Some(Point2D::at(col, row - n)).filter(|&p| self.has_asteroid_at(p)))
             .take(1);
         let directions = upper_left_generator
             .chain(left_generator)
@@ -193,13 +192,13 @@ impl AsteroidField {
         Some(directions.count())
     }
 
-    fn has_asteroid_at(&self, p: Point<usize>) -> bool {
+    fn has_asteroid_at(&self, p: Point2D<usize>) -> bool {
         self.asteroids[*p.y()][*p.x()]
     }
 }
 
-impl<'s> NomParse<'s> for AsteroidField {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for AsteroidField {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         let asteroid = comb::value(true, character::char('#'));
         let blank = comb::value(false, character::char('.'));
         let row_parser = multi::many1(branch::alt((asteroid, blank)));
@@ -208,7 +207,7 @@ impl<'s> NomParse<'s> for AsteroidField {
     }
 }
 
-impl_from_str_for_nom_parse!(AsteroidField);
+aoc_util::impl_from_str_for_nom_parse!(AsteroidField);
 
 pub(super) fn run() -> io::Result<()> {
     let field = std::fs::read_to_string("2019_10.txt")?
@@ -223,7 +222,7 @@ pub(super) fn run() -> io::Result<()> {
                 let count = field.count(col, row).unwrap();
                 if count > most {
                     most = count;
-                    most_coords = Some(Point::at(col, row));
+                    most_coords = Some(Point2D::at(col, row));
                 }
             }
         }
@@ -242,7 +241,7 @@ pub(super) fn run() -> io::Result<()> {
         let bottom_space = field.asteroids.len() - row - 1;
         // let upper = (1..=top_space)
         //     .filter_map(|n| {
-        //         Some(Point::at(col, row - n))
+        //         Some(Point2D::at(col, row - n))
         //             .filter(|&p| field.has_asteroid_at(p))
         //     })
         //     .take(1)
@@ -252,12 +251,13 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .filter_map(|p| {
                 Multiplier::new(p, right_space, top_space).find_map(|p| {
-                    Some(Point::at(col + p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
+                    Some(Point2D::at(col + p.x(), row - p.y()))
+                        .filter(|&p| field.has_asteroid_at(p))
                 })
             });
         // let right = (1..=right_space)
         //     .filter_map(|n| {
-        //         Some(Point::at(col + n, row))
+        //         Some(Point2D::at(col + n, row))
         //             .filter(|&p| field.has_asteroid_at(p))
         //     })
         //     .take(1)
@@ -267,12 +267,13 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .filter_map(|p| {
                 Multiplier::new(p, right_space, bottom_space).find_map(|p| {
-                    Some(Point::at(col + p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
+                    Some(Point2D::at(col + p.x(), row + p.y()))
+                        .filter(|&p| field.has_asteroid_at(p))
                 })
             });
         // let bottom = (1..=bottom_space)
         //     .filter_map(|n| {
-        //         Some(Point::at(col, row + n))
+        //         Some(Point2D::at(col, row + n))
         //             .filter(|&p| field.has_asteroid_at(p))
         //     })
         //     .take(1)
@@ -282,12 +283,13 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .filter_map(|p| {
                 Multiplier::new(p, left_space, bottom_space).find_map(|p| {
-                    Some(Point::at(col - p.x(), row + p.y())).filter(|&p| field.has_asteroid_at(p))
+                    Some(Point2D::at(col - p.x(), row + p.y()))
+                        .filter(|&p| field.has_asteroid_at(p))
                 })
             });
         // let left = (1..=left_space)
         //     .filter_map(|n| {
-        //         Some(Point::at(col - n, row))
+        //         Some(Point2D::at(col - n, row))
         //             .filter(|&p| field.has_asteroid_at(p))
         //     })
         //     .take(1)
@@ -297,7 +299,8 @@ pub(super) fn run() -> io::Result<()> {
             .into_iter()
             .filter_map(|p| {
                 Multiplier::new(p, left_space, top_space).find_map(|p| {
-                    Some(Point::at(col - p.x(), row - p.y())).filter(|&p| field.has_asteroid_at(p))
+                    Some(Point2D::at(col - p.x(), row - p.y()))
+                        .filter(|&p| field.has_asteroid_at(p))
                 })
             });
         // This is missing 7 values, the cardinal direction iterators seem to

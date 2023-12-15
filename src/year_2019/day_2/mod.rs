@@ -1,15 +1,19 @@
 use super::intcode_interpreter::IntcodeInterpreter;
 
-use std::io;
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 use extended_io::pipe::{PipeRead, PipeWrite};
 
 pub(super) fn run() -> io::Result<()> {
     {
         // Part 1
-        let mut prog = crate::get_lines("2019_2.txt")?
+        let mut prog = BufReader::new(File::open("2019_2.txt")?)
+            .lines()
             .next()
-            .unwrap()
+            .unwrap()?
             .split(',')
             .map(|s| s.parse().unwrap())
             .collect::<Vec<_>>();
@@ -20,9 +24,10 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         // Part 2
-        let mut prog = crate::get_lines("2019_2.txt")?
+        let mut prog = BufReader::new(File::open("2019_2.txt")?)
+            .lines()
             .next()
-            .unwrap()
+            .unwrap()?
             .split(',')
             .map(|s| {
                 s.parse().map_err(|e| {

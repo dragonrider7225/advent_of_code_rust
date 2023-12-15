@@ -1,4 +1,7 @@
-use std::io;
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 struct Body {
     name: String,
@@ -89,13 +92,19 @@ impl Default for Body {
 }
 
 fn get_orbits() -> io::Result<Body> {
-    let mut orbits: Box<dyn Iterator<Item = (String, String)>> =
-        Box::new(crate::get_lines("2019_6.txt")?.map(|s| {
-            let mut strs = s.split(')').map(|s| s.to_owned());
-            let parent = strs.next().unwrap();
-            let child = strs.next().unwrap();
-            (parent, child)
-        }));
+    let mut orbits: Box<dyn Iterator<Item = (String, String)>> = Box::new(
+        BufReader::new(File::open("2019_6.txt")?)
+            .lines()
+            .map(|s| {
+                let s = s?;
+                let mut strs = s.split(')').map(|s| s.to_owned());
+                let parent = strs.next().unwrap();
+                let child = strs.next().unwrap();
+                Ok((parent, child))
+            })
+            .collect::<io::Result<Vec<_>>>()?
+            .into_iter(),
+    );
     let mut com = Body::default();
     loop {
         let mut missed = vec![];

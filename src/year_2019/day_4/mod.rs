@@ -1,12 +1,17 @@
-use crate::parse::NomParse;
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+    ops::Range,
+};
 
-use std::{io, ops::Range};
-
-use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
+use nom::{
+    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
+    IResult,
+};
 
 fn parse_range(s: &str) -> IResult<&str, Range<u32>> {
     comb::map(
-        sequence::separated_pair(u32::nom_parse, bytes::tag("-"), u32::nom_parse),
+        sequence::separated_pair(character::u32, bytes::tag("-"), character::u32),
         |(least, most)| least..most,
     )(s)
 }
@@ -53,30 +58,32 @@ fn possible_pw_modified(pw: u32) -> bool {
 pub(super) fn run() -> io::Result<()> {
     {
         // Part 1
-        let pw_range = crate::get_lines("2019_4.txt")?
-            .map(|s| parse_range(&s).unwrap().1)
+        let num_pws = BufReader::new(File::open("2019_4.txt")?)
+            .lines()
+            .map(|s| {
+                parse_range(&s?)
+                    .map(|(_, range)| range)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
             .next()
-            .unwrap();
-        let mut num_pws = 0;
-        for pw in pw_range {
-            if possible_pw(pw) {
-                num_pws += 1;
-            }
-        }
+            .unwrap()?
+            .filter(|&pw| possible_pw(pw))
+            .count();
         println!("The number of potential passwords is {num_pws}");
     }
     {
         // Part 2
-        let pw_range = crate::get_lines("2019_4.txt")?
-            .map(|s| parse_range(&s).unwrap().1)
+        let num_pws = BufReader::new(File::open("2019_4.txt")?)
+            .lines()
+            .map(|s| {
+                parse_range(&s?)
+                    .map(|(_, range)| range)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
             .next()
-            .unwrap();
-        let mut num_pws = 0;
-        for pw in pw_range {
-            if possible_pw_modified(pw) {
-                num_pws += 1;
-            }
-        }
+            .unwrap()?
+            .filter(|&pw| possible_pw_modified(pw))
+            .count();
         println!("The number of potential passwords is {num_pws}");
     }
     Ok(())

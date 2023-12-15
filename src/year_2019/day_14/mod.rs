@@ -2,8 +2,9 @@ use std::{
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
+    fs::File,
     hint::unreachable_unchecked,
-    io,
+    io::{self, BufRead, BufReader},
     ops::Mul,
 };
 
@@ -12,7 +13,7 @@ use nom::{
     sequence, IResult,
 };
 
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 struct Material(u64, String);
@@ -65,11 +66,11 @@ impl<'a, 'b> Mul<&'b u64> for &'a Material {
     }
 }
 
-impl<'s> NomParse<'s> for Material {
+impl<'s> NomParse<&'s str> for Material {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
-                u64::nom_parse,
+                character::u64,
                 bytes::tag(" "),
                 multi::many1(character::one_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ")),
             ),
@@ -147,7 +148,7 @@ impl<'a, 'b> Mul<&'b u64> for &'a Reaction {
     }
 }
 
-impl<'s> NomParse<'s> for Reaction {
+impl<'s> NomParse<&'s str> for Reaction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
@@ -160,16 +161,23 @@ impl<'s> NomParse<'s> for Reaction {
     }
 }
 
-impl_from_str_for_nom_parse!(Reaction);
+aoc_util::impl_from_str_for_nom_parse!(Reaction);
 
 type Reactions = HashMap<String, Reaction>;
 
 fn parse_reactions() -> io::Result<Reactions> {
-    let ret = crate::parse_lines("2019_14.txt")?.fold(Reactions::new(), |mut acc, x: Reaction| {
-        assert!(acc.insert(x.result().chemical().clone(), x).is_none());
-        acc
-    });
-    Ok(ret)
+    BufReader::new(File::open("2019_14.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse::<Reaction>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .try_fold(Reactions::new(), |mut acc, x| {
+            let x = x?;
+            assert!(acc.insert(x.result().chemical().clone(), x).is_none());
+            Ok(acc)
+        })
 }
 
 pub(super) fn run() -> io::Result<()> {

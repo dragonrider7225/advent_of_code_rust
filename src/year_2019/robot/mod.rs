@@ -1,4 +1,4 @@
-use crate::util::Point;
+use aoc_util::geometry::Point2D;
 
 use std::{
     collections::HashSet,
@@ -103,16 +103,16 @@ impl Default for Field {
     }
 }
 
-impl Index<Point<usize>> for Field {
+impl Index<Point2D<usize>> for Field {
     type Output = Color;
 
-    fn index(&self, p: Point<usize>) -> &Self::Output {
+    fn index(&self, p: Point2D<usize>) -> &Self::Output {
         &self.0[*p.y()][*p.x()]
     }
 }
 
-impl IndexMut<Point<usize>> for Field {
-    fn index_mut(&mut self, p: Point<usize>) -> &mut Self::Output {
+impl IndexMut<Point2D<usize>> for Field {
+    fn index_mut(&mut self, p: Point2D<usize>) -> &mut Self::Output {
         &mut self.0[*p.y()][*p.x()]
     }
 }
@@ -149,12 +149,12 @@ impl Default for Direction {
 
 #[derive(Clone)]
 pub struct Robot {
-    pos: Point<usize>,
+    pos: Point2D<usize>,
     field: Field,
     input: PipeRead,
     output: PipeWrite,
     facing: Direction,
-    painted: HashSet<Point<usize>>,
+    painted: HashSet<Point2D<usize>>,
 }
 
 impl Robot {
@@ -210,34 +210,34 @@ impl Robot {
                 if *self.pos.y() == self.field.height() - 1 {
                     self.field.add_last_row();
                 }
-                self.pos += Point::at(0, 1);
+                self.pos += Point2D::at(0, 1);
             }
             Direction::Left => {
                 if *self.pos.x() == 0 {
                     self.field.add_first_col();
-                    self.painted = self.painted.iter().map(|p| p + Point::at(1, 0)).collect();
+                    self.painted = self.painted.iter().map(|p| p + Point2D::at(1, 0)).collect();
                 } else {
-                    self.pos -= Point::at(1, 0);
+                    self.pos -= Point2D::at(1, 0);
                 }
             }
             Direction::Down => {
                 if *self.pos.y() == 0 {
                     self.field.add_first_row();
-                    self.painted = self.painted.iter().map(|p| p + Point::at(0, 1)).collect();
+                    self.painted = self.painted.iter().map(|p| p + Point2D::at(0, 1)).collect();
                 } else {
-                    self.pos -= Point::at(0, 1);
+                    self.pos -= Point2D::at(0, 1);
                 }
             }
             Direction::Right => {
                 if *self.pos.x() == self.field.width() - 1 {
                     self.field.add_last_col();
                 }
-                self.pos += Point::at(1, 0);
+                self.pos += Point2D::at(1, 0);
             }
         }
     }
 
-    pub(super) fn set(&mut self, at: Point<usize>, color: Color) {
+    pub(super) fn set(&mut self, at: Point2D<usize>, color: Color) {
         self.field[at] = color;
     }
 
