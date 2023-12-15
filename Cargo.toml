@@ -10,6 +10,7 @@ edition = "2021"
 extended_io = { git = "https://github.com/dragonrider7225/extended_io.git", version = "^0.2.0", tag = "v0.2.0" }
 nom = "^7.0.0"
 aoc_iter = { path = "iter_extensions" }
+aoc_util = { path = "aoc_util" }
 aoc_2020 = { path = "aoc_2020" }
 aoc_2021 = { path = "aoc_2021" }
 aoc_2022 = { path = "aoc_2022" }

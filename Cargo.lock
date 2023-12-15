@@ -10,6 +10,7 @@ dependencies = [
  "aoc_2021",
  "aoc_2022",
  "aoc_iter",
+ "aoc_util",
  "clap",
  "extended_io",
  "nom",
