@@ -1,5 +1,7 @@
 // Feature isqrt used in day 8
 #![feature(isqrt)]
+// Feature inline_const used in day 15
+#![feature(inline_const)]
 use std::io;
 
 mod day_1;
