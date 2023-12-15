@@ -1,8 +1,16 @@
-use std::{cmp::Ordering, collections::HashMap, io};
+use std::{
+    cmp::Ordering,
+    collections::HashMap,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 pub fn run() -> io::Result<()> {
-    fn get_line_bytes() -> io::Result<impl Iterator<Item = Vec<u8>>> {
-        Ok(super::super::get_lines("2.txt")?.map(|s| s.into_bytes()))
+    fn get_line_bytes() -> io::Result<Vec<Vec<u8>>> {
+        BufReader::new(File::open("2018_02.txt")?)
+            .lines()
+            .map(|line| line.map(|line| line.into_bytes()))
+            .collect::<io::Result<Vec<_>>>()
     }
     {
         // Part 1
@@ -36,7 +44,7 @@ pub fn run() -> io::Result<()> {
     }
     {
         // Part 2
-        let ids: Vec<_> = get_line_bytes()?.collect();
+        let ids = get_line_bytes()?;
         'lv0: for i in 0..ids.len() {
             'lv1: for j in 0..i {
                 let a = &ids[i];

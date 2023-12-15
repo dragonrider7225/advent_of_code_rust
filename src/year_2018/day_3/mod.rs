@@ -1,59 +1,16 @@
-use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
+use nom::{
+    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
+    IResult,
+};
 
-use std::{cmp::Ordering, io, iter::FromIterator};
+use std::{
+    cmp::Ordering,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    iter::FromIterator,
+};
 
-use crate::parse::NomParse;
-
-trait Semigroup {
-    /// An associative operation.
-    fn op(self, other: Self) -> Self;
-}
-
-impl<T: Semigroup> Semigroup for Option<T> {
-    fn op(self, other: Option<T>) -> Option<T> {
-        match (self, other) {
-            (Some(x), Some(y)) => Some(x.op(y)),
-            (Some(x), _) => Some(x),
-            (_, Some(y)) => Some(y),
-            _ => None,
-        }
-    }
-}
-
-impl Semigroup for Ordering {
-    fn op(self, other: Ordering) -> Ordering {
-        self.then(other)
-    }
-}
-
-#[derive(Copy, Clone, PartialEq, Eq)]
-struct Point<T>(T, T);
-
-impl<T> Point<T> {
-    fn new(x: T, y: T) -> Point<T> {
-        Point(x, y)
-    }
-}
-
-impl<T> From<(T, T)> for Point<T> {
-    fn from((base_x, base_y): (T, T)) -> Point<T> {
-        Point::new(base_x, base_y)
-    }
-}
-
-impl<T: PartialOrd> PartialOrd for Point<T> {
-    fn partial_cmp(&self, other: &Point<T>) -> Option<Ordering> {
-        self.1
-            .partial_cmp(&other.1)
-            .op(self.0.partial_cmp(&other.0))
-    }
-}
-
-impl<T: Ord> Ord for Point<T> {
-    fn cmp(&self, other: &Point<T>) -> Ordering {
-        self.1.cmp(&other.1).op(self.0.cmp(&other.0))
-    }
-}
+use aoc_util::nom_extended::NomParse;
 
 #[derive(PartialEq, Eq, Clone)]
 struct Rect {
@@ -81,10 +38,6 @@ impl Rect {
 
     fn id(&self) -> u32 {
         self.id
-    }
-
-    fn lower_left(&self) -> Point<u32> {
-        Point::new(self.left(), self.bottom())
     }
 
     fn left(&self) -> u32 {
@@ -229,15 +182,16 @@ impl PartialOrd for Rect {
 
 impl Ord for Rect {
     fn cmp(&self, other: &Rect) -> Ordering {
-        self.lower_left()
-            .cmp(&other.lower_left())
-            .op(self.height().cmp(&other.height()))
-            .op(self.width().cmp(&other.width()))
+        self.bottom()
+            .cmp(&other.bottom())
+            .then(self.left().cmp(&other.left()))
+            .then(self.height().cmp(&other.height()))
+            .then(self.width().cmp(&other.width()))
     }
 }
 
-impl<'s> NomParse<'s> for Rect {
-    fn nom_parse(s: &str) -> IResult<&str, Rect> {
+impl<'s> NomParse<&'s str> for Rect {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Rect> {
         comb::map(
             // Parse ((id, (left, bottom)), (width, height)) ("#{} @ {},{}: {}x{}")
             sequence::pair(
@@ -246,17 +200,17 @@ impl<'s> NomParse<'s> for Rect {
                     // Parse id ("#{} @ ")
                     sequence::terminated(
                         // Parse id ("#{}")
-                        sequence::preceded(bytes::tag("#"), u32::nom_parse),
+                        sequence::preceded(bytes::tag("#"), character::u32),
                         bytes::tag(" @ "),
                     ),
                     // Parse (left, bottom) ("{},{}")
-                    sequence::separated_pair(u32::nom_parse, bytes::tag(","), u32::nom_parse),
+                    sequence::separated_pair(character::u32, bytes::tag(","), character::u32),
                 ),
                 // Parse (width, height) (": {}x{}")
                 sequence::preceded(
                     bytes::tag(": "),
                     // Parse (width, height) ("{}x{}")
-                    sequence::separated_pair(u32::nom_parse, bytes::tag("x"), u32::nom_parse),
+                    sequence::separated_pair(character::u32, bytes::tag("x"), character::u32),
                 ),
             ),
             |((id, (left, bottom)), (width, height))| {
@@ -266,7 +220,7 @@ impl<'s> NomParse<'s> for Rect {
     }
 }
 
-impl_from_str_for_nom_parse!(Rect);
+aoc_util::impl_from_str_for_nom_parse!(Rect);
 
 // Invariants: contents of wrapped `Vec` monotonically increase.
 #[derive(Clone)]
@@ -315,7 +269,7 @@ impl RectSet {
     /// Compute the union of `self` and `other` in place.
     fn union_mut(&mut self, other: &RectSet) {
         if other.0.is_empty() || self.0.is_empty() {
-            self.0.extend(other.0.clone().into_iter());
+            self.0.extend(other.0.clone());
             // Invariant upheld because `self` now contains exactly the same
             // `Rect`s in exactly the same order as `other`.
             return;
@@ -430,8 +384,16 @@ impl IntoIterator for RectSet {
 
 pub fn run() -> io::Result<()> {
     fn get_claims() -> io::Result<RectSet> {
-        Ok(super::super::parse_lines("3.txt")?.collect())
+        BufReader::new(File::open("2018_03.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            })
+            .collect()
     }
+
     // Part 1
     println!("Overlap area: {}", get_claims()?.overlap().area());
     // Part 2

@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
-    io,
+    fs::File,
+    io::{self, BufRead, BufReader},
 };
 
 fn invert_case(c: char) -> char {
@@ -53,7 +54,7 @@ impl Braid {
 }
 
 fn get_polymer() -> io::Result<String> {
-    Ok(super::super::get_lines("5.txt")?.next().unwrap())
+    BufReader::new(File::open("5.txt")?).lines().next().unwrap()
 }
 
 pub fn run() -> io::Result<()> {
