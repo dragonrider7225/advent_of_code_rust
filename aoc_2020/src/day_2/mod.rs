@@ -1,9 +1,13 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
+    bytes::complete as bytes, character::complete as character, combinator, combinator as comb,
+    sequence, IResult,
 };
-use std::{io, iter, str::FromStr};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+    iter,
+};
 
 enum PasswordPolicy {
     SingleLetterCount {
@@ -59,13 +63,15 @@ impl PasswordPolicy {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for PasswordPolicy {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for PasswordPolicy {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
+        fn parse_usize(s: &str) -> IResult<&str, usize> {
+            combinator::map(character::u64, |n| n as usize)(s)
+        }
+
         comb::map(
             sequence::separated_pair(
-                sequence::separated_pair(usize::nom_parse, bytes::tag("-"), usize::nom_parse),
+                sequence::separated_pair(parse_usize, bytes::tag("-"), parse_usize),
                 bytes::tag(" "),
                 character::one_of(&*('a'..='z').collect::<String>()),
             ),
@@ -89,9 +95,7 @@ impl PasswordDatabaseEntry {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for PasswordDatabaseEntry {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for PasswordDatabaseEntry {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
@@ -107,22 +111,7 @@ impl<'s> NomParse<'s, &'s str> for PasswordDatabaseEntry {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(PasswordDatabaseEntry);
-impl FromStr for PasswordDatabaseEntry
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(PasswordDatabaseEntry);
 
 struct PasswordDatabase(Vec<PasswordDatabaseEntry>);
 
@@ -132,9 +121,25 @@ impl PasswordDatabase {
     }
 }
 
+impl FromIterator<PasswordDatabaseEntry> for PasswordDatabase {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = PasswordDatabaseEntry>,
+    {
+        Self(iter.into_iter().collect())
+    }
+}
+
 #[allow(unreachable_code)]
 pub(super) fn run() -> io::Result<()> {
-    let mut password_database = PasswordDatabase(aoc_util::parse_lines("2020_02.txt")?.collect());
+    let mut password_database = BufReader::new(File::open("2020_02.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .collect::<io::Result<PasswordDatabase>>()?;
     {
         println!("Year 2020 Day 2 Part 1");
         println!(

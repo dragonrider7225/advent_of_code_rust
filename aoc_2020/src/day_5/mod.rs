@@ -1,18 +1,20 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
-use std::{cmp::Ordering, io, str::FromStr};
+use std::{
+    cmp::Ordering,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 #[repr(transparent)]
 struct Row(u8);
 
-impl<'s> NomParse<'s, &'s str> for Row {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Row {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             comb::map_res(bytes::take(7usize), |s: &str| {
-                s.chars().fold(Ok(0), |acc, c| match (acc?, c) {
+                s.chars().try_fold(0, |acc, c| match (acc, c) {
                     (acc, 'F') => Ok(acc * 2),
                     (acc, 'B') => Ok(acc * 2 + 1),
                     (_, c) => Err(format!("Invalid row character: {c:?}")),
@@ -23,34 +25,15 @@ impl<'s> NomParse<'s, &'s str> for Row {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Row);
-impl FromStr for Row
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
-
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 #[repr(transparent)]
 struct Column(u8);
 
-impl<'s> NomParse<'s, &'s str> for Column {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Column {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             comb::map_res(bytes::take(3usize), |s: &str| {
-                s.chars().fold(Ok(0), |acc, c| match (acc?, c) {
+                s.chars().try_fold(0, |acc, c| match (acc, c) {
                     (acc, 'L') => Ok(acc * 2),
                     (acc, 'R') => Ok(acc * 2 + 1),
                     (_, c) => Err(format!("Invalid column character: {c:?}")),
@@ -58,23 +41,6 @@ impl<'s> NomParse<'s, &'s str> for Column {
             }),
             Column,
         )(s)
-    }
-}
-
-// TODO: impl_from_str_for_nom_parse!(Column);
-impl FromStr for Column
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
     }
 }
 
@@ -102,9 +68,7 @@ impl Ord for Seat {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Seat {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Seat {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::pair(Row::nom_parse, Column::nom_parse),
@@ -113,26 +77,18 @@ impl<'s> NomParse<'s, &'s str> for Seat {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Seat);
-impl FromStr for Seat
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Row Column Seat);
 
 #[allow(unreachable_code)]
 pub(super) fn run() -> io::Result<()> {
-    let mut seats = aoc_util::parse_lines("2020_05.txt")?.collect::<Vec<Seat>>();
+    let mut seats = BufReader::new(File::open("2020_05.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse::<Seat>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
     seats.sort();
     {
         println!("Year 2020 Day 5 Part 1");

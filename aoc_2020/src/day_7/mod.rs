@@ -1,7 +1,7 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, Finish, IResult,
+    branch, bytes::complete as bytes, character::complete as character, combinator,
+    combinator as comb, multi, sequence, Finish, IResult,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -18,9 +18,7 @@ impl<'color> Display for BagColor<'color> {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for BagColor<'s> {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for BagColor<'s> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             comb::recognize(multi::separated_list1(
@@ -43,12 +41,10 @@ impl<'color> BagRule<'color> {
     }
 }
 
-impl<'color, 's> NomParse<'s, &'s str> for BagRule<'color>
+impl<'color, 's> NomParse<&'s str> for BagRule<'color>
 where
     's: 'color,
 {
-    type Error = nom::error::Error<&'s str>;
-
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             branch::alt((
@@ -66,7 +62,7 @@ where
                         ),
                         comb::map(
                             sequence::separated_pair(
-                                usize::nom_parse,
+                                combinator::map(character::u64, |n| n as usize),
                                 bytes::tag(" "),
                                 sequence::terminated(BagColor::nom_parse, bytes::tag(" bags")),
                             ),
@@ -135,12 +131,10 @@ impl<'color> BagRules<'color> {
     }
 }
 
-impl<'color, 's> NomParse<'s, &'s str> for BagRules<'color>
+impl<'color, 's> NomParse<&'s str> for BagRules<'color>
 where
     's: 'color,
 {
-    type Error = nom::error::Error<&'s str>;
-
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::many0(sequence::terminated(

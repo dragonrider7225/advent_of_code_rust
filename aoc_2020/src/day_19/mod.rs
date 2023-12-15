@@ -1,4 +1,4 @@
-use aoc_util::{impl_from_str_for_nom_parse, nom_parse::NomParse};
+use aoc_util::nom_extended::NomParse;
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb,
     error::ParseError, multi, sequence, AsChar, Finish, IResult, InputIter, InputLength, Offset,
@@ -110,11 +110,9 @@ impl UnnamedRule {
     }
 }
 
-impl_from_str_for_nom_parse!(UnnamedRule);
+aoc_util::impl_from_str_for_nom_parse!(UnnamedRule);
 
-impl<'s> NomParse<'s, &'s str> for UnnamedRule {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for UnnamedRule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn satisfy_many1<I, E>(f: impl Fn(char) -> bool) -> impl FnMut(I) -> IResult<I, I, E>
         where
@@ -165,11 +163,9 @@ impl<'s> NomParse<'s, &'s str> for UnnamedRule {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct RuleId(u32);
 
-impl<'s> NomParse<'s, &'s str> for RuleId {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for RuleId {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(u32::nom_parse, Self)(s)
+        comb::map(character::u32, Self)(s)
     }
 }
 
@@ -206,11 +202,9 @@ impl Rule {
     }
 }
 
-impl_from_str_for_nom_parse!(Rule);
+aoc_util::impl_from_str_for_nom_parse!(Rule);
 
-impl<'s> NomParse<'s, &'s str> for Rule {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Rule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
@@ -228,9 +222,7 @@ impl<'s> NomParse<'s, &'s str> for Rule {
 
 struct Rules(HashMap<RuleId, Rule>);
 
-impl<'s> NomParse<'s, &'s str> for Rules {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Rules {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(multi::many1(Rule::nom_parse), |rules| {
             Self(rules.into_iter().map(|rule| (rule.id, rule)).collect())
@@ -243,9 +235,7 @@ struct RulesAndStrings {
     strings: Vec<String>,
 }
 
-impl<'s> NomParse<'s, &'s str> for RulesAndStrings {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for RulesAndStrings {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::separated_pair(
@@ -279,7 +269,7 @@ pub(super) fn run() -> io::Result<()> {
         res
     }
     let RulesAndStrings { rules, strings } =
-        <RulesAndStrings as NomParse<'_, _>>::nom_parse(&fs::read_to_string("2020_19.txt")?)
+        RulesAndStrings::nom_parse(&fs::read_to_string("2020_19.txt")?)
             .finish()
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))?
             .1;

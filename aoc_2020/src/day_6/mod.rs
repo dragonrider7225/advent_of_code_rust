@@ -1,11 +1,10 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use std::{
     convert::TryFrom,
     fs, io,
     iter::{FromIterator, Product, Sum},
     ops::{Add, Index, Mul},
-    str::FromStr,
 };
 
 use nom::{character::complete as character, combinator as comb, multi, IResult};
@@ -13,9 +12,7 @@ use nom::{character::complete as character, combinator as comb, multi, IResult};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct QuestionId(u8);
 
-impl<'s> NomParse<'s, &'s str> for QuestionId {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for QuestionId {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(character::one_of(&*('a'..='z').collect::<String>()), |c| {
             Self(u8::try_from(u32::from(c) - u32::from('a')).unwrap())
@@ -57,22 +54,7 @@ impl FromIterator<QuestionId> for Answers {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Answers);
-impl FromStr for Answers
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Answers);
 
 impl Index<QuestionId> for Answers {
     type Output = bool;
@@ -95,9 +77,7 @@ impl Mul for Answers {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Answers {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Answers {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(multi::many1(QuestionId::nom_parse), Answers::from_iter)(s)
     }
@@ -134,9 +114,7 @@ impl GroupAnswers {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for GroupAnswers {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for GroupAnswers {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::separated_list1(character::line_ending, Answers::nom_parse),
@@ -145,22 +123,7 @@ impl<'s> NomParse<'s, &'s str> for GroupAnswers {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(GroupAnswers);
-impl FromStr for GroupAnswers
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(GroupAnswers);
 
 pub(super) fn run() -> io::Result<()> {
     let group_answers = fs::read_to_string("2020_06.txt")?

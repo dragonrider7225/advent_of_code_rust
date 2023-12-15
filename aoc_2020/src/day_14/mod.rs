@@ -1,4 +1,4 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
     sequence, IResult,
@@ -8,7 +8,6 @@ use std::{
     convert::{TryFrom, TryInto},
     fs, io, iter,
     ops::{BitAnd, BitOr, BitXor, Not},
-    str::FromStr,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -54,11 +53,9 @@ impl BitXor for Value {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Value {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Value {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map_res(u64::nom_parse, Self::try_from)(s)
+        comb::map_res(character::u64, Self::try_from)(s)
     }
 }
 
@@ -109,9 +106,7 @@ impl Mask {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Mask {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Mask {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn build(bits: Vec<char>) -> Result<Mask, <Value as TryFrom<u64>>::Error> {
             let (bits_set, bits_unset) =
@@ -137,22 +132,7 @@ impl<'s> NomParse<'s, &'s str> for Mask {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Mask);
-impl FromStr for Mask
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Mask);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum Instruction {
@@ -180,9 +160,7 @@ impl Instruction {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Instruction {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::map(
@@ -204,22 +182,7 @@ impl<'s> NomParse<'s, &'s str> for Instruction {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Instruction);
-impl FromStr for Instruction
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Instruction);
 
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 struct ProgramMemory(HashMap<Value, Value>);
@@ -268,9 +231,7 @@ impl Program {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Program {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Program {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
@@ -282,22 +243,7 @@ impl<'s> NomParse<'s, &'s str> for Program {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Program);
-impl FromStr for Program
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Program);
 
 pub(super) fn run() -> io::Result<()> {
     let program = fs::read_to_string("2020_14.txt")?

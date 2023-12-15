@@ -1,4 +1,4 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, multi,
     sequence, Finish, IResult,
@@ -18,13 +18,11 @@ impl FieldRule {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for FieldRule {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for FieldRule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn range(s: &str) -> IResult<&str, RangeInclusive<u64>> {
             comb::map(
-                sequence::separated_pair(u64::nom_parse, bytes::tag("-"), u64::nom_parse),
+                sequence::separated_pair(character::u64, bytes::tag("-"), character::u64),
                 |(start, end)| start..=end,
             )(s)
         }
@@ -101,9 +99,7 @@ impl<'field> TicketRules<'field> {
     }
 }
 
-impl<'field> NomParse<'field, &'field str> for TicketRules<'field> {
-    type Error = nom::error::Error<&'field str>;
-
+impl<'field> NomParse<&'field str> for TicketRules<'field> {
     fn nom_parse(s: &'field str) -> IResult<&'field str, Self> {
         comb::map(
             multi::many0(sequence::pair(
@@ -131,13 +127,11 @@ impl Ticket {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Ticket {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Ticket {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
-                multi::separated_list0(bytes::tag(","), u64::nom_parse),
+                multi::separated_list0(bytes::tag(","), character::u64),
                 character::line_ending,
             ),
             |fields| Self { fields },

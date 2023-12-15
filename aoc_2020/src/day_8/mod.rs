@@ -1,9 +1,9 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator as comb,
     sequence, IResult,
 };
-use std::{collections::HashSet, convert::TryFrom, fs, io, str::FromStr};
+use std::{collections::HashSet, convert::TryFrom, fs, io};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Instruction {
@@ -12,33 +12,16 @@ enum Instruction {
     Jump(isize),
 }
 
-// TODO: impl_from_str_for_nom_parse!(Instruction);
-impl FromStr for Instruction
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
+aoc_util::impl_from_str_for_nom_parse!(Instruction);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
-
-impl<'s> NomParse<'s, &'s str> for Instruction {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::map(
                 sequence::pair(
                     bytes::tag("nop "),
                     comb::map(
-                        sequence::pair(character::one_of("+-"), u32::nom_parse),
+                        sequence::pair(character::one_of("+-"), character::u32),
                         |(sign, val)| {
                             let val = isize::try_from(val).unwrap();
                             if sign == '-' {
@@ -55,7 +38,7 @@ impl<'s> NomParse<'s, &'s str> for Instruction {
                 sequence::pair(
                     bytes::tag("acc "),
                     comb::map(
-                        sequence::pair(character::one_of("+-"), u32::nom_parse),
+                        sequence::pair(character::one_of("+-"), character::u32),
                         |(sign, val)| {
                             let val = i32::try_from(val).unwrap();
                             if sign == '-' {
@@ -72,7 +55,7 @@ impl<'s> NomParse<'s, &'s str> for Instruction {
                 sequence::pair(
                     bytes::tag("jmp "),
                     comb::map(
-                        sequence::pair(character::one_of("+-"), u32::nom_parse),
+                        sequence::pair(character::one_of("+-"), character::u32),
                         |(sign, val)| {
                             let val = isize::try_from(val).unwrap();
                             if sign == '-' {

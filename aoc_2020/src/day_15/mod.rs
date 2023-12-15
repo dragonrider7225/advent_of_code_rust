@@ -1,4 +1,4 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 use nom::{
     bytes::complete as bytes, character::complete as character, combinator as comb, multi,
     sequence, IResult,
@@ -7,7 +7,6 @@ use std::{
     collections::HashMap,
     fs, io,
     ops::{Add, Sub},
-    str::FromStr,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
@@ -77,30 +76,13 @@ impl History {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(History);
-impl FromStr for History
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
+aoc_util::impl_from_str_for_nom_parse!(History);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
-
-impl<'s> NomParse<'s, &'s str> for History {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for History {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::terminated(
-                multi::separated_list1(bytes::tag(","), u64::nom_parse),
+                multi::separated_list1(bytes::tag(","), character::u64),
                 comb::opt(character::line_ending),
             ),
             |values| Self::new(&values),

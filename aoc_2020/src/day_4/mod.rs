@@ -1,4 +1,4 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use std::{
     collections::{HashMap, HashSet},
@@ -168,24 +168,17 @@ impl<'s> Passport<'s> {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for Passport<'s> {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Passport<'s> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn parse_field(
             field_name: &'static str,
         ) -> impl for<'s> FnMut(&'s str) -> IResult<&'s str, &'s str> {
             move |s| {
-                // println!("Parsing field {:?}", field_name);
-                let res = sequence::delimited(
+                sequence::delimited(
                     sequence::pair(bytes::tag(field_name), bytes::tag(":")),
                     bytes::is_not(" \r\n"),
                     branch::alt((character::line_ending, character::multispace1, comb::eof)),
-                )(s);
-                res.map(|(remaining, value)| {
-                    // println!("Found {:?}:{:?}", field_name, value);
-                    (remaining, value)
-                })
+                )(s)
             }
         }
 

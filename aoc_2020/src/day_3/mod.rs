@@ -1,4 +1,4 @@
-use aoc_util::nom_parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use std::{fs, io, iter};
 
@@ -10,9 +10,7 @@ enum Tile {
     Tree,
 }
 
-impl<'s> NomParse<'s, &'s str> for Tile {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Tile {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::value(Self::Snow, character::char('.')),
@@ -36,9 +34,7 @@ impl TreeMap {
     }
 }
 
-impl<'s> NomParse<'s, &'s str> for TreeMap {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for TreeMap {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         let (_, first_line) =
             sequence::terminated(multi::many1(Tile::nom_parse), character::line_ending)(s)?;

@@ -1,5 +1,5 @@
-#![feature(box_syntax, box_patterns)]
-#![feature(hash_drain_filter)]
+#![feature(box_patterns)]
+#![feature(hash_extract_if)]
 use std::io;
 
 mod day_1;
