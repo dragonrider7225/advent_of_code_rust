@@ -3,20 +3,16 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-use aoc_util::{
-    aabb::{Aabb, AabbSet},
-    nom_extended,
-};
+use aoc_util::aabb::{Aabb, AabbSet};
 
-use nom::{branch, bytes::complete as bytes, combinator as comb, sequence, Finish, IResult};
+use nom::{
+    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+    sequence, Finish, IResult,
+};
 
 fn aabb_nom_parse(s: &str) -> IResult<&str, Aabb> {
     fn read_range(s: &str) -> IResult<&str, (i64, i64)> {
-        sequence::separated_pair(
-            nom_extended::recognize_i64,
-            bytes::tag(".."),
-            nom_extended::recognize_i64,
-        )(s)
+        sequence::separated_pair(character::i64, bytes::tag(".."), character::i64)(s)
     }
 
     comb::map(
