@@ -3,10 +3,7 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-type Card = u32;
-
-fn part1(input: &mut dyn BufRead) -> io::Result<()> {
-    let mut lines = input.lines();
+fn part1(_input: &mut dyn BufRead) -> io::Result<()> {
     todo!("Year 2020 Day 22 Part 1")
 }
 

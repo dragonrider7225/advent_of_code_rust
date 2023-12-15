@@ -1,4 +1,9 @@
-use std::{cmp::Ordering, fmt::Display, io};
+use std::{
+    cmp::Ordering,
+    fmt::Display,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 enum SumResult {
     Incomplete,
@@ -22,7 +27,14 @@ use SumResult::{Incomplete, Overflow, Weakness};
 
 pub(super) fn run() -> io::Result<()> {
     const PREAMBLE_LENGTH: usize = 25;
-    let xmas_stream = aoc_util::parse_lines("2020_09.txt")?.collect::<Vec<u64>>();
+    let xmas_stream = BufReader::new(File::open("2020_09.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse::<u64>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
     let invalid_follower = {
         println!("Year 2020 Day 9 Part 1");
         let invalid_follower = xmas_stream

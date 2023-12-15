@@ -1,6 +1,9 @@
-use aoc_util::{geometry::Point2D as Point, nom_parse::NomParse};
+use aoc_util::{geometry::Point2D as Point, nom_extended::NomParse};
 use nom::{character::complete as character, combinator as comb, sequence, IResult};
-use std::{io, str::FromStr};
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Facing {
@@ -146,29 +149,12 @@ impl From<(Facing, i32)> for Instruction {
     }
 }
 
-// TODO: impl_from_str_for_nom_parse!(Instruction);
-impl FromStr for Instruction
-where
-    Self: for<'s> NomParse<'s, &'s str, Error = nom::error::Error<&'s str>>,
-{
-    type Err = String;
+aoc_util::impl_from_str_for_nom_parse!(Instruction);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
-
-impl<'s> NomParse<'s, &'s str> for Instruction {
-    type Error = nom::error::Error<&'s str>;
-
+impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
-            sequence::pair(character::one_of("NSEWLRF"), u16::nom_parse),
+            sequence::pair(character::one_of("NSEWLRF"), character::u16),
             |(c, distance)| match c {
                 'N' => Self::North(i32::from(distance)),
                 'S' => Self::South(i32::from(distance)),
@@ -184,7 +170,14 @@ impl<'s> NomParse<'s, &'s str> for Instruction {
 }
 
 pub(super) fn run() -> io::Result<()> {
-    let directions = aoc_util::parse_lines::<Instruction, _>("2020_12.txt")?.collect::<Vec<_>>();
+    let directions = BufReader::new(File::open("2020_12.txt")?)
+        .lines()
+        .map(|line| {
+            line?
+                .parse()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
     {
         println!("Year 2020 Day 12 Part 1");
         let mut ship = Ship::default();

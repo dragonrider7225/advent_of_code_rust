@@ -1,4 +1,8 @@
-use std::{collections::HashMap, io};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 fn count_arrangements(adapters: &[u32]) -> u64 {
     fn delegate(adapters: &[u32], memoizer: &mut HashMap<usize, u64>) -> u64 {
@@ -39,8 +43,15 @@ fn count_arrangements(adapters: &[u32]) -> u64 {
 
 pub(super) fn run() -> io::Result<()> {
     let adapters = {
-        let mut res = aoc_util::parse_lines("2020_10.txt")?.collect::<Vec<u32>>();
-        res.push(0);
+        let mut res = BufReader::new(File::open("2020_10.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse::<u32>()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            })
+            .chain([Ok(0)])
+            .collect::<io::Result<Vec<_>>>()?;
         res.sort_unstable();
         res.push(res.last().unwrap() + 3);
         res

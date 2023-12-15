@@ -79,32 +79,29 @@ where
 fn read_allergens(
     input: &mut dyn BufRead,
 ) -> io::Result<HashMap<BTreeSet<String>, HashSet<String>>> {
-    input
-        .lines()
-        .fold(Ok(HashMap::new()), |acc: io::Result<_>, line| {
-            // `line?` is of the form `"mxmxvkd kfcds sqjhc nhms (contains dairy, fish)"` where
-            // `mxmxvkd`, `kfcds`, `sqjhc`, and `nhms` are the ingredients and `dairy` and `fish` are
-            // the marked allergens.
-            //
-            // Thus `ingredients` is of the form `"mxmxvkd kfcds sqjhc nhms" and `allergens` is of the
-            // form `"dairy, fish)"`.
-            let mut acc = acc?;
-            let line = line?;
-            let (ingredients, allergens) = line.split_once(" (contains ").ok_or_else(|| {
-                io::Error::new(io::ErrorKind::InvalidData, "Missing allergen list")
-            })?;
-            // This can't be a HashSet because HashSet doesn't implement Hash for some reason.
-            let ingredients = ingredients
-                .split_whitespace()
-                .map(ToOwned::to_owned)
-                .collect::<BTreeSet<_>>();
-            let allergens = allergens[..(allergens.len() - 1)]
-                .split(", ")
-                .map(ToOwned::to_owned)
-                .collect::<HashSet<_>>();
-            assert!(acc.insert(ingredients, allergens).is_none());
-            Ok(acc)
-        })
+    input.lines().try_fold(HashMap::new(), |mut acc, line| {
+        // `line?` is of the form `"mxmxvkd kfcds sqjhc nhms (contains dairy, fish)"` where
+        // `mxmxvkd`, `kfcds`, `sqjhc`, and `nhms` are the ingredients and `dairy` and `fish` are
+        // the marked allergens.
+        //
+        // Thus `ingredients` is of the form `"mxmxvkd kfcds sqjhc nhms" and `allergens` is of the
+        // form `"dairy, fish)"`.
+        let line = line?;
+        let (ingredients, allergens) = line
+            .split_once(" (contains ")
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Missing allergen list"))?;
+        // This can't be a HashSet because HashSet doesn't implement Hash for some reason.
+        let ingredients = ingredients
+            .split_whitespace()
+            .map(ToOwned::to_owned)
+            .collect::<BTreeSet<_>>();
+        let allergens = allergens[..(allergens.len() - 1)]
+            .split(", ")
+            .map(ToOwned::to_owned)
+            .collect::<HashSet<_>>();
+        assert!(acc.insert(ingredients, allergens).is_none());
+        Ok(acc)
+    })
 }
 
 /// Returns a set of ingredients that don't contain any allergens and a map from allergen to the

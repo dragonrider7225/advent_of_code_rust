@@ -1,4 +1,9 @@
-use std::{cmp::Ordering, hint::unreachable_unchecked, io, path::Path};
+use std::{
+    cmp::Ordering,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::Path,
+};
 
 struct Expenses {
     ends: Vec<Vec<u32>>,
@@ -7,16 +12,18 @@ struct Expenses {
 impl Expenses {
     fn read_from_file(filename: impl AsRef<Path>) -> io::Result<Self> {
         let mut ends = vec![vec![]; 10];
-        let values = aoc_util::parse_lines(filename)?;
-        for value in values {
-            match value % 10 {
-                digit @ 0..=9 => &mut ends[digit as usize],
-                // SAFETY: This call to `unreachable_unchecked` is safe because the only possible
-                //         results of `u32::rem(_, 10)` are in the range `(0..=9)`.
-                _ => unsafe { unreachable_unchecked() },
-            }
-            .push(value);
-        }
+        BufReader::new(File::open(filename)?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            })
+            .try_for_each::<_, io::Result<_>>(|value| {
+                let value = value?;
+                ends[(value % 10) as usize].push(value);
+                Ok(())
+            })?;
         for end in ends.iter_mut() {
             end.sort_unstable();
         }
