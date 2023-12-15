@@ -6,21 +6,10 @@
 #![feature(hash_extract_if)]
 #![feature(step_trait)]
 
-use std::{
-    convert::AsRef,
-    fmt::Debug,
-    fs::File,
-    io::{self, BufRead, BufReader},
-    path::Path,
-    str::FromStr,
-};
+use std::io;
 
 use extended_io as eio;
 
-#[macro_use]
-#[deprecated = "Use aoc_util::nom_parse instead"]
-mod parse;
-mod util;
 mod year_2018;
 mod year_2019;
 
