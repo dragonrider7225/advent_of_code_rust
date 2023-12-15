@@ -6,11 +6,10 @@ use std::{
     str::FromStr,
 };
 
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, IResult,
+    bytes::complete as bytes, character::complete as character, combinator as comb, multi, IResult,
 };
 
 use extended_io::{
@@ -514,21 +513,16 @@ where
     }
 }
 
-impl<'s, R, W> NomParse<'s> for IntcodeInterpreter<R, W>
+impl<'s, R, W> NomParse<&'s str> for IntcodeInterpreter<R, W>
 where
     R: BufRead + Sized,
     W: Write + Sized,
 {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        let parse_i64 = comb::map(
-            comb::recognize(sequence::pair(
-                comb::opt(bytes::tag("-")),
-                character::digit1,
-            )),
-            |s: &str| s.parse::<i64>().expect("Invalid i64"),
-        );
-        let snl = multi::separated_list1;
-        comb::map(snl(bytes::tag(","), parse_i64), Self::from)(s)
+        comb::map(
+            multi::separated_list1(bytes::tag(","), character::i64),
+            Self::from,
+        )(s)
     }
 }
 
@@ -540,7 +534,7 @@ where
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        comb::cut(Self::nom_parse)(s)
+        Self::nom_parse(s)
             .map(|(_, x)| x)
             .map_err(|e| format!("{e:?}"))
     }

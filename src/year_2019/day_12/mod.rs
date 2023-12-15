@@ -1,236 +1,152 @@
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use std::{
     cmp::Ordering,
-    io,
+    fs::File,
+    io::{self, BufRead, BufReader},
     ops::{Add, AddAssign},
-    str::FromStr,
 };
 
-use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
+use nom::{
+    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
+    IResult,
+};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-struct Vec3<T> {
-    x: T,
-    y: T,
-    z: T,
+struct Vec3 {
+    x: i16,
+    y: i16,
+    z: i16,
 }
 
-impl<T> Vec3<T> {
-    fn new(x: T, y: T, z: T) -> Self {
+impl Vec3 {
+    fn new(x: i16, y: i16, z: i16) -> Self {
         Self { x, y, z }
     }
 }
 
-impl<T, U, V> Add<Vec3<U>> for Vec3<T>
-where
-    T: Add<U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl Add for Vec3 {
+    type Output = Self;
 
-    fn add(self, other: Vec3<U>) -> Self::Output {
-        Vec3::new(self.x + other.x, self.y + other.y, self.z + other.z)
+    fn add(self, other: Self) -> Self::Output {
+        Self::new(self.x + other.x, self.y + other.y, self.z + other.z)
     }
 }
 
-impl<'a, T, U, V> Add<&'a Vec3<U>> for Vec3<T>
-where
-    T: Add<U, Output = V>,
-    U: Clone,
-{
-    type Output = Vec3<V>;
+impl<'a> Add<&'a Self> for Vec3 {
+    type Output = Self;
 
-    fn add(self, other: &'a Vec3<U>) -> Self::Output {
-        Vec3::new(
-            self.x + other.x.clone(),
-            self.y + other.y.clone(),
-            self.z + other.z.clone(),
-        )
+    fn add(self, other: &'a Self) -> Self::Output {
+        self + *other
     }
 }
 
-impl<'a, T, U, V> Add<&'a mut Vec3<U>> for Vec3<T>
-where
-    T: Add<&'a mut U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a> Add<&'a mut Self> for Vec3 {
+    type Output = Self;
 
-    fn add(self, other: &'a mut Vec3<U>) -> Self::Output {
-        Vec3::new(
-            self.x + &mut other.x,
-            self.y + &mut other.y,
-            self.z + &mut other.z,
-        )
+    fn add(self, other: &'a mut Self) -> Self::Output {
+        self + *other
     }
 }
 
-impl<'a, T, U, V> Add<Vec3<U>> for &'a Vec3<T>
-where
-    &'a T: Add<U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a> Add<Vec3> for &'a Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: Vec3<U>) -> Self::Output {
-        Vec3::new(&self.x + other.x, &self.y + other.y, &self.z + other.z)
+    fn add(self, other: Vec3) -> Self::Output {
+        other + self
     }
 }
 
-impl<'a, 'b, T, U, V> Add<&'b Vec3<U>> for &'a Vec3<T>
-where
-    &'a T: Add<&'b U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a, 'b> Add<&'b Vec3> for &'a Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: &'b Vec3<U>) -> Self::Output {
-        Vec3::new(&self.x + &other.x, &self.y + &other.y, &self.z + &other.z)
+    fn add(self, other: &'b Vec3) -> Self::Output {
+        *self + other
     }
 }
 
-impl<'a, 'b, T, U, V> Add<&'b mut Vec3<U>> for &'a Vec3<T>
-where
-    &'a T: Add<&'b mut U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a, 'b> Add<&'b mut Vec3> for &'a Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: &'b mut Vec3<U>) -> Self::Output {
-        Vec3::new(
-            &self.x + &mut other.x,
-            &self.y + &mut other.y,
-            &self.z + &mut other.z,
-        )
+    fn add(self, other: &'b mut Vec3) -> Self::Output {
+        *self + other
     }
 }
 
-impl<'a, T, U, V> Add<Vec3<U>> for &'a mut Vec3<T>
-where
-    &'a mut T: Add<U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a> Add<Vec3> for &'a mut Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: Vec3<U>) -> Self::Output {
-        Vec3::new(
-            &mut self.x + other.x,
-            &mut self.y + other.y,
-            &mut self.z + other.z,
-        )
+    fn add(self, other: Vec3) -> Self::Output {
+        other + self
     }
 }
 
-impl<'a, 'b, T, U, V> Add<&'b Vec3<U>> for &'a mut Vec3<T>
-where
-    &'a mut T: Add<&'b U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a, 'b> Add<&'b Vec3> for &'a mut Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: &'b Vec3<U>) -> Self::Output {
-        Vec3::new(
-            &mut self.x + &other.x,
-            &mut self.y + &other.y,
-            &mut self.z + &other.z,
-        )
+    fn add(self, other: &'b Vec3) -> Self::Output {
+        *self + other
     }
 }
 
-impl<'a, 'b, T, U, V> Add<&'b mut Vec3<U>> for &'a mut Vec3<T>
-where
-    &'a mut T: Add<&'b mut U, Output = V>,
-{
-    type Output = Vec3<V>;
+impl<'a, 'b> Add<&'b mut Vec3> for &'a mut Vec3 {
+    type Output = Vec3;
 
-    fn add(self, other: &'b mut Vec3<U>) -> Self::Output {
-        Vec3::new(
-            &mut self.x + &mut other.x,
-            &mut self.y + &mut other.y,
-            &mut self.z + &mut other.z,
-        )
+    fn add(self, other: &'b mut Vec3) -> Self::Output {
+        *self + other
     }
 }
 
-impl<T, U> AddAssign<Vec3<U>> for Vec3<T>
-where
-    T: AddAssign<U>,
-{
-    fn add_assign(&mut self, other: Vec3<U>) {
+impl AddAssign for Vec3 {
+    fn add_assign(&mut self, other: Self) {
         self.x += other.x;
         self.y += other.y;
         self.z += other.z;
     }
 }
 
-impl<'a, T, U> AddAssign<&'a Vec3<U>> for Vec3<T>
-where
-    T: AddAssign<U>,
-    U: Clone,
-{
-    fn add_assign(&mut self, other: &'a Vec3<U>) {
-        self.x += other.x.clone();
-        self.y += other.y.clone();
-        self.z += other.z.clone();
+impl<'a> AddAssign<&'a Self> for Vec3 {
+    fn add_assign(&mut self, other: &'a Self) {
+        *self += *other;
     }
 }
 
-impl<'a, T, U> AddAssign<&'a mut Vec3<U>> for Vec3<T>
-where
-    T: AddAssign<U>,
-    U: Clone,
-{
-    fn add_assign(&mut self, other: &'a mut Vec3<U>) {
-        self.x += other.x.clone();
-        self.y += other.y.clone();
-        self.z += other.z.clone();
+impl<'a> AddAssign<&'a mut Self> for Vec3 {
+    fn add_assign(&mut self, other: &'a mut Self) {
+        *self += *other;
     }
 }
 
-impl<'a, T, U> AddAssign<Vec3<U>> for &'a mut Vec3<T>
-where
-    T: AddAssign<U>,
-{
-    fn add_assign(&mut self, other: Vec3<U>) {
-        self.x += other.x;
-        self.y += other.y;
-        self.z += other.z;
+impl<'a> AddAssign<Vec3> for &'a mut Vec3 {
+    fn add_assign(&mut self, other: Vec3) {
+        **self += other;
     }
 }
 
-impl<'a, 'b, T, U> AddAssign<&'b Vec3<U>> for &'a mut Vec3<T>
-where
-    T: AddAssign<U>,
-    U: Clone,
-{
-    fn add_assign(&mut self, other: &'b Vec3<U>) {
-        self.x += other.x.clone();
-        self.y += other.y.clone();
-        self.z += other.z.clone();
+impl<'a, 'b> AddAssign<&'b Vec3> for &'a mut Vec3 {
+    fn add_assign(&mut self, other: &'b Vec3) {
+        **self += other;
     }
 }
 
-impl<'a, 'b, T, U> AddAssign<&'b mut Vec3<U>> for &'a mut Vec3<T>
-where
-    T: AddAssign<U>,
-    U: Clone,
-{
-    fn add_assign(&mut self, other: &'b mut Vec3<U>) {
-        self.x += other.x.clone();
-        self.y += other.y.clone();
-        self.z += other.z.clone();
+impl<'a, 'b> AddAssign<&'b mut Vec3> for &'a mut Vec3 {
+    fn add_assign(&mut self, other: &'b mut Vec3) {
+        **self += other;
     }
 }
 
-impl<'s, T> NomParse<'s> for Vec3<T>
-where
-    T: NomParse<'s>,
-{
+impl<'s> NomParse<&'s str> for Vec3 {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             sequence::delimited(
                 bytes::tag("<"),
                 sequence::separated_pair(
-                    sequence::preceded(bytes::tag("x="), NomParse::nom_parse),
+                    sequence::preceded(bytes::tag("x="), character::i16),
                     bytes::tag(", "),
                     sequence::separated_pair(
-                        sequence::preceded(bytes::tag("y="), NomParse::nom_parse),
+                        sequence::preceded(bytes::tag("y="), character::i16),
                         bytes::tag(", "),
-                        sequence::preceded(bytes::tag("z="), NomParse::nom_parse),
+                        sequence::preceded(bytes::tag("z="), character::i16),
                     ),
                 ),
                 bytes::tag(">"),
@@ -240,26 +156,17 @@ where
     }
 }
 
-impl<T> FromStr for Vec3<T>
-where
-    // `T` can be parsed from a string of any lifetime, including a lifetime shorter than the
-    // lifetime of `T`.
-    T: for<'s> NomParse<'s>,
-{
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::nom_parse(s)
-            .map(|(_, x)| x)
-            .map_err(|e| format!("{e:?}"))
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Vec3);
 
 pub(super) fn run() -> io::Result<()> {
-    let initial_xv = crate::get_lines("2019_12.txt")?
-        .map(|s| s.parse().unwrap())
-        .map(|v: Vec3<i16>| (v, Vec3::default()))
-        .collect::<Vec<_>>();
+    let initial_xv = BufReader::new(File::open("2019_12.txt")?)
+        .lines()
+        .map(|s| {
+            s?.parse::<Vec3>()
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
+        .map(|v| Ok((v?, Vec3::default())))
+        .collect::<io::Result<Vec<_>>>()?;
     {
         println!("Year 2019 Day 12 Part 1");
         let mut xv1 = initial_xv.clone();
@@ -288,13 +195,13 @@ pub(super) fn run() -> io::Result<()> {
                 moon.0 += &moon.1;
             }
         }
-        fn potential_energy(moon_x: Vec3<i16>) -> i16 {
+        fn potential_energy(moon_x: Vec3) -> i16 {
             moon_x.x.abs() + moon_x.y.abs() + moon_x.z.abs()
         }
-        fn kinetic_energy(moon_v: Vec3<i16>) -> i16 {
+        fn kinetic_energy(moon_v: Vec3) -> i16 {
             moon_v.x.abs() + moon_v.y.abs() + moon_v.z.abs()
         }
-        fn total_energy((moon_x, moon_v): (Vec3<i16>, Vec3<i16>)) -> i16 {
+        fn total_energy((moon_x, moon_v): (Vec3, Vec3)) -> i16 {
             potential_energy(moon_x) * kinetic_energy(moon_v)
         }
         println!(

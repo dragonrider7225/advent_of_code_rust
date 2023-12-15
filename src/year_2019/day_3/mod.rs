@@ -1,12 +1,16 @@
-use crate::parse::NomParse;
+use aoc_util::nom_extended::NomParse;
 
 use std::{
     collections::{HashMap, HashSet},
-    io, mem,
-    str::FromStr,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    mem,
 };
 
-use nom::{branch, bytes::complete as bytes, combinator as comb, multi, sequence, IResult};
+use nom::{
+    branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
+    sequence, IResult,
+};
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 enum Direction {
@@ -16,8 +20,8 @@ enum Direction {
     Right,
 }
 
-impl<'s> NomParse<'s> for Direction {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for Direction {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             comb::value(Direction::Up, bytes::tag("U")),
             comb::value(Direction::Down, bytes::tag("D")),
@@ -29,10 +33,10 @@ impl<'s> NomParse<'s> for Direction {
 
 struct Movement(Direction, u32);
 
-impl<'s> NomParse<'s> for Movement {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for Movement {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
-            sequence::pair(Direction::nom_parse, u32::nom_parse),
+            sequence::pair(Direction::nom_parse, character::u32),
             |(direction, distance)| Movement(direction, distance),
         )(s)
     }
@@ -127,8 +131,8 @@ impl Wire {
     }
 }
 
-impl<'s> NomParse<'s> for Wire {
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
+impl<'s> NomParse<&'s str> for Wire {
+    fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         comb::map(
             multi::separated_list1(bytes::tag(","), Movement::nom_parse),
             |ms| Wire::from_movements(&ms[..]),
@@ -136,20 +140,20 @@ impl<'s> NomParse<'s> for Wire {
     }
 }
 
-impl FromStr for Wire {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::nom_parse(s).map_err(|_| ()).map(|(_, x)| x)
-    }
-}
+aoc_util::impl_from_str_for_nom_parse!(Wire);
 
 pub(super) fn run() -> io::Result<()> {
     {
         // Part 1
-        let mut wires = crate::parse_lines::<Wire, _>("2019_3.txt")?;
-        let wire1 = wires.next().expect("Missing first wire");
-        let wire2 = wires.next().expect("Missing second wire");
+        let mut wires = BufReader::new(File::open("2019_3.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse::<Wire>()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            });
+        let wire1 = wires.next().expect("Missing first wire")?;
+        let wire2 = wires.next().expect("Missing second wire")?;
         let mut intersections = wire1
             .intersections(&wire2)
             .into_iter()
@@ -160,9 +164,15 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         // Part 2
-        let mut wires = crate::parse_lines::<Wire, _>("2019_3.txt")?;
-        let wire1 = wires.next().expect("Missing first wire");
-        let wire2 = wires.next().expect("Missing second wire");
+        let mut wires = BufReader::new(File::open("2019_3.txt")?)
+            .lines()
+            .map(|line| {
+                line?
+                    .parse::<Wire>()
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+            });
+        let wire1 = wires.next().expect("Missing first wire")?;
+        let wire2 = wires.next().expect("Missing second wire")?;
         let mut intersections = wire1
             .intersections(&wire2)
             .into_iter()
