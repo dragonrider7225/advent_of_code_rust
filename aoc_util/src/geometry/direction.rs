@@ -2,7 +2,7 @@ use super::Point2D;
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 /// A direction in 2-dimensional space.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Direction {
     #[allow(missing_docs)]
     Down,
