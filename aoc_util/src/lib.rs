@@ -11,6 +11,9 @@ pub mod aabb;
 #[doc(hidden)]
 pub mod a_star;
 
+/// Collection types that are not provided by the standard library.
+pub mod collections;
+
 /// Extensions to the `nom` crate.
 pub mod nom_extended;
 

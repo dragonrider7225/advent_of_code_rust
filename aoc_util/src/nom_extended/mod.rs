@@ -151,6 +151,8 @@ mod tests {
 
     impl NomParse<&'_ str> for A {
         fn nom_parse(input: &str) -> IResult<&str, Self> {
+            use nom::{branch, bytes::complete as bytes};
+
             combinator::value(A, branch::alt((bytes::tag("a"), bytes::tag("1"))))(input)
         }
     }
