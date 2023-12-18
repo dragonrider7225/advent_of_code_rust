@@ -1,9 +1,6 @@
 use std::{
-    fmt::{self, Display, Formatter},
-    fs::{File, OpenOptions},
-    io::{self, BufRead, BufReader, Write},
-    iter, mem,
-    path::Path,
+    fs::File,
+    io::{self, BufRead, BufReader},
 };
 
 use aoc_util::geometry::Direction;
@@ -11,164 +8,6 @@ use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator, multi,
     sequence, IResult,
 };
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum Tile {
-    Ground,
-    Hole,
-}
-
-impl Display for Tile {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Ground => write!(f, "."),
-            Self::Hole => write!(f, "#"),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-struct Pit {
-    tiles: Vec<Vec<Tile>>,
-    position: (usize, usize),
-}
-
-impl Pit {
-    fn new() -> Self {
-        Self {
-            tiles: vec![vec![Tile::Hole]],
-            position: (0, 0),
-        }
-    }
-
-    fn write_ppm(&self, out: &mut dyn Write) -> io::Result<()> {
-        writeln!(out, "P6\n{} {}\n1", self.tiles[0].len(), self.tiles.len())?;
-        for (row_idx, row) in self.tiles.iter().enumerate() {
-            for (col_idx, tile) in row.iter().enumerate() {
-                if (row_idx, col_idx) == self.position {
-                    out.write_all(&[1, 0, 0])?;
-                } else {
-                    match tile {
-                        Tile::Ground => out.write_all(&[1, 1, 1])?,
-                        Tile::Hole => out.write_all(&[0, 0, 0])?,
-                    }
-                }
-            }
-        }
-        Ok(())
-    }
-
-    fn dig(&mut self, direction: Direction, distance: usize) {
-        match direction {
-            Direction::Down => {
-                let max_row = self.position.0 + distance;
-                if self.tiles.len() <= max_row {
-                    self.tiles[self.position.0..]
-                        .iter_mut()
-                        .for_each(|row| row[self.position.1] = Tile::Hole);
-                    let mut new_row = vec![Tile::Ground; self.tiles[0].len()];
-                    new_row[self.position.1] = Tile::Hole;
-                    let new_rows = iter::repeat(new_row).take(max_row - (self.tiles.len() - 1));
-                    self.tiles.extend(new_rows);
-                } else {
-                    self.tiles[self.position.0..=max_row]
-                        .iter_mut()
-                        .for_each(|row| row[self.position.1] = Tile::Hole);
-                }
-                self.position.0 = max_row;
-            }
-            Direction::Up => {
-                if self.position.0 < distance {
-                    self.tiles[..self.position.0]
-                        .iter_mut()
-                        .for_each(|row| row[self.position.1] = Tile::Hole);
-                    let num_new_rows = distance - self.position.0;
-                    let mut new_row = vec![Tile::Ground; self.tiles[0].len()];
-                    new_row[self.position.1] = Tile::Hole;
-                    let old_rows = mem::replace(
-                        &mut self.tiles,
-                        iter::repeat(new_row).take(num_new_rows).collect(),
-                    );
-                    self.tiles.extend(old_rows);
-                    self.position.0 = 0;
-                } else {
-                    let min_row = self.position.0 - distance;
-                    self.tiles[min_row..self.position.0]
-                        .iter_mut()
-                        .for_each(|row| row[self.position.1] = Tile::Hole);
-                    self.position.0 = min_row;
-                }
-            }
-            Direction::Left => {
-                if self.position.1 < distance {
-                    self.tiles[self.position.0][..self.position.1].fill(Tile::Hole);
-                    let num_new_cols = distance - self.position.1;
-                    let new_cols = vec![Tile::Ground; num_new_cols];
-                    self.tiles
-                        .iter_mut()
-                        .enumerate()
-                        .for_each(|(row_idx, row)| {
-                            let old_row = if row_idx == self.position.0 {
-                                mem::replace(row, vec![Tile::Hole; num_new_cols])
-                            } else {
-                                mem::replace(row, new_cols.clone())
-                            };
-                            row.extend(old_row);
-                        });
-                    self.position.1 = 0;
-                } else {
-                    let min_col = self.position.1 - distance;
-                    self.tiles[self.position.0][min_col..self.position.1].fill(Tile::Hole);
-                    self.position.1 = min_col;
-                }
-            }
-            Direction::Right => {
-                let max_col = self.position.1 + distance;
-                if self.tiles[self.position.0].len() <= max_col {
-                    self.tiles[self.position.0][self.position.1..].fill(Tile::Hole);
-                    let num_new_cols = max_col - (self.tiles[self.position.0].len() - 1);
-                    let new_cols = vec![Tile::Ground; num_new_cols];
-                    self.tiles
-                        .iter_mut()
-                        .enumerate()
-                        .for_each(|(row_idx, row)| {
-                            if row_idx == self.position.0 {
-                                row.extend(vec![Tile::Hole; num_new_cols]);
-                            } else {
-                                row.extend(new_cols.clone());
-                            }
-                        });
-                    self.position.1 = self.tiles[self.position.0].len() - 1;
-                } else {
-                    self.tiles[self.position.0][self.position.1..=max_col].fill(Tile::Hole);
-                    self.position.1 = max_col;
-                }
-            }
-        }
-    }
-}
-
-impl Default for Pit {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Display for Pit {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for (row_idx, row) in self.tiles.iter().enumerate() {
-            for (col_idx, tile) in row.iter().enumerate() {
-                if (row_idx, col_idx) == self.position {
-                    write!(f, "X")?;
-                } else {
-                    write!(f, "{}", tile)?;
-                }
-            }
-            writeln!(f)?;
-        }
-        Ok(())
-    }
-}
 
 fn parse_direction(s: &str) -> IResult<&str, Direction> {
     branch::alt((
@@ -179,97 +18,91 @@ fn parse_direction(s: &str) -> IResult<&str, Direction> {
     ))(s)
 }
 
-fn open_file_for_writing(p: impl AsRef<Path>) -> io::Result<File> {
-    OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(p)
-}
-
-fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
-    let mut pit = input
-        .lines()
-        .map(|line| {
-            let line = line?;
-            #[allow(clippy::let_and_return)]
-            let ret = sequence::terminated(
-                sequence::separated_pair(
-                    parse_direction,
-                    bytes::tag(" "),
-                    combinator::map(character::u32, |n| n as usize),
-                ),
-                sequence::delimited(
-                    bytes::tag(" (#"),
-                    multi::many_m_n(6, 6, character::one_of("0123456789abcdef")),
-                    bytes::tag(")"),
-                ),
-            )(&line[..])
-            .map(|(_, x)| x)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-            ret
+fn calculate_area(points: &[(i64, i64)]) -> i64 {
+    let (double_signed_area, perimeter) = points
+        .windows(2)
+        .map(|points| match points {
+            &[(x1, y1), (x2, y2)] => (x1 * y2 - y1 * x2, x1.abs_diff(x2) + y1.abs_diff(y2)),
+            _ => unreachable!(),
         })
-        .try_fold::<_, _, io::Result<_>>(Pit::default(), |mut acc, parts| {
-            let (direction, distance) = parts?;
-            acc.dig(direction, distance);
-            Ok(acc)
-        })?;
-    pit.write_ppm(&mut open_file_for_writing("2023_18-border.ppm")?)?;
-    for row_idx in 1..(pit.tiles.len() - 1) {
-        let mut inside = false;
-        let mut first_hole_idx = pit.tiles[row_idx]
-            .iter()
-            .position(|&tile| tile == Tile::Hole)
-            .expect("Pit contains row without any holes");
-        while let Some((ground_idx, _)) = pit.tiles[row_idx]
-            .iter()
-            .enumerate()
-            .skip(first_hole_idx)
-            .find(|&(_, &tile)| tile == Tile::Ground)
-        {
-            let last_hole_idx = ground_idx - 1;
-            if first_hole_idx == last_hole_idx
-                || pit.tiles[row_idx + 1][first_hole_idx] != pit.tiles[row_idx + 1][last_hole_idx]
-            {
-                // This was not the top or bottom part of a U-turn:
-                // ###
-                // #.#
-                // or
-                // ###
-                // ...
-                // so we've crossed the boundry.
-                inside = !inside;
-            }
-            let next_hole_idx = match pit.tiles[row_idx]
-                .iter()
-                .skip(ground_idx)
-                .position(|&tile| tile == Tile::Hole)
-            {
-                Some(next_hole_position) => next_hole_position + ground_idx,
-                None => {
-                    if inside {
-                        panic!("The right side of the structure includes at least one ground tile inside of the lagoon in row {row_idx}")
-                    }
-                    break;
-                }
-            };
-            if inside {
-                pit.tiles[row_idx][ground_idx..next_hole_idx].fill(Tile::Hole);
-            }
-            first_hole_idx = next_hole_idx;
-        }
-    }
-    pit.write_ppm(&mut open_file_for_writing("2023_18-filled.ppm")?)?;
-    Ok(pit
-        .tiles
-        .into_iter()
-        .flatten()
-        .filter(|&tile| tile == Tile::Hole)
-        .count())
+        .fold((0, 0), |total, delta| {
+            (total.0 + delta.0, total.1 + delta.1)
+        });
+    (double_signed_area.abs() + perimeter as i64) / 2 + 1
 }
 
-fn part2(_input: &mut dyn BufRead) -> io::Result<()> {
-    todo!("Year 2023 Day 18 Part 2")
+fn parse_instructions<F>(input: &mut dyn BufRead, mut line_parser: F) -> io::Result<Vec<(i64, i64)>>
+where
+    F: FnMut(&str) -> io::Result<(Direction, i64)>,
+{
+    input
+        .lines()
+        .map(|line| line_parser(&line?[..]))
+        .try_fold(vec![(0, 0)], |mut acc, parts| {
+            let (direction, distance) = parts?;
+            let mut position = *acc.last().unwrap();
+            match direction {
+                Direction::Down => position.1 -= distance,
+                Direction::Left => position.0 -= distance,
+                Direction::Right => position.0 += distance,
+                Direction::Up => position.1 += distance,
+            }
+            acc.push(position);
+            Ok(acc)
+        })
+}
+
+fn part1(input: &mut dyn BufRead) -> io::Result<i64> {
+    let pit = parse_instructions(input, |s| {
+        sequence::terminated(
+            sequence::separated_pair(parse_direction, bytes::tag(" "), character::i64),
+            sequence::delimited(
+                bytes::tag(" (#"),
+                multi::many_m_n(6, 6, character::one_of("0123456789abcdef")),
+                bytes::tag(")"),
+            ),
+        )(s)
+        .map(|(_, x)| x)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+    })?;
+    Ok(calculate_area(&pit))
+}
+
+fn part2(input: &mut dyn BufRead) -> io::Result<i64> {
+    let pit = parse_instructions(input, |s| {
+        sequence::delimited(
+            sequence::tuple((
+                parse_direction,
+                bytes::tag(" "),
+                character::i64,
+                bytes::tag(" (#"),
+            )),
+            combinator::map(
+                multi::many_m_n(6, 6, character::one_of("0123456789abcdef")),
+                |chars| {
+                    let ret = chars.into_iter().fold(0, |acc, c| {
+                        if c.is_ascii_digit() {
+                            acc * 16 + (c as u8 - b'0') as i64
+                        } else {
+                            acc * 16 + (c as u8 - b'a' + 10) as i64
+                        }
+                    });
+                    let direction = match ret % 16 {
+                        0 => Direction::Right,
+                        1 => Direction::Down,
+                        2 => Direction::Left,
+                        3 => Direction::Up,
+                        _ => unreachable!(),
+                    };
+                    (direction, ret / 16)
+                },
+            ),
+            bytes::tag(")"),
+        )(s)
+        .map(|(_, x)| x)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+    })?;
+    Ok(calculate_area(&pit))
 }
 
 pub(super) fn run() -> io::Result<()> {
@@ -283,7 +116,7 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2023 Day 18 Part 2");
         println!(
-            "{:?}",
+            "{}",
             part2(&mut BufReader::new(File::open("2023_18.txt")?))?
         );
     }
@@ -317,6 +150,14 @@ mod tests {
     fn test_part1() -> io::Result<()> {
         let expected = 62;
         let actual = part1(&mut Cursor::new(TEST_DATA))?;
+        assert_eq!(expected, actual);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2() -> io::Result<()> {
+        let expected = 952_408_144_115;
+        let actual = part2(&mut Cursor::new(TEST_DATA))?;
         assert_eq!(expected, actual);
         Ok(())
     }
