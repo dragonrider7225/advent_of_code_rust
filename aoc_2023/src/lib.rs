@@ -8,6 +8,8 @@
 #![feature(extract_if)]
 // Feature control_flow_enum used in day 19
 #![feature(control_flow_enum)]
+// Feature iter_map_windows used in day 23
+#![feature(iter_map_windows)]
 
 use std::io;
 
