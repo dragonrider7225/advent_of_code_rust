@@ -592,43 +592,6 @@ mod tests {
     }
 
     #[test]
-    fn random_sample() -> io::Result<()> {
-        const TEST_DATA: &[(&str, usize)] = &[
-            ("..#?#??????#???? 11,1\n", 2),
-            (".??#?.?.##?.? 2,3\n", 2),
-            (".???#??????#???.???# 5,5,1,4\n", 4),
-            (".????#???.???. 6,3\n", 3),
-            (".??????#?##???.?? 1,5,1\n", 33),
-            (".??????#?????.# 1,1,5,1,1\n", 5),
-            ("?#??#?#?????#??..?. 7,3\n", 6),
-            ("?#????.#??.????#.? 4,1,3,2,1,1\n", 2),
-            ("?.?#.?.#???..? 1,4\n", 1),
-            ("?.???#?##???#.?.? 1,5,1,1\n", 12),
-            ("?.?????.????#? 4,2,1\n", 4),
-            ("?.??????#??#???#?#? 1,1,1,12\n", 4),
-            ("??###???#??????#.?? 5,5,1,1\n", 16),
-            ("??##.???????#.??? 3,2,5,1\n", 3),
-            ("??##???##???#.#?.?.# 11,1,1,1,1\n", 1),
-            ("??#??#?.??? 6,2\n", 4),
-            ("??#???#??????#.????? 12,3\n", 3),
-            ("??#?????##?#??.??? 2,5,3,1\n", 6),
-            ("??.#?????#?. 1,8\n", 2),
-            ("??.?.????. 1,1,1\n", 17),
-            ("??.????##..?#.??# 1,3,2,2,2\n", 2),
-            ("???#?????.#..??#???? 8,1,4\n", 6),
-            ("???.???##?##???.???? 10,1\n", 8),
-            ("????###???#???? 1,9,1\n", 10),
-            ("?????#???.??# 6,1,3\n", 3),
-            ("?????????? 1,1,1\n", 56),
-        ];
-        for &(line, expected) in TEST_DATA {
-            let actual = part1(&mut Cursor::new(line))?;
-            assert_eq!(expected, actual);
-        }
-        Ok(())
-    }
-
-    #[test]
     fn current_case() {
         let mut row = SpringRow {
             springs: vec![
@@ -654,5 +617,40 @@ mod tests {
         };
         row.apply_by_inspection();
         assert_eq!(row.count_sat(), 33);
+    }
+
+    #[test]
+    fn fragile_known_good() -> io::Result<()> {
+        fn parse_line(s: &str) -> IResult<&str, (u32, u32)> {
+            sequence::separated_pair(character::u32, bytes::tag(" "), character::u32)(s)
+        }
+
+        let input = match File::open("2023_12_known_good.txt") {
+            Ok(f) => f,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        let mut puzzle_input = BufReader::new(File::open("2023_12.txt")?).lines();
+        let mut last_line = 0usize;
+        for line in BufReader::new(input).lines() {
+            let line = line?;
+            if line.as_bytes()[0] == b'/' {
+                continue;
+            }
+            let (next_line, expected_count) = parse_line(&line)
+                .map(|(_, (next_line, expected_count))| {
+                    (next_line as usize, expected_count as usize)
+                })
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+            let line = puzzle_input
+                .by_ref()
+                .take(next_line - last_line)
+                .last()
+                .expect("Ran out of lines in puzzle input")?;
+            last_line = next_line;
+            let actual = part1(&mut Cursor::new(line))?;
+            assert_eq!(expected_count, actual);
+        }
+        Ok(())
     }
 }
