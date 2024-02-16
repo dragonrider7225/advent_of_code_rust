@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
@@ -8,6 +9,13 @@ use nom::{
     branch, bytes::complete as bytes, character::complete as character, combinator, multi,
     sequence, IResult,
 };
+
+macro_rules! say {
+    ($($tokens:tt)*) => {
+        #[cfg(test)]
+        println!($($tokens)*)
+    };
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Spring {
@@ -64,436 +72,239 @@ impl SpringRow {
         self.springs.is_empty() && self.damaged_groups.is_empty()
     }
 
-    /// Count the number of springs required to satisfy the damaged groups if all springs are
-    /// unknown.
-    fn required_springs(&self) -> usize {
-        if self.damaged_groups.is_empty() {
-            0
-        } else {
-            self.damaged_groups.len() - 1 + self.damaged_groups.iter().sum::<usize>()
-        }
-    }
-
     fn count_sat(&self) -> usize {
-        fn num_weak_compositions(n: usize, max_parts: usize) -> usize {
-            fn num_k_compositions(n: usize, k: usize) -> usize {
-                if k > n {
+        #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+        struct Truncation {
+            springs_start_idx: usize,
+            damaged_groups_start_idx: usize,
+        }
+        impl Display for Truncation {
+            fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+                write!(
+                    f,
+                    "springs from {}, damaged groups from {}",
+                    self.springs_start_idx, self.damaged_groups_start_idx
+                )
+            }
+        }
+        fn inner(
+            this: &SpringRow,
+            memoized: &mut HashMap<Truncation, usize>,
+            truncation: Truncation,
+        ) -> usize {
+            if let Some(&n) = memoized.get(&truncation) {
+                n
+            } else {
+                let ret = if truncation.damaged_groups_start_idx >= this.damaged_groups.len() {
+                    say!("Out of groups");
+                    if truncation.springs_start_idx >= this.springs.len()
+                        || this.springs[truncation.springs_start_idx..]
+                            .iter()
+                            .all(|&spring| spring != Spring::Damaged)
+                    {
+                        say!("Out of definitely-damaged springs");
+                        1
+                    } else {
+                        say!("Still have definitely-damaged springs");
+                        0
+                    }
+                } else if truncation.springs_start_idx
+                    + this.damaged_groups[truncation.damaged_groups_start_idx]
+                    > this.springs.len()
+                {
+                    say!("Not enough springs for first remaining group");
                     0
                 } else {
-                    choose(n - 1, k - 1)
-                }
-            }
-
-            fn choose(n: usize, k: usize) -> usize {
-                if n - k < k {
-                    choose(n, n - k)
-                } else {
-                    (1..=k).fold(1, |acc, x| acc * (n - k) / x + acc)
-                }
-            }
-
-            if max_parts == 0 {
-                0
-            } else if n == 0 {
-                1
-            } else {
-                // A k-composition is a composition with exactly `k` positive terms. Since we are
-                // counting weak compositions with up to `max_parts` terms, we need to add the
-                // k-compositions for all k in `1..=max_parts` with the appropriate multiplicity,
-                // derived from the number of ways to have `max_parts - k` empty "buckets".
-                (1..=max_parts)
-                    .map(|k| choose(max_parts, k) * num_k_compositions(n, k))
-                    .sum()
+                    let current_group = this.damaged_groups[truncation.damaged_groups_start_idx];
+                    let first_damaged = this.springs[truncation.springs_start_idx..]
+                        .iter()
+                        .take(current_group)
+                        .position(|&spring| spring == Spring::Damaged)
+                        .map(|first_damaged| first_damaged + truncation.springs_start_idx);
+                    let last_operational = this.springs[truncation.springs_start_idx..]
+                        .iter()
+                        .take(current_group)
+                        .rposition(|&spring| spring == Spring::Operational)
+                        .map(|last_operational| last_operational + truncation.springs_start_idx);
+                    match (first_damaged, last_operational) {
+                        (Some(first_damaged), Some(last_operational))
+                            if first_damaged < last_operational =>
+                        {
+                            say!("There is a damaged spring preceding an operational spring in the first {} springs", this.damaged_groups[truncation.damaged_groups_start_idx]);
+                            0
+                        }
+                        (_, Some(last_operational)) => {
+                            say!("Skip the first {last_operational} springs");
+                            inner(
+                                this,
+                                memoized,
+                                Truncation {
+                                    springs_start_idx: last_operational + 1,
+                                    ..truncation
+                                },
+                            )
+                        }
+                        (Some(first_damaged), None) => {
+                            say!("Early damaged, no early operational");
+                            (truncation.springs_start_idx..=first_damaged)
+                                .take_while(|&group_start| {
+                                    group_start + current_group <= this.springs.len()
+                                        && this.springs[group_start..]
+                                            .iter()
+                                            .take(current_group)
+                                            .all(|&spring| spring != Spring::Operational)
+                                })
+                                .filter(|&group_start| {
+                                    this.springs
+                                        .get(group_start + current_group)
+                                        .filter(|&&spring| spring == Spring::Damaged)
+                                        .is_none()
+                                })
+                                .map(|group_start| {
+                                    say!("Group anchored at {first_damaged}, starting at {group_start}");
+                                    inner(
+                                        this,
+                                        memoized,
+                                        Truncation {
+                                            springs_start_idx: group_start + current_group + 1,
+                                            damaged_groups_start_idx: truncation
+                                                .damaged_groups_start_idx
+                                                + 1,
+                                        },
+                                    )
+                                })
+                                .sum()
+                        }
+                        (None, None) => {
+                            if this.springs.len() == current_group + truncation.springs_start_idx {
+                                inner(
+                                    this,
+                                    memoized,
+                                    Truncation {
+                                        springs_start_idx: this.springs.len(),
+                                        damaged_groups_start_idx: truncation
+                                            .damaged_groups_start_idx
+                                            + 1,
+                                    },
+                                )
+                            } else {
+                                let leader = if this.springs
+                                    [truncation.springs_start_idx + current_group]
+                                    != Spring::Damaged
+                                {
+                                    inner(
+                                        this,
+                                        memoized,
+                                        Truncation {
+                                            springs_start_idx: truncation.springs_start_idx
+                                                + current_group
+                                                + 1,
+                                            damaged_groups_start_idx: truncation
+                                                .damaged_groups_start_idx
+                                                + 1,
+                                        },
+                                    )
+                                } else {
+                                    0
+                                };
+                                leader
+                                    + inner(
+                                        this,
+                                        memoized,
+                                        Truncation {
+                                            springs_start_idx: truncation.springs_start_idx + 1,
+                                            ..truncation
+                                        },
+                                    )
+                            }
+                        }
+                    }
+                };
+                say!("{truncation} @ {this}: {ret}");
+                memoized.insert(truncation, ret);
+                ret
             }
         }
 
-        println!("Counting {self} \x7B\x7B");
-        let ret = if self.damaged_groups.is_empty() {
-            println!("No damaged groups;");
-            if self
-                .springs
-                .iter()
-                .all(|spring| !matches!(spring, Spring::Damaged))
-            {
-                println!("No damaged springs, so 1 way;");
-                println!("\x7D\x7D");
-                1
+        let mut memoized = HashMap::new();
+        inner(
+            self,
+            &mut memoized,
+            Truncation {
+                springs_start_idx: 0,
+                damaged_groups_start_idx: 0,
+            },
+        )
+    }
+
+    #[cfg(test)]
+    fn matches(&self) -> bool {
+        let mut group_idx = 0;
+        let mut spring_idx = 0;
+        while spring_idx < self.springs.len() {
+            if self.springs[spring_idx] == Spring::Damaged {
+                if spring_idx != 0 && self.springs[spring_idx - 1] != Spring::Operational
+                    || group_idx >= self.damaged_groups.len()
+                    || self.springs.len() < spring_idx + self.damaged_groups[group_idx]
+                    || self.springs[spring_idx..(spring_idx + self.damaged_groups[group_idx])]
+                        .iter()
+                        .any(|&spring| spring != Spring::Damaged)
+                {
+                    return false;
+                }
+                spring_idx += self.damaged_groups[group_idx];
+                group_idx += 1;
             } else {
-                println!("At least one damaged spring, so 0 ways;");
-                println!("\x7D\x7D");
-                0
+                spring_idx += 1;
             }
-        } else if self.required_springs() > self.springs.len() {
-            println!("Not enough springs, so 0 ways;");
-            println!("\x7D\x7D");
-            0
-        } else if self
+        }
+        group_idx == self.damaged_groups.len() && spring_idx == self.springs.len()
+    }
+
+    #[cfg(test)]
+    fn count_sat_brute_force(&self) -> usize {
+        let mut this = self.clone();
+        let unknown_indices = this
             .springs
             .iter()
-            .all(|spring| matches!(spring, Spring::Unknown))
-        {
-            print!("All springs are unknown, so we have maximum freedom, ");
-            let num_undamaged = self.springs.len() - self.required_springs();
-            let num_groups = self.damaged_groups.len() + 1;
-            let ret = num_weak_compositions(num_undamaged, num_groups);
-            println!("{ret} ways;");
-            println!("\x7D\x7D");
-            ret
-        } else if self.damaged_groups.len() == 1 && !self.springs.contains(&Spring::Operational) {
-            let ret = self.springs.len() - self.damaged_groups[0] + 1;
-            println!(
-                "Only one group of damaged springs and no springs are operational, {ret} ways;"
-            );
-            println!("\x7D\x7D");
-            ret
-        } else {
-            let num_leading_unknowns = self
-                .springs
-                .iter()
-                .take_while(|spring| matches!(spring, Spring::Unknown))
-                .count();
-            let num_leading_possible = self
-                .springs
-                .iter()
-                .take_while(|spring| !matches!(spring, Spring::Operational))
-                .count();
-            let leading_group_len = self.damaged_groups[0];
-            let max_removed = num_leading_possible.min(num_leading_unknowns + leading_group_len);
-            let mut ret = (leading_group_len..=max_removed)
-                .filter(|&num_removed| self.springs.get(num_removed) != Some(&Spring::Damaged))
-                .map(|num_removed| {
-                    println!("Removing {num_removed} springs and first group;");
-                    let mut sub = Self {
-                        springs: self.springs[num_removed..].to_owned(),
-                        damaged_groups: self.damaged_groups[1..].to_owned(),
+            .enumerate()
+            .filter_map(|(idx, &spring)| {
+                if spring == Spring::Unknown {
+                    Some(idx)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        (0..(1usize << unknown_indices.len()))
+            .filter(|i| {
+                (0..unknown_indices.len()).for_each(|j| {
+                    this.springs[unknown_indices[j]] = match i & (1 << j) {
+                        0 => Spring::Operational,
+                        _ => Spring::Damaged,
                     };
-                    if let Some(spring) = sub.springs.first_mut() {
-                        *spring = Spring::Operational;
-                    }
-                    println!("Sub is {sub};");
-                    sub.apply_by_inspection();
-                    sub.count_sat()
-                })
-                .sum();
-            if num_leading_unknowns == num_leading_possible
-                && self.springs.len() > num_leading_possible
-            {
-                let mut sub = Self {
-                    springs: self
-                        .springs
-                        .iter()
-                        .copied()
-                        .skip(num_leading_possible + 1)
-                        .collect(),
-                    damaged_groups: self.damaged_groups.clone(),
-                };
-                sub.apply_by_inspection();
-                ret += sub.count_sat();
-            }
-            println!("Split into smaller problems, {ret} ways;");
-            println!("\x7D\x7D");
-            ret
-        };
-        ret
+                });
+                this.matches()
+            })
+            .count()
     }
 
-    fn trim_leading_operational(&mut self) {
-        for i in 0..self.springs.len() {
-            if !matches!(self.springs[i], Spring::Operational) {
-                self.springs.drain(..i);
-                return;
-            }
-        }
-        self.springs.clear();
-    }
+    fn unfold(&mut self) {
+        use std::{iter, mem};
 
-    fn trim_leading_groups(&mut self) {
-        self.trim_leading_operational();
-        for i in 0..self.damaged_groups.len() {
-            let group_len = self.damaged_groups[i];
-            loop {
-                // Remove any springs that *must* precede the first group of damaged springs
-                let mut should_break = true;
-                let num_damaged = self
-                    .springs
-                    .iter()
-                    .skip(group_len)
-                    .take_while(|spring| matches!(spring, Spring::Damaged))
-                    .count();
-                if self.springs[..num_damaged]
-                    .iter()
-                    .any(|spring| matches!(spring, Spring::Damaged))
-                {
-                    self.damaged_groups.drain(..i);
-                    self.springs.clear();
-                    return;
+        self.springs = iter::repeat(mem::take(&mut self.springs).into_iter())
+            .take(5)
+            .fold(vec![], |mut acc, row| {
+                if !acc.is_empty() {
+                    acc.push(Spring::Unknown);
                 }
-                self.springs.drain(..num_damaged);
-                if num_damaged > 0 {
-                    should_break = false;
-                }
-                self.trim_leading_operational();
-                if let Some(undamaged_idx) = self
-                    .springs
-                    .iter()
-                    .take(group_len)
-                    .rposition(|spring| matches!(spring, Spring::Operational))
-                {
-                    if self.springs[..=undamaged_idx]
-                        .iter()
-                        .any(|&spring| spring == Spring::Damaged)
-                    {
-                        self.springs.clear();
-                        should_break = true;
-                    } else {
-                        should_break = false;
-                        self.springs.drain(..=undamaged_idx);
-                    }
-                }
-                self.trim_leading_operational();
-                if should_break {
-                    break;
-                }
-            }
-            if self.springs.len() < group_len {
-                self.springs.clear();
-                return;
-            }
-            if self.springs.len() == group_len {
-                self.springs.clear();
-                println!("The first {i} groups can only be satisfied one way;");
-                self.damaged_groups.drain(..=i);
-                return;
-            } else if !self.springs[..group_len]
-                .iter()
-                .any(|spring| matches!(spring, Spring::Operational))
-                && (matches!(self.springs.first(), Some(Spring::Damaged))
-                    || self.springs[..group_len]
-                        .iter()
-                        .any(|spring| matches!(spring, Spring::Damaged))
-                        && matches!(self.springs[group_len], Spring::Operational))
-            {
-                // The first group of damaged springs is definitely shoved up against the
-                // beginning of the row of springs.
-                println!("The first group is shoved up against the beginning of the row: {self};");
-                self.springs.drain(..group_len);
-                if let Some(spring) = self.springs.first_mut() {
-                    *spring = Spring::Operational;
-                }
-                self.trim_leading_operational();
-                continue;
-            } else if let Some(first_damaged) = self
-                .springs
-                .iter()
-                .take(group_len)
-                .position(|spring| matches!(spring, Spring::Damaged))
-            {
-                // The first group of damaged springs definitely includes at least one of the
-                // first `group_len` springs, so we can confirm that all of the first
-                // `group_len` springs that follow the damaged spring are also damaged.
-                for spring in self.springs[first_damaged..group_len].iter_mut() {
-                    *spring = Spring::Damaged;
-                }
-                println!("We know more about the new first group, but we don't know exactly where it is;");
-            }
-            // Keep going only if a group of damaged springs was removed.
-            self.damaged_groups.drain(..i);
-            println!("Draining the first {i} groups;");
-            return;
-        }
-        self.damaged_groups.clear();
-    }
-
-    fn trim_trailing_operational(&mut self) {
-        for i in (0..self.springs.len()).rev() {
-            if !matches!(self.springs[i], Spring::Operational) {
-                self.springs.truncate(i + 1);
-                return;
-            }
-        }
-        self.springs.clear();
-    }
-
-    fn trim_trailing_groups(&mut self) {
-        self.trim_trailing_operational();
-        for i in (0..self.damaged_groups.len()).rev() {
-            debug_assert_eq!(i + 1, self.damaged_groups.len());
-            let group_len = self.damaged_groups[i];
-            loop {
-                // Remove all springs that *must* follow the last group of damaged springs
-                let mut should_break = true;
-                let num_damaged = self
-                    .springs
-                    .iter()
-                    .rev()
-                    .skip(group_len)
-                    .take_while(|spring| matches!(spring, Spring::Damaged))
-                    .count();
-                if self.springs[(self.springs.len() - num_damaged)..]
-                    .iter()
-                    .any(|spring| matches!(spring, Spring::Damaged))
-                {
-                    self.springs.clear();
-                    self.damaged_groups.drain(..i);
-                    return;
-                }
-                self.springs.drain((self.springs.len() - num_damaged)..);
-                if num_damaged > 0 {
-                    should_break = false;
-                }
-                self.trim_trailing_operational();
-                if let Some(operational_idx) = self
-                    .springs
-                    .iter()
-                    .rev()
-                    .take(group_len)
-                    .rposition(|spring| matches!(spring, Spring::Operational))
-                    .map(|idx| self.springs.len() - 1 - idx)
-                {
-                    if self.springs[operational_idx..]
-                        .iter()
-                        .any(|&spring| spring == Spring::Damaged)
-                    {
-                        should_break = true;
-                        self.springs.clear();
-                    } else {
-                        self.springs.drain(operational_idx..);
-                        should_break = false;
-                    }
-                }
-                self.trim_trailing_operational();
-                if should_break {
-                    break;
-                }
-            }
-            if self.springs.len() < group_len {
-                self.springs.clear();
-                return;
-            }
-            if self.springs.len() == group_len {
-                // Don't need to check that there are no Operational springs because if there were
-                // the unconditional loop above would have already cleared the springs.
-                self.damaged_groups.remove(i);
-                self.springs.clear();
-                return;
-            }
-            if matches!(self.springs.last(), Some(Spring::Damaged))
-                || self.springs[(self.springs.len() - group_len)..]
-                    .iter()
-                    .any(|spring| matches!(spring, Spring::Damaged))
-                    && matches!(
-                        self.springs[self.springs.len() - 1 - group_len],
-                        Spring::Operational
-                    )
-            {
-                // The last group of damaged springs is definitely shoved up against the end of
-                // the row of springs.
-                self.springs.truncate(self.springs.len() - group_len);
-                if let Some(spring) = self.springs.last_mut() {
-                    *spring = Spring::Operational;
-                }
-                self.trim_trailing_operational();
-                self.damaged_groups.remove(i);
-                continue;
-            } else if let Some(last_damaged) = self
-                .springs
-                .iter()
-                .rev()
-                .take(group_len)
-                .position(|spring| matches!(spring, Spring::Damaged))
-            {
-                // The last group of damaged springs definitely includes at least one of the
-                // last `group_len` springs, so we can confirm that all of the last `group_len`
-                // springs that precede the damaged spring are also damaged.
-                let last_damaged = self.springs.len() - 1 - last_damaged;
-                let last_group_start = self.springs.len() - group_len;
-                for spring in self.springs[last_group_start..last_damaged].iter_mut() {
-                    *spring = Spring::Damaged;
-                }
-            }
-            // Keep going only if a group of damaged springs was removed (reducing the length of
-            // the list of groups of damaged springs)
-            break;
-        }
-    }
-
-    /// Applies all transformations that "by inspection" do not change the number of possible ways
-    /// to resolve the unknown springs:
-    /// * Converts unknown springs adjacent to known complete groups of damaged springs into
-    ///   operational springs
-    /// * Trims leading and trailing groups of operational springs
-    /// * Trims leading and trailing complete groups of damaged springs
-    /// * Replaces each group of multiple consecutive operational springs with a single operational
-    ///   spring
-    fn apply_by_inspection(&mut self) {
-        self.trim_trailing_groups();
-        println!("Trimmed trailing groups: {self};");
-        self.trim_leading_groups();
-        println!("Trimmed leading groups: {self};");
-        if !self.damaged_groups.is_empty()
-            && self.damaged_groups[1..]
-                .iter()
-                .fold(self.damaged_groups[0], |acc, group_len| acc + 1 + group_len)
-                == self.springs.len()
-            && self
-                .damaged_groups
-                .iter()
-                .try_fold(0, |total_used, next_group| {
-                    if self.springs[total_used] != Spring::Damaged
-                        && self.springs[(total_used + 1)..(total_used + next_group)]
-                            .iter()
-                            .all(|&spring| spring != Spring::Operational)
-                    {
-                        Some(total_used + 1 + next_group)
-                    } else {
-                        None
-                    }
-                })
-                .is_some()
-        {
-            self.damaged_groups.clear();
-            self.springs.clear();
-        }
-        if self.damaged_groups.is_empty()
-            && self
-                .springs
-                .iter()
-                .all(|spring| !matches!(spring, Spring::Damaged))
-        {
-            self.springs.clear();
-        }
-        if let [group_len] = self.damaged_groups[..] {
-            if let Some(last_damaged) = self
-                .springs
-                .iter()
-                .rposition(|spring| matches!(spring, Spring::Damaged))
-            {
-                let mut changed = false;
-                if last_damaged < self.springs.len() - group_len {
-                    self.springs.drain((last_damaged + group_len)..);
-                    changed = true;
-                }
-                let first_damaged = self
-                    .springs
-                    .iter()
-                    .position(|spring| matches!(spring, Spring::Damaged))
-                    .unwrap();
-                if first_damaged >= group_len {
-                    self.springs.drain(..(first_damaged - (group_len - 1)));
-                    changed = true;
-                }
-                if changed {
-                    self.apply_by_inspection();
-                }
-            }
-        }
-        for i in (1..self.springs.len()).rev() {
-            if let (Spring::Operational, Spring::Operational) =
-                (self.springs[i - 1], self.springs[i])
-            {
-                self.springs.remove(i);
-            }
-        }
+                acc.extend(row);
+                acc
+            });
+        self.damaged_groups = iter::repeat(mem::take(&mut self.damaged_groups).into_iter())
+            .take(5)
+            .flatten()
+            .collect();
     }
 }
 
@@ -525,17 +336,29 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
                 .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
         })
         .collect::<io::Result<Vec<_>>>()?;
+    Ok(spring_rows.iter_mut().map(|row| row.count_sat()).sum())
+}
+
+fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
+    let mut spring_rows = input
+        .lines()
+        .map(|line| {
+            SpringRow::nom_parse(&line?)
+                .map(|(_, row)| row)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
     Ok(spring_rows
         .iter_mut()
-        .map(|row| {
-            row.apply_by_inspection();
+        .enumerate()
+        .map(|(row_idx, row)| {
+            if row_idx % 100 == 0 {
+                println!("{}0% complete", row_idx / 100);
+            }
+            row.unfold();
             row.count_sat()
         })
         .sum())
-}
-
-fn part2(_input: &mut dyn BufRead) -> io::Result<()> {
-    todo!("Year 2023 Day 12 Part 2")
 }
 
 pub(super) fn run() -> io::Result<()> {
@@ -549,7 +372,7 @@ pub(super) fn run() -> io::Result<()> {
     {
         println!("Year 2023 Day 12 Part 2");
         println!(
-            "{:?}",
+            "{}",
             part2(&mut BufReader::new(File::open("2023_12.txt")?))?
         );
     }
@@ -592,31 +415,29 @@ mod tests {
     }
 
     #[test]
+    fn test_part2() -> io::Result<()> {
+        let expected = 525152;
+        let actual = part2(&mut Cursor::new(TEST_DATA_2))?;
+        assert_eq!(expected, actual);
+        Ok(())
+    }
+
+    #[test]
     fn current_case() {
         let mut row = SpringRow {
             springs: vec![
-                Spring::Operational,
-                Spring::Unknown,
-                Spring::Unknown,
-                Spring::Unknown,
-                Spring::Unknown,
-                Spring::Unknown,
-                Spring::Unknown,
-                Spring::Damaged,
-                Spring::Unknown,
-                Spring::Damaged,
-                Spring::Damaged,
                 Spring::Unknown,
                 Spring::Unknown,
                 Spring::Unknown,
                 Spring::Operational,
-                Spring::Unknown,
-                Spring::Unknown,
+                Spring::Damaged,
+                Spring::Damaged,
+                Spring::Damaged,
             ],
-            damaged_groups: vec![1, 5, 1],
+            damaged_groups: vec![1, 1, 3],
         };
-        row.apply_by_inspection();
-        assert_eq!(row.count_sat(), 33);
+        row.unfold();
+        assert_eq!(row.count_sat(), 1);
     }
 
     #[test]
@@ -625,12 +446,16 @@ mod tests {
             sequence::separated_pair(character::u32, bytes::tag(" "), character::u32)(s)
         }
 
-        let input = match File::open("2023_12_known_good.txt") {
+        let input = match File::open("../2023_12_known_good.txt") {
             Ok(f) => f,
-            Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                eprintln!("Couldn't open input file");
+                eprintln!("Invoked in {:?}", std::env::current_dir());
+                return Ok(());
+            }
             Err(e) => return Err(e),
         };
-        let mut puzzle_input = BufReader::new(File::open("2023_12.txt")?).lines();
+        let mut puzzle_input = BufReader::new(File::open("../2023_12.txt")?).lines();
         let mut last_line = 0usize;
         for line in BufReader::new(input).lines() {
             let line = line?;
@@ -649,7 +474,23 @@ mod tests {
                 .expect("Ran out of lines in puzzle input")?;
             last_line = next_line;
             let actual = part1(&mut Cursor::new(line))?;
-            assert_eq!(expected_count, actual);
+            assert_eq!(
+                expected_count, actual,
+                "Line {last_line} had unexpected count {actual}"
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn print_count_sat_brute_force() -> io::Result<()> {
+        let input = BufReader::new(File::open("../2023_12.txt")?);
+        for (i, line) in input.lines().enumerate() {
+            let line = line?;
+            let spring_row = SpringRow::nom_parse(&line)
+                .map(|(_, row)| row)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+            println!("{} {}", i + 1, spring_row.count_sat_brute_force());
         }
         Ok(())
     }
