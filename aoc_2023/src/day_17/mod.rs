@@ -90,13 +90,11 @@ impl City {
                 && row_idx + 1 == self.0.len()
                 && col_idx + 1 == self.0[row_idx].len()
             {
-                #[cfg(test)]
-                dbg!(seen);
                 return heat_loss;
             }
             match last_direction {
                 None => {
-                    // We can only have no in direction at for our first Position, so we know we
+                    // We can only have no `last_direction` at our first Position, so we know we
                     // can't go up or left.
                     let new_row_idx = 1;
                     add_position(
@@ -366,6 +364,9 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         println!("Year 2023 Day 17 Part 2");
+        println!("823 is too high on my input");
+        println!("According to git@github.com:PhunkyBob/adventofcode.git, the correct answer for my input is 822");
+        println!("I don't understand where the off-by-one error comes from, since my code works correctly on the examples");
         println!(
             "{}",
             part2(&mut BufReader::new(File::open("2023_17.txt")?))?
