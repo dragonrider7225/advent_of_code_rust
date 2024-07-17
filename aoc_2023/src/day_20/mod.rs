@@ -211,6 +211,7 @@ impl Module for BroadcastModule {
     }
 }
 
+#[derive(Clone, Debug)]
 enum WrappedModule {
     FlipFlop(FlipFlopModule),
     Conjunction(ConjunctionModule),
@@ -296,54 +297,110 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     Ok(low_pulses * high_pulses)
 }
 
+fn gcd(mut a: usize, mut b: usize) -> usize {
+    if a < b {
+        (a, b) = (b, a);
+    }
+    while b > 0 {
+        (a, b) = (b, a % b);
+    }
+    a
+}
+
+fn lcm(a: usize, b: usize) -> usize {
+    let doubled = gcd(a, b);
+    a * (b / doubled)
+}
+
 fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let mut modules = parse_modules(input)?;
-    // let mut ns_high_pulses = [0usize; 4];
-    for i in 1.. {
-        if i % 10_000 == 0 {
-            println!("Pushed button {i} times");
-            // for (i, x) in ns_high_pulses.into_iter().enumerate() {
-            //     println!(
-            //         "\"ns\" received {} high pulses that resulted in remembering {} high pulses",
-            //         x,
-            //         i + 1
-            //     );
-            // }
-        }
-        let mut pending_pulses = VecDeque::new();
-        pending_pulses.push_back((
-            ModuleId { inner: "button" },
-            BroadcastModule::NAME,
-            Pulse::Low,
-        ));
-        while let Some((from, to, pulse)) = pending_pulses.pop_front() {
-            if (ModuleId { inner: "rx" }) == to && Pulse::Low == pulse {
-                return Ok(i);
-            }
-            if let Some(module) = modules.iter_mut().find(|module| module.name() == &to) {
-                if let Some(pulse) = module.receive_signal(pulse, &from) {
-                    let from = to;
-                    pending_pulses.extend(module.outputs().iter().map(|&to| (from, to, pulse)));
+    // Assumes that the modules are connected in the following way:
+    //
+    //                   [broadcaster]
+    //                  /     ...     \
+    //              (left)    ...   (right)
+    //                  \     ...     /
+    //                   \    ...    /
+    //                    \   ...   /
+    //                     \  ...  /
+    //                      \ ... /
+    //                       \.../
+    //                       (join)
+    //                         |
+    //                         rx
+    // where (left) and (right) represent disjoint sets of modules which are not interconnected,
+    // the `...` represents an arbitrary number of additional sets like (left) and (right), and
+    // (join) is a `ConjunctionModule`.
+    let broadcaster_outputs = modules
+        .iter()
+        .find(|module| module.name() == &BroadcastModule::NAME)
+        .expect("Missing broadcast module")
+        .outputs();
+    let join_module = *modules
+        .iter()
+        .find(|module| module.outputs().contains(&ModuleId { inner: "rx" }))
+        .expect("Missing output connection")
+        .name();
+    let sections = broadcaster_outputs
+        .iter()
+        .map(|&broadcaster_output| {
+            let target = modules
+                .iter()
+                .find(|module| *module.name() == broadcaster_output)
+                .expect("Missing connection from broadcaster");
+            let mut seen = vec![broadcaster_output];
+            let mut pending = Vec::from(target.outputs());
+            while let Some(module_id) = pending.pop() {
+                if !seen.iter().any(|&module| module == module_id) {
+                    let module = modules
+                        .iter()
+                        .find(|module| module.name() == &module_id)
+                        .expect("Broken connection");
+                    if module.outputs().contains(&join_module) {
+                        return (broadcaster_output, module_id);
+                    }
+                    pending.extend(module.outputs());
+                    seen.push(*module.name());
                 }
-                // if (ModuleId { inner: "ns" }) == to && Pulse::High == pulse {
-                //     if let WrappedModule::Conjunction(ns) = module {
-                //         ns_high_pulses[ns
-                //             .memory
-                //             .values()
-                //             .filter(|&&pulse| Pulse::High == pulse)
-                //             .count()
-                //             - 1] += 1;
-                //     } else {
-                //         println!("Got non-conjunction {to:?} module");
-                //     }
-                // }
             }
-        }
-    }
-    Err(io::Error::new(
-        io::ErrorKind::Other,
-        "Ran out of numbers in usize",
-    ))
+            panic!(
+                "Section beginning with {broadcaster_output} does not reconnect to {join_module}"
+            )
+        })
+        .collect::<Vec<_>>();
+    let counts = sections
+        .into_iter()
+        .map(|(start, r#final)| {
+            for i in 1usize.. {
+                let mut pending_pulses = VecDeque::new();
+                pending_pulses.push_back((ModuleId { inner: "button" }, start, Pulse::Low));
+                while let Some((from, to, pulse)) = pending_pulses.pop_front() {
+                    if r#final == from {
+                        if pulse == Pulse::High {
+                            println!("{final} emitted a high pulse on button press {i}");
+                            return Ok(i);
+                        }
+                        continue;
+                    }
+                    if let Some(module) = modules.iter_mut().find(|module| module.name() == &to) {
+                        if let Some(pulse) = module.receive_signal(pulse, &from) {
+                            let from = to;
+                            pending_pulses
+                                .extend(module.outputs().iter().map(|&to| (from, to, pulse)));
+                        }
+                    }
+                }
+            }
+            Err(io::Error::new(
+                io::ErrorKind::Other,
+                "Ran out of numbers in usize",
+            ))
+        })
+        .collect::<io::Result<Vec<_>>>()?;
+    counts
+        .into_iter()
+        .reduce(lcm)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Broadcaster doesn't broadcast"))
 }
 
 pub(super) fn run() -> io::Result<()> {
