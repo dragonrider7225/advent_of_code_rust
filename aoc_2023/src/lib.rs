@@ -1,7 +1,5 @@
 // Feature isqrt used in day 8
 #![feature(isqrt)]
-// Feature inline_const used in day 15
-#![feature(inline_const)]
 // Features fn_traits and unboxed_closures used in day 19
 #![feature(fn_traits, unboxed_closures)]
 // Feature extract_if used in day 19
