@@ -1,12 +1,12 @@
 //! An executable wrapper around (my) advent of code solutions.
 use advent_of_code as aoc;
 
-use clap::{App, Arg};
+use clap::{Arg, Command};
 
 use std::io;
 
-fn app() -> App<'static> {
-    App::new("Advent of Code")
+fn app() -> Command<'static> {
+    Command::new("Advent of Code")
         .version("0.1.0")
         .author("Kevin M. <dragonrider7225@gmail.com>")
         .about("Runs one day of one year of the Advent of Code <adventofcode.com>")
@@ -17,7 +17,7 @@ fn app() -> App<'static> {
                 .long("year")
                 .takes_value(true)
                 .value_name("YEAR")
-                .possible_values(["2018", "2019", "2020", "2021", "2022", "2023"])
+                .value_parser(["2018", "2019", "2020", "2021", "2022", "2023"])
                 .help("Selects the year to run"),
         )
         .arg(
@@ -26,7 +26,7 @@ fn app() -> App<'static> {
                 .long("day")
                 .takes_value(true)
                 .value_name("DAY")
-                .possible_values([
+                .value_parser([
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14",
                     "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25",
                 ])
@@ -36,8 +36,8 @@ fn app() -> App<'static> {
 
 fn main() -> io::Result<()> {
     let matches = app().get_matches();
-    let year = matches.value_of("year").and_then(|s| s.parse::<u32>().ok());
-    let day = matches.value_of("day").and_then(|s| s.parse::<u32>().ok());
+    let year = matches.get_one("year").copied();
+    let day = matches.get_one("day").copied();
     aoc::run(year, day)
 }
 
