@@ -2,8 +2,7 @@ use crate::year_2019::intcode_interpreter::IntcodeInterpreter;
 
 use std::{
     io::{self, BufRead, Cursor, Seek, Write},
-    ops::{Coroutine, CoroutineState},
-    pin::Pin,
+    iter::Peekable,
     thread,
 };
 
@@ -12,50 +11,123 @@ use extended_io::{
     pipe::{self, PipeRead, PipeWrite},
 };
 
+struct Permutations3 {
+    current_idx: usize,
+    value: i64,
+    inner: Peekable<<[[i64; 2]; 2] as IntoIterator>::IntoIter>,
+}
+
+impl Permutations3 {
+    fn of(values: [i64; 3]) -> Self {
+        Self {
+            current_idx: 0,
+            value: values[0],
+            inner: [[values[1], values[2]], [values[2], values[1]]]
+                .into_iter()
+                .peekable(),
+        }
+    }
+}
+
+impl Iterator for Permutations3 {
+    type Item = [i64; 3];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_idx < 3 {
+            let sub = self.inner.peek()?;
+            let mut res = [0; 3];
+            res[..self.current_idx].copy_from_slice(&sub[..self.current_idx]);
+            res[self.current_idx] = self.value;
+            res[(self.current_idx + 1)..].copy_from_slice(&sub[self.current_idx..]);
+            self.current_idx += 1;
+            Some(res)
+        } else {
+            self.current_idx = 0;
+            let _ = self.inner.next();
+            self.next()
+        }
+    }
+}
+
+struct Permutations4 {
+    current_idx: usize,
+    value: i64,
+    inner: Peekable<Permutations3>,
+}
+
+impl Permutations4 {
+    fn of(values: [i64; 4]) -> Self {
+        Self {
+            current_idx: 0,
+            value: values[0],
+            inner: Permutations3::of([values[1], values[2], values[3]]).peekable(),
+        }
+    }
+}
+
+impl Iterator for Permutations4 {
+    type Item = [i64; 4];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_idx < 4 {
+            let sub = self.inner.peek()?;
+            let mut res = [0; 4];
+            res[..self.current_idx].copy_from_slice(&sub[..self.current_idx]);
+            res[self.current_idx] = self.value;
+            res[(self.current_idx + 1)..].copy_from_slice(&sub[self.current_idx..]);
+            self.current_idx += 1;
+            Some(res)
+        } else {
+            self.current_idx = 0;
+            let _ = self.inner.next();
+            self.next()
+        }
+    }
+}
+
+struct Permutations5 {
+    current_idx: usize,
+    value: i64,
+    inner: Peekable<Permutations4>,
+}
+
+impl Permutations5 {
+    fn of(values: [i64; 5]) -> Self {
+        Self {
+            current_idx: 0,
+            value: values[0],
+            inner: Permutations4::of([values[1], values[2], values[3], values[4]]).peekable(),
+        }
+    }
+}
+
+impl Iterator for Permutations5 {
+    type Item = [i64; 5];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_idx < 5 {
+            let sub = self.inner.peek()?;
+            let mut res = [0; 5];
+            res[..self.current_idx].copy_from_slice(&sub[..self.current_idx]);
+            res[self.current_idx] = self.value;
+            res[(self.current_idx + 1)..].copy_from_slice(&sub[self.current_idx..]);
+            self.current_idx += 1;
+            Some(res)
+        } else {
+            self.current_idx = 0;
+            let _ = self.inner.next();
+            self.next()
+        }
+    }
+}
+
 pub(super) fn run() -> io::Result<()> {
     let amplifier_controller =
         IntcodeInterpreter::<PipeRead, PipeWrite>::read_from_file("2019_7.txt")?;
     {
         println!("Year 2019 Day 7 Part 1");
-        let mut permutations = || {
-            let mut sub = || {
-                let mut sub = || {
-                    let mut sub = || {
-                        yield [3, 4];
-                        yield [4, 3];
-                    };
-                    while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                        for i in 0..3 {
-                            let mut res = [0; 3];
-                            res[..i].copy_from_slice(&sub[..i]);
-                            res[i] = 2;
-                            res[(i + 1)..3].copy_from_slice(&sub[i..2]);
-                            yield res;
-                        }
-                    }
-                };
-                while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                    for i in 0..4 {
-                        let mut res = [0; 4];
-                        res[..i].copy_from_slice(&sub[..i]);
-                        res[i] = 1;
-                        res[(i + 1)..4].copy_from_slice(&sub[i..3]);
-                        yield res;
-                    }
-                }
-            };
-            while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                for i in 0..5 {
-                    let mut res: [i64; 5] = [0; 5];
-                    res[..i].copy_from_slice(&sub[..i]);
-                    res[i] = 0;
-                    res[(i + 1)..5].copy_from_slice(&sub[i..4]);
-                    yield res;
-                }
-            }
-        };
         let mut results = Cursor::new(vec![]);
-        while let CoroutineState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
+        for perm in Permutations5::of([0, 1, 2, 3, 4]) {
             let (to_a_read, mut to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();
@@ -106,45 +178,8 @@ pub(super) fn run() -> io::Result<()> {
     }
     {
         println!("Year 2019 Day 7 Part 2");
-        let mut permutations = || {
-            let mut sub = || {
-                let mut sub = || {
-                    let mut sub = || {
-                        yield [8, 9];
-                        yield [9, 8];
-                    };
-                    while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                        for i in 0..3 {
-                            let mut res = [0; 3];
-                            res[..i].copy_from_slice(&sub[..i]);
-                            res[i] = 7;
-                            res[(i + 1)..3].copy_from_slice(&sub[i..2]);
-                            yield res;
-                        }
-                    }
-                };
-                while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                    for i in 0..4 {
-                        let mut res = [0; 4];
-                        res[..i].copy_from_slice(&sub[..i]);
-                        res[i] = 6;
-                        res[(i + 1)..4].copy_from_slice(&sub[i..3]);
-                        yield res;
-                    }
-                }
-            };
-            while let CoroutineState::Yielded(sub) = Pin::new(&mut sub).resume(()) {
-                for i in 0..5 {
-                    let mut res: [i64; 5] = [0; 5];
-                    res[..i].copy_from_slice(&sub[..i]);
-                    res[i] = 5;
-                    res[(i + 1)..5].copy_from_slice(&sub[i..4]);
-                    yield res;
-                }
-            }
-        };
         let mut results = vec![];
-        while let CoroutineState::Yielded(perm) = Pin::new(&mut permutations).resume(()) {
+        for perm in Permutations5::of([5, 6, 7, 8, 9]) {
             let (mut e_to_a_read, mut e_to_a_write) = pipe::mk_pipe();
             let (a_to_b_read, mut a_to_b_write) = pipe::mk_pipe();
             let (b_to_c_read, mut b_to_c_write) = pipe::mk_pipe();

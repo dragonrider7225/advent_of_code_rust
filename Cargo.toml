@@ -14,7 +14,8 @@ aoc_util = { path = "aoc_util" }
 aoc_2020 = { path = "aoc_2020" }
 aoc_2021 = { path = "aoc_2021" }
 aoc_2022 = { path = "aoc_2022" }
+aoc_2023 = { path = "aoc_2023" }
 clap = "^3.2.22"
 
 [workspace]
-members = ["iter_extensions", "aoc_2020", "aoc_2021", "aoc_2022", "aoc_util"]
+members = ["iter_extensions", "aoc_2020", "aoc_2021", "aoc_2022", "aoc_2023", "aoc_util"]
