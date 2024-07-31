@@ -5,7 +5,7 @@ use clap::{Arg, Command};
 
 use std::io;
 
-fn app() -> Command<'static> {
+fn app() -> Command {
     Command::new("Advent of Code")
         .version("0.1.0")
         .author("Kevin M. <dragonrider7225@gmail.com>")
@@ -15,7 +15,6 @@ fn app() -> Command<'static> {
             Arg::new("year")
                 .short('y')
                 .long("year")
-                .takes_value(true)
                 .value_name("YEAR")
                 .value_parser(["2018", "2019", "2020", "2021", "2022", "2023"])
                 .help("Selects the year to run"),
@@ -24,13 +23,9 @@ fn app() -> Command<'static> {
             Arg::new("day")
                 .short('d')
                 .long("day")
-                .takes_value(true)
                 .value_name("DAY")
-                .value_parser([
-                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14",
-                    "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25",
-                ])
-                .help("Selects the day to run"),
+                .value_parser(1..=25)
+                .help("Selects the day to run (1..=25)"),
         )
 }
 
