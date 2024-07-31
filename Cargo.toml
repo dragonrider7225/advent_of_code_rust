@@ -15,7 +15,7 @@ aoc_2020 = { path = "aoc_2020" }
 aoc_2021 = { path = "aoc_2021" }
 aoc_2022 = { path = "aoc_2022" }
 aoc_2023 = { path = "aoc_2023" }
-clap = "^3.2.22"
+clap = { version = "^4.5.11", features = ["wrap_help"] }
 
 [workspace]
 members = ["iter_extensions", "aoc_2020", "aoc_2021", "aoc_2022", "aoc_2023", "aoc_util"]
