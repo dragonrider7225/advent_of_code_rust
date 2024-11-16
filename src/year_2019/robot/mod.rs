@@ -3,7 +3,7 @@ use aoc_util::geometry::Point2D;
 use std::{
     collections::HashSet,
     convert::{TryFrom, TryInto},
-    fmt::{self, Debug, Formatter},
+    fmt::{self, Debug, Display, Formatter},
     io,
     ops::{Index, IndexMut},
 };
@@ -117,19 +117,18 @@ impl IndexMut<Point2D<usize>> for Field {
     }
 }
 
-impl ToString for Field {
-    fn to_string(&self) -> String {
-        let mut ret = String::new();
+impl Display for Field {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for row in &self.0 {
             for color in row {
                 match color {
-                    Color::Black => ret.push('.'),
-                    Color::White => ret.push('#'),
+                    Color::Black => write!(f, ".")?,
+                    Color::White => write!(f, "#")?,
                 }
             }
-            ret.push('\n');
+            writeln!(f)?;
         }
-        ret
+        Ok(())
     }
 }
 
@@ -174,7 +173,7 @@ impl Robot {
     }
 
     pub fn print_field(&self) {
-        print!("{}", self.field.to_string());
+        print!("{}", self.field);
     }
 
     fn try_read<T>(&mut self) -> io::Result<T>

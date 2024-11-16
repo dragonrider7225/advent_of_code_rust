@@ -42,15 +42,15 @@ impl Mul<u64> for Material {
     }
 }
 
-impl<'a> Mul<&'a u64> for Material {
+impl Mul<&'_ u64> for Material {
     type Output = Self;
 
-    fn mul(self, rhs: &'a u64) -> Self::Output {
+    fn mul(self, rhs: &u64) -> Self::Output {
         Self(self.amount() * rhs, self.chemical().clone())
     }
 }
 
-impl<'a> Mul<u64> for &'a Material {
+impl Mul<u64> for &'_ Material {
     type Output = Material;
 
     fn mul(self, rhs: u64) -> Self::Output {
@@ -58,10 +58,10 @@ impl<'a> Mul<u64> for &'a Material {
     }
 }
 
-impl<'a, 'b> Mul<&'b u64> for &'a Material {
+impl Mul<&'_ u64> for &'_ Material {
     type Output = Material;
 
-    fn mul(self, rhs: &'b u64) -> Self::Output {
+    fn mul(self, rhs: &u64) -> Self::Output {
         Material(self.amount() * rhs, self.chemical().clone())
     }
 }
@@ -115,10 +115,10 @@ impl Mul<u64> for Reaction {
     }
 }
 
-impl<'a> Mul<&'a u64> for Reaction {
+impl Mul<&'_ u64> for Reaction {
     type Output = Self;
 
-    fn mul(self, rhs: &'a u64) -> Self::Output {
+    fn mul(self, rhs: &'_ u64) -> Self::Output {
         Self(
             self.ingredients().iter().map(|mat| mat * rhs).collect(),
             self.result() * rhs,
@@ -126,7 +126,7 @@ impl<'a> Mul<&'a u64> for Reaction {
     }
 }
 
-impl<'a> Mul<u64> for &'a Reaction {
+impl Mul<u64> for &'_ Reaction {
     type Output = Reaction;
 
     fn mul(self, rhs: u64) -> Self::Output {
@@ -137,10 +137,10 @@ impl<'a> Mul<u64> for &'a Reaction {
     }
 }
 
-impl<'a, 'b> Mul<&'b u64> for &'a Reaction {
+impl Mul<&'_ u64> for &'_ Reaction {
     type Output = Reaction;
 
-    fn mul(self, rhs: &'b u64) -> Self::Output {
+    fn mul(self, rhs: &'_ u64) -> Self::Output {
         Reaction(
             self.ingredients().iter().map(|mat| mat * rhs).collect(),
             self.result() * rhs,
