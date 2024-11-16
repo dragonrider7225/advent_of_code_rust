@@ -174,9 +174,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let _num_indispensible_bricks = indispensible_bricks.len();
     Ok(indispensible_bricks
         .into_iter()
-        .enumerate()
-        .map(|(_idx, indispensible_brick)| {
-            // println!("Checking brick {_idx} out of {_num_indispensible_bricks}");
+        .map(|indispensible_brick| {
             settled_bricks
                 .iter()
                 .copied()
