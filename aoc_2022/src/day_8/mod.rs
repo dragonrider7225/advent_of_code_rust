@@ -167,24 +167,24 @@ impl Forest {
 }
 
 fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
-    let forest = input
-        .lines()
-        .fold(Ok(Forest::default()), |forest: io::Result<_>, line| {
-            let mut forest = forest?;
-            forest.add_row(line?.bytes().map(|b| b - b'0' + 1).collect());
-            Ok(forest)
-        })?;
+    let forest =
+        input
+            .lines()
+            .try_fold(Forest::default(), |mut forest, line| -> io::Result<_> {
+                forest.add_row(line?.bytes().map(|b| b - b'0' + 1).collect());
+                Ok(forest)
+            })?;
     Ok(forest.num_visible_trees())
 }
 
 fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
-    let forest = input
-        .lines()
-        .fold(Ok(Forest::default()), |forest: io::Result<_>, line| {
-            let mut forest = forest?;
-            forest.add_row(line?.bytes().map(|b| b - b'0' + 1).collect());
-            Ok(forest)
-        })?;
+    let forest =
+        input
+            .lines()
+            .try_fold(Forest::default(), |mut forest, line| -> io::Result<_> {
+                forest.add_row(line?.bytes().map(|b| b - b'0' + 1).collect());
+                Ok(forest)
+            })?;
     Ok(forest.max_scenic_score())
 }
 
