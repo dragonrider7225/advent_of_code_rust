@@ -208,15 +208,19 @@ impl<'a> NomParse<&'a str> for Hailstone {
     }
 }
 
-fn part1(input: &mut dyn BufRead, test_area: RangeInclusive<i128>) -> io::Result<usize> {
-    let hailstones = input
+fn parse_hailstones(input: &mut dyn BufRead) -> io::Result<Vec<Hailstone>> {
+    input
         .lines()
         .map(|line| {
             Hailstone::nom_parse(&line?)
                 .map(|(_, hailstone)| hailstone)
                 .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
         })
-        .collect::<io::Result<Vec<_>>>()?;
+        .collect()
+}
+
+fn part1(input: &mut dyn BufRead, test_area: RangeInclusive<i128>) -> io::Result<usize> {
+    let hailstones = parse_hailstones(input)?;
     Ok(hailstones
         .iter()
         .copied()
@@ -239,16 +243,184 @@ fn part1(input: &mut dyn BufRead, test_area: RangeInclusive<i128>) -> io::Result
         .count())
 }
 
-fn part2(input: &mut dyn BufRead) -> io::Result<i128> {
-    let hailstones = input
-        .lines()
-        .map(|line| {
-            Hailstone::nom_parse(&line?)
-                .map(|(_, hailstone)| hailstone)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+fn collapse_ranges(ranges: impl IntoIterator<Item = (i128, i128)>) -> Vec<(i128, i128)> {
+    let mut ranges = ranges.into_iter().collect::<Vec<_>>();
+    ranges.sort();
+    let num_ranges = ranges.len();
+    ranges
+        .into_iter()
+        .fold(Vec::with_capacity(num_ranges), |mut acc, range| {
+            let Some(last_range) = acc.last_mut() else {
+                acc.push(range);
+                return acc;
+            };
+            if last_range.1 + 1 >= range.0 {
+                last_range.1 = last_range.1.max(range.1);
+            } else {
+                acc.push(range);
+            }
+            acc
         })
-        .collect::<io::Result<Vec<_>>>()?;
-    let (h1, h2) = hailstones
+}
+
+fn part2_brute_force(hailstones: &[Hailstone]) -> i128 {
+    // Given `h1` and `h2` such that `h1` starts left of `h2` and moves right slower than `h2`.
+    // If the rock has a rightward velocity greater than that of `h2` then it must start left of
+    // `h1`. If the rock has a rightward velocity less than that of `h1` then it must start
+    // right of `h2`. If the rock has a rightward velocity greater than that of `h1` but less
+    // than that of `h2` then it either must start left of `h2` and thus never intersect it or
+    // it must start right of `h1` and never intersect *it*.
+    let excluded_x_velocity = collapse_ranges(
+        hailstones
+            .iter()
+            .enumerate()
+            .flat_map(|(idx, h1)| hailstones.iter().skip(idx + 1).map(move |h2| (h1, h2)))
+            .filter_map(|(h1, h2)| {
+                if h1.x() < h2.x() {
+                    Some((h1, h2))
+                } else {
+                    Some((h2, h1))
+                }
+                .filter(|(h1, h2)| h1.dx() < h2.dx())
+                .map(|(h1, h2)| (h1.dx(), h2.dx()))
+            }),
+    );
+    let excluded_y_velocity = collapse_ranges(
+        hailstones
+            .iter()
+            .enumerate()
+            .flat_map(|(idx, h1)| hailstones.iter().skip(idx + 1).map(move |h2| (h1, h2)))
+            .filter_map(|(h1, h2)| {
+                if h1.y() < h2.y() {
+                    Some((h1, h2))
+                } else {
+                    Some((h2, h1))
+                }
+                .filter(|(h1, h2)| h1.dy() < h2.dy())
+                .map(|(h1, h2)| (h1.dy(), h2.dy()))
+            }),
+    );
+    let mut range_idx = 0;
+    let mut dx = -1001;
+    while dx < 1000 {
+        dx += 1;
+        if excluded_x_velocity
+            .get(range_idx)
+            .filter(|&&(low, high)| (low..=high).contains(&dx))
+            .is_some()
+        {
+            dx = excluded_x_velocity[range_idx].1 + 1;
+            range_idx += 1;
+        }
+        let mut range_idx = 0;
+        let mut dy = -1001;
+        while dy < 1000 {
+            dy += 1;
+            if excluded_y_velocity
+                .get(range_idx)
+                .filter(|&&(low, high)| (low..=high).contains(&dy))
+                .is_some()
+            {
+                dy = excluded_y_velocity[range_idx].1 + 1;
+                range_idx += 1;
+            }
+            let dv = Point3D::at(dx, dy, 0);
+            let mut intersection_point = None;
+            let h1 = hailstones[0];
+            let h1 = Hailstone {
+                velocity: h1.velocity - dv,
+                ..h1
+            };
+            for h2 in hailstones[1..].iter() {
+                let h2 = Hailstone {
+                    position: h2.position,
+                    velocity: h2.velocity - dv,
+                };
+                match h1.path().intersect(&h2.path()) {
+                    IntersectionResult::Parallel => continue,
+                    IntersectionResult::Identical => continue,
+                    IntersectionResult::At { x, y } => {
+                        if !x.is_integral() || !y.is_integral() {
+                            break;
+                        }
+                        if let Some((ix, iy)) = intersection_point {
+                            if x == ix && y == iy {
+                                continue;
+                            } else {
+                                intersection_point = None;
+                                break;
+                            }
+                        } else {
+                            intersection_point = Some((x.trunc(), y.trunc()));
+                        }
+                    }
+                }
+            }
+            let Some((ix, iy)) = intersection_point else {
+                continue;
+            };
+            let (t1, z1) = {
+                let dx = ix - h1.x();
+                let dt = dx / h1.dx();
+                (dt, h1.z() + dt * h1.dz())
+            };
+            let (t2, z2) = {
+                let h2 = hailstones[1];
+                let h2 = Hailstone {
+                    velocity: h2.velocity - dv,
+                    ..h2
+                };
+                let dx = ix - h2.x();
+                let dt = dx / h2.dx();
+                (dt, h2.z() + dt * h2.dz())
+            };
+            if t1 == t2 {
+                continue;
+            }
+            let dz = Fraction::new(z1 - z2, NonZeroI128::new(t1 - t2).unwrap());
+            if !dz.is_integral() {
+                continue;
+            }
+            let dz = dz.trunc();
+            let rock_velocity = dv + Point3D::at(0, 0, dz);
+            let intersection_point = Point3D::at(ix, iy, z1 - t1 * dz);
+            let found_intersection_point = hailstones.iter().all(|h| {
+                let h = Hailstone {
+                    velocity: h.velocity - rock_velocity,
+                    ..*h
+                };
+                let distance = intersection_point - h.position;
+                let dt = if h.dx() != 0 {
+                    if distance.x() % h.dx() != 0 {
+                        return false;
+                    }
+                    distance.x() / h.dx()
+                } else if h.dy() != 0 {
+                    if distance.y() % h.dy() != 0 {
+                        return false;
+                    }
+                    distance.y() / h.dy()
+                } else if h.dz() != 0 {
+                    if distance.z() % h.dz() != 0 {
+                        return false;
+                    }
+                    distance.z() / h.dz()
+                } else {
+                    return distance == Point3D::at(0, 0, 0);
+                };
+                h.velocity * dt == distance
+            });
+            if found_intersection_point {
+                return intersection_point.dot(&Point3D::at(1, 1, 1));
+            }
+        }
+    }
+    todo!("Couldn't find intersection point")
+}
+
+fn part2(input: &mut dyn BufRead) -> io::Result<i128> {
+    let hailstones = parse_hailstones(input)?;
+    let Some((h1, h2)) = hailstones
         .iter()
         .enumerate()
         .flat_map(|(i, h1)| hailstones.iter().skip(i + 1).map(move |h2| (h1, h2)))
@@ -267,12 +439,14 @@ fn part2(input: &mut dyn BufRead) -> io::Result<i128> {
             );
             ratio_x == ratio_y && ratio_x == ratio_z
         })
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "No parallel paths"))?;
-    eprintln!("Found parallel hailstones {h1} and {h2}");
+    else {
+        // We don't have any coplanar lines, so we can't cheat by constructing a plane that must
+        // contain the rock's entire path.
+        return Ok(part2_brute_force(&hailstones));
+    };
     let v1 = h1.velocity;
     let v2 = h2.position - h1.position;
     let normal = v1.cross(&v2);
-    eprintln!("Stone path must be perpendicular to {normal:?}");
     // The plane containing the paths of both `h1` and `h2` has equation `normal.dot(x - h1.position) = 0`.
     // The path of a hailstone `h` is `x(t) = h.position + t * h.velocity`.
     // These intersect when `normal.dot(h.position - h1.position + h.velocity * t) = 0`.
@@ -281,11 +455,10 @@ fn part2(input: &mut dyn BufRead) -> io::Result<i128> {
         .iter()
         .filter(|hailstone| normal.dot(&hailstone.velocity) != 0)
         .map(|hailstone| {
-            eprintln!("Checking hailstone {hailstone}");
             let denominator = normal.dot(&hailstone.velocity);
             let numerator = -normal.dot(&(hailstone.position - h1.position));
             assert_eq!(
-                dbg!(numerator) % dbg!(denominator),
+                numerator % denominator,
                 0,
                 "Interception must happen at integer times"
             );
@@ -296,15 +469,14 @@ fn part2(input: &mut dyn BufRead) -> io::Result<i128> {
     let (h1, t1) = times[0];
     let (h2, t2) = times[1];
     // Once we have two hailstone-interception time pairs `(h1, t1)` and `(h2, t2)`, the path of the
-    // stone must be described by `h1.position + t1 * h1.velocity = s.position + t1 * s.velocity`
-    // and `h2.position + t2 * h2.velocity = s.position + t2 * s.velocity`.
+    // rock must be described by `h1.position + t1 * h1.velocity = r.position + t1 * r.velocity`
+    // and `h2.position + t2 * h2.velocity = r.position + t2 * r.velocity`.
 
     let intercept1 = h1.position + h1.velocity * t1;
     let intercept2 = h2.position + h2.velocity * t2;
-    let stone_velocity = (intercept1 - intercept2) / (t1 - t2);
-    let stone_position = intercept1 - stone_velocity * t1;
-    eprintln!("Stone path is {stone_position:?} @ {stone_velocity:?}");
-    Ok(stone_position.dot(&Point3D::at(1, 1, 1)))
+    let rock_velocity = (intercept1 - intercept2) / (t1 - t2);
+    let rock_position = intercept1 - rock_velocity * t1;
+    Ok(rock_position.dot(&Point3D::at(1, 1, 1)))
 }
 
 pub(super) fn run() -> io::Result<()> {
@@ -354,6 +526,15 @@ mod tests {
     fn test_part2() -> io::Result<()> {
         let expected = 47;
         let actual = part2(&mut Cursor::new(TEST_DATA))?;
+        assert_eq!(expected, actual);
+        Ok(())
+    }
+
+    #[test]
+    fn test_part2_brute_force() -> io::Result<()> {
+        let expected = 47;
+        let hailstones = parse_hailstones(&mut Cursor::new(TEST_DATA))?;
+        let actual = part2_brute_force(&hailstones);
         assert_eq!(expected, actual);
         Ok(())
     }
