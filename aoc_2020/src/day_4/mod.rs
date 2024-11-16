@@ -23,7 +23,7 @@ struct Passport<'s> {
     country_id: Option<&'s str>,
 }
 
-impl<'s> Passport<'s> {
+impl Passport<'_> {
     const fn is_filled(&self) -> bool {
         self.birth_year.is_some()
             && self.issue_year.is_some()

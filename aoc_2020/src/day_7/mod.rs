@@ -12,7 +12,7 @@ use std::{
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct BagColor<'color>(&'color str);
 
-impl<'color> Display for BagColor<'color> {
+impl Display for BagColor<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -35,7 +35,7 @@ struct BagRule<'color> {
     contents: HashMap<BagColor<'color>, usize>,
 }
 
-impl<'color> BagRule<'color> {
+impl BagRule<'_> {
     fn contains(&self, inner: BagColor<'_>) -> bool {
         self.contents.contains_key(&inner)
     }

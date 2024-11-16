@@ -53,7 +53,7 @@ impl<'s> ExprTokens<'s> {
     }
 }
 
-impl<'s> Iterator for ExprTokens<'s> {
+impl Iterator for ExprTokens<'_> {
     type Item = ExprToken;
 
     fn next(&mut self) -> Option<Self::Item> {
