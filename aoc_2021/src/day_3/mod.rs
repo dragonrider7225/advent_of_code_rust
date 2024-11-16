@@ -8,20 +8,19 @@ use std::{
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     let bit_rates = input
         .lines()
-        .fold(Ok(None), |acc, line| match acc? {
-            None => Ok(Some({
-                line?
-                    .chars()
-                    .map(|bit| match bit {
-                        '0' => Ok((1, 0)),
-                        '1' => Ok((0, 1)),
-                        bit => Err(io::Error::new(
-                            io::ErrorKind::InvalidData,
-                            String::from(bit),
-                        )),
-                    })
-                    .collect::<io::Result<Vec<_>>>()?
-            })),
+        .try_fold::<Option<Vec<(i32, i32)>>, _, _>(None, |acc, line| match acc {
+            None => line?
+                .chars()
+                .map(|bit| match bit {
+                    '0' => Ok((1, 0)),
+                    '1' => Ok((0, 1)),
+                    bit => Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        String::from(bit),
+                    )),
+                })
+                .collect::<io::Result<Vec<_>>>()
+                .map(Some),
             Some(mut acc) => {
                 for (bit, counts) in line?.chars().zip(acc.iter_mut()) {
                     match bit {
@@ -38,12 +37,8 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
                 Ok(Some(acc))
             }
         })
-        .and_then(|v| match v {
-            Some(v) => Ok(v),
-            None => Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "Input was empty",
-            )),
+        .and_then(|v| {
+            v.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Input was empty"))
         })?;
     let width = bit_rates.len();
     let (gamma_rate, epsilon_rate) = bit_rates.into_iter().enumerate().fold(

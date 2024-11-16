@@ -68,8 +68,7 @@ impl Map {
     fn read(input: &mut dyn BufRead) -> io::Result<Self> {
         let ret = input
             .lines()
-            .fold(Ok(Self::default()), |acc: io::Result<_>, line| {
-                let mut acc = acc?;
+            .try_fold(Self::default(), |mut acc, line| -> io::Result<_> {
                 let line = line?;
                 let bytes = line.as_bytes();
                 let row = bytes

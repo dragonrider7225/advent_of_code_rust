@@ -190,7 +190,7 @@ struct GameOfLife<'behavior> {
     occupation_behavior: &'behavior dyn OccupationBehavior<Vec<Tile>>,
 }
 
-impl<'behavior> GameOfLife<'behavior> {
+impl GameOfLife<'_> {
     fn num_occupied_seats(&self) -> usize {
         self.tiles
             .iter()
@@ -224,7 +224,7 @@ impl<'behavior> GameOfLife<'behavior> {
     }
 }
 
-impl<'behavior> Eq for GameOfLife<'behavior> {}
+impl Eq for GameOfLife<'_> {}
 
 impl<'s> NomParse<&'s str> for GameOfLife<'static> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
@@ -250,7 +250,7 @@ impl<'s> NomParse<&'s str> for GameOfLife<'static> {
 
 aoc_util::impl_from_str_for_nom_parse!(GameOfLife<'static>);
 
-impl<'behavior> PartialEq for GameOfLife<'behavior> {
+impl PartialEq for GameOfLife<'_> {
     fn eq(&self, rhs: &Self) -> bool {
         self.tiles.eq(&rhs.tiles)
     }

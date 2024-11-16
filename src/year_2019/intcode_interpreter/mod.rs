@@ -513,7 +513,7 @@ where
     }
 }
 
-impl<'s, R, W> NomParse<&'s str> for IntcodeInterpreter<R, W>
+impl<R, W> NomParse<&'_ str> for IntcodeInterpreter<R, W>
 where
     R: BufRead + Sized,
     W: Write + Sized,

@@ -1,6 +1,7 @@
 use crate::year_2019::intcode_interpreter::IntcodeInterpreter;
 
 use std::{
+    cmp::Reverse,
     io::{self, BufRead, Cursor, Seek, Write},
     iter::Peekable,
     thread,
@@ -172,7 +173,7 @@ pub(super) fn run() -> io::Result<()> {
                 (name, speed)
             })
             .collect::<Vec<_>>();
-        lines[..].sort_by_key(|(_, speed)| std::u32::MAX - speed);
+        lines[..].sort_by_key(|(_, speed)| Reverse(*speed));
         let (fastest, speed) = &lines[0];
         println!("{fastest}: {speed}");
     }

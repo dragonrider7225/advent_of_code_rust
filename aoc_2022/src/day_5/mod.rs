@@ -39,15 +39,12 @@ impl Warehouse {
         let mut ret = Self::new();
         let mut lines = input.lines();
         let mut next_line = || {
-            lines
-                .next()
-                .ok_or_else(|| {
-                    io::Error::new(
-                        io::ErrorKind::UnexpectedEof,
-                        "Failed to reach bottom of warehouse",
-                    )
-                })
-                .map_or_else(Err, |x| x)
+            lines.next().unwrap_or_else(|| {
+                Err(io::Error::new(
+                    io::ErrorKind::UnexpectedEof,
+                    "Failed to reach bottom of warehouse",
+                ))
+            })
         };
         loop {
             let line = next_line()?;

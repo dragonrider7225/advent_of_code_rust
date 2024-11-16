@@ -33,23 +33,23 @@ impl Add for Vec3 {
     }
 }
 
-impl<'a> Add<&'a Self> for Vec3 {
+impl Add<&'_ Self> for Vec3 {
     type Output = Self;
 
-    fn add(self, other: &'a Self) -> Self::Output {
+    fn add(self, other: &Self) -> Self::Output {
         self + *other
     }
 }
 
-impl<'a> Add<&'a mut Self> for Vec3 {
+impl Add<&'_ mut Self> for Vec3 {
     type Output = Self;
 
-    fn add(self, other: &'a mut Self) -> Self::Output {
+    fn add(self, other: &mut Self) -> Self::Output {
         self + *other
     }
 }
 
-impl<'a> Add<Vec3> for &'a Vec3 {
+impl Add<Vec3> for &'_ Vec3 {
     type Output = Vec3;
 
     fn add(self, other: Vec3) -> Self::Output {
@@ -57,23 +57,23 @@ impl<'a> Add<Vec3> for &'a Vec3 {
     }
 }
 
-impl<'a, 'b> Add<&'b Vec3> for &'a Vec3 {
+impl Add<&'_ Vec3> for &'_ Vec3 {
     type Output = Vec3;
 
-    fn add(self, other: &'b Vec3) -> Self::Output {
+    fn add(self, other: &Vec3) -> Self::Output {
         *self + other
     }
 }
 
-impl<'a, 'b> Add<&'b mut Vec3> for &'a Vec3 {
+impl Add<&'_ mut Vec3> for &'_ Vec3 {
     type Output = Vec3;
 
-    fn add(self, other: &'b mut Vec3) -> Self::Output {
+    fn add(self, other: &mut Vec3) -> Self::Output {
         *self + other
     }
 }
 
-impl<'a> Add<Vec3> for &'a mut Vec3 {
+impl Add<Vec3> for &'_ mut Vec3 {
     type Output = Vec3;
 
     fn add(self, other: Vec3) -> Self::Output {
@@ -81,18 +81,18 @@ impl<'a> Add<Vec3> for &'a mut Vec3 {
     }
 }
 
-impl<'a, 'b> Add<&'b Vec3> for &'a mut Vec3 {
+impl Add<&'_ Vec3> for &'_ mut Vec3 {
     type Output = Vec3;
 
-    fn add(self, other: &'b Vec3) -> Self::Output {
+    fn add(self, other: &Vec3) -> Self::Output {
         *self + other
     }
 }
 
-impl<'a, 'b> Add<&'b mut Vec3> for &'a mut Vec3 {
+impl Add<&'_ mut Vec3> for &'_ mut Vec3 {
     type Output = Vec3;
 
-    fn add(self, other: &'b mut Vec3) -> Self::Output {
+    fn add(self, other: &mut Vec3) -> Self::Output {
         *self + other
     }
 }
@@ -105,32 +105,32 @@ impl AddAssign for Vec3 {
     }
 }
 
-impl<'a> AddAssign<&'a Self> for Vec3 {
-    fn add_assign(&mut self, other: &'a Self) {
+impl AddAssign<&'_ Self> for Vec3 {
+    fn add_assign(&mut self, other: &Self) {
         *self += *other;
     }
 }
 
-impl<'a> AddAssign<&'a mut Self> for Vec3 {
-    fn add_assign(&mut self, other: &'a mut Self) {
+impl AddAssign<&'_ mut Self> for Vec3 {
+    fn add_assign(&mut self, other: &mut Self) {
         *self += *other;
     }
 }
 
-impl<'a> AddAssign<Vec3> for &'a mut Vec3 {
+impl AddAssign<Vec3> for &'_ mut Vec3 {
     fn add_assign(&mut self, other: Vec3) {
         **self += other;
     }
 }
 
-impl<'a, 'b> AddAssign<&'b Vec3> for &'a mut Vec3 {
-    fn add_assign(&mut self, other: &'b Vec3) {
+impl AddAssign<&'_ Vec3> for &'_ mut Vec3 {
+    fn add_assign(&mut self, other: &Vec3) {
         **self += other;
     }
 }
 
-impl<'a, 'b> AddAssign<&'b mut Vec3> for &'a mut Vec3 {
-    fn add_assign(&mut self, other: &'b mut Vec3) {
+impl AddAssign<&'_ mut Vec3> for &'_ mut Vec3 {
+    fn add_assign(&mut self, other: &mut Vec3) {
         **self += other;
     }
 }
@@ -254,10 +254,8 @@ pub(super) fn run() -> io::Result<()> {
             }
         }
         println!(
-            "The moons returned to their initial state after {}*{}+{} steps",
-            overflows,
-            std::u128::MAX,
-            steps,
+            "The moons returned to their initial state after {overflows}*{}+{steps} steps",
+            u128::MAX,
         );
     }
     Ok(())
