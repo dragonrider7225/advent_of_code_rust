@@ -303,6 +303,36 @@ impl<T> Point3D<T> {
     pub const fn z(&self) -> &T {
         &self.z
     }
+
+    /// Compute the dot product of `self` and `rhs`.
+    ///
+    /// Geometrically, the dot product of two vectors `u` and `v` with inner angle `theta` is
+    /// `u.len() * v.len() * theta.cos()`.
+    pub fn dot<U, V>(&self, rhs: &Point3D<U>) -> V
+    where
+        for<'a, 'b> &'a T: Mul<&'b U, Output = V>,
+        V: Add<Output = V>,
+    {
+        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
+    }
+
+    /// Compute the cross product of `self` and `rhs`.
+    ///
+    /// Geometrically, the cross product of two vectors `u` and `v` with inner angle `theta` in
+    /// 3-space has length `u.len() * v.len() * theta.cos()` and is perpendicular to both `u` and
+    /// `v`. If `u.cross(&v)` points "up" then `u` is to the right of the angle `theta` and `v` is
+    /// to the left.
+    pub fn cross<U, V>(&self, rhs: &Point3D<U>) -> Point3D<V>
+    where
+        for<'a, 'b> &'a T: Mul<&'b U>,
+        for<'a, 'b> <&'a T as Mul<&'b U>>::Output: std::ops::Sub<Output = V>,
+    {
+        Point3D {
+            x: &self.y * &rhs.z - &self.z * &rhs.y,
+            y: &self.z * &rhs.x - &self.x * &rhs.z,
+            z: &self.x * &rhs.y - &self.y * &rhs.x,
+        }
+    }
 }
 
 macro_rules! impl_manhattan_distance_3d_const {
