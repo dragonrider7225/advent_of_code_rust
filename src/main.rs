@@ -16,7 +16,7 @@ fn app() -> Command {
                 .short('y')
                 .long("year")
                 .value_name("YEAR")
-                .value_parser(["2018", "2019", "2020", "2021", "2022", "2023"])
+                .value_parser(2018..=2023)
                 .help("Selects the year to run"),
         )
         .arg(
@@ -31,8 +31,8 @@ fn app() -> Command {
 
 fn main() -> io::Result<()> {
     let matches = app().get_matches();
-    let year = matches.get_one("year").copied();
-    let day = matches.get_one("day").copied();
+    let year = matches.get_one::<i64>("year").map(|&n| n as _);
+    let day = matches.get_one::<i64>("day").map(|&n| n as _);
     aoc::run(year, day)
 }
 
