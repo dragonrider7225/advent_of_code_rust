@@ -1,12 +1,14 @@
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, sequence, IResult,
+        Parser,
+    },
+    nom_supreme::ParserExt,
+};
 use std::{
     cmp::Reverse,
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, sequence,
-    IResult,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -29,19 +31,19 @@ enum CardWithoutJokers {
 impl CardWithoutJokers {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::_2, bytes::tag("2")),
-            combinator::value(Self::_3, bytes::tag("3")),
-            combinator::value(Self::_4, bytes::tag("4")),
-            combinator::value(Self::_5, bytes::tag("5")),
-            combinator::value(Self::_6, bytes::tag("6")),
-            combinator::value(Self::_7, bytes::tag("7")),
-            combinator::value(Self::_8, bytes::tag("8")),
-            combinator::value(Self::_9, bytes::tag("9")),
-            combinator::value(Self::T, bytes::tag("T")),
-            combinator::value(Self::J, bytes::tag("J")),
-            combinator::value(Self::Q, bytes::tag("Q")),
-            combinator::value(Self::K, bytes::tag("K")),
-            combinator::value(Self::A, bytes::tag("A")),
+            bytes::tag("2").map(|_| Self::_2),
+            bytes::tag("3").map(|_| Self::_3),
+            bytes::tag("4").map(|_| Self::_4),
+            bytes::tag("5").map(|_| Self::_5),
+            bytes::tag("6").map(|_| Self::_6),
+            bytes::tag("7").map(|_| Self::_7),
+            bytes::tag("8").map(|_| Self::_8),
+            bytes::tag("9").map(|_| Self::_9),
+            bytes::tag("T").map(|_| Self::T),
+            bytes::tag("J").map(|_| Self::J),
+            bytes::tag("Q").map(|_| Self::Q),
+            bytes::tag("K").map(|_| Self::K),
+            bytes::tag("A").map(|_| Self::A),
         ))(s)
     }
 }
@@ -66,19 +68,19 @@ enum CardWithJokers {
 impl CardWithJokers {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::_2, bytes::tag("2")),
-            combinator::value(Self::_3, bytes::tag("3")),
-            combinator::value(Self::_4, bytes::tag("4")),
-            combinator::value(Self::_5, bytes::tag("5")),
-            combinator::value(Self::_6, bytes::tag("6")),
-            combinator::value(Self::_7, bytes::tag("7")),
-            combinator::value(Self::_8, bytes::tag("8")),
-            combinator::value(Self::_9, bytes::tag("9")),
-            combinator::value(Self::T, bytes::tag("T")),
-            combinator::value(Self::J, bytes::tag("J")),
-            combinator::value(Self::Q, bytes::tag("Q")),
-            combinator::value(Self::K, bytes::tag("K")),
-            combinator::value(Self::A, bytes::tag("A")),
+            bytes::tag("2").map(|_| Self::_2),
+            bytes::tag("3").map(|_| Self::_3),
+            bytes::tag("4").map(|_| Self::_4),
+            bytes::tag("5").map(|_| Self::_5),
+            bytes::tag("6").map(|_| Self::_6),
+            bytes::tag("7").map(|_| Self::_7),
+            bytes::tag("8").map(|_| Self::_8),
+            bytes::tag("9").map(|_| Self::_9),
+            bytes::tag("T").map(|_| Self::T),
+            bytes::tag("J").map(|_| Self::J),
+            bytes::tag("Q").map(|_| Self::Q),
+            bytes::tag("K").map(|_| Self::K),
+            bytes::tag("A").map(|_| Self::A),
         ))(s)
     }
 }
@@ -117,19 +119,7 @@ where
 
 impl Hand<CardWithoutJokers> {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            combinator::map_parser(
-                bytes::take(5usize),
-                sequence::tuple((
-                    CardWithoutJokers::nom_parse,
-                    CardWithoutJokers::nom_parse,
-                    CardWithoutJokers::nom_parse,
-                    CardWithoutJokers::nom_parse,
-                    CardWithoutJokers::nom_parse,
-                )),
-            ),
-            |(a, b, c, d, e)| Self::new([a, b, c, d, e]),
-        )(s)
+        CardWithoutJokers::nom_parse.array().map(Self::new).parse(s)
     }
 
     fn new(cards: [CardWithoutJokers; 5]) -> Self {
@@ -152,19 +142,7 @@ impl Hand<CardWithoutJokers> {
 
 impl Hand<CardWithJokers> {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            combinator::map_parser(
-                bytes::take(5usize),
-                sequence::tuple((
-                    CardWithJokers::nom_parse,
-                    CardWithJokers::nom_parse,
-                    CardWithJokers::nom_parse,
-                    CardWithJokers::nom_parse,
-                    CardWithJokers::nom_parse,
-                )),
-            ),
-            |(a, b, c, d, e)| Self::new([a, b, c, d, e]),
-        )(s)
+        CardWithJokers::nom_parse.array().map(Self::new).parse(s)
     }
 
     fn new(cards: [CardWithJokers; 5]) -> Self {
@@ -207,6 +185,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
             // Need to separate this out here because otherwise the borrow checker claims that
             // `line` doesn't live long enough even though the references in both `Ok` and `Err` are
             // removed in the same expression.
+            // TODO: Remove unnecessary local when the compiler can handle it (2024 edition?).
             let res = sequence::separated_pair(
                 Hand::<CardWithoutJokers>::nom_parse,
                 bytes::tag(" "),
@@ -233,6 +212,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
             // Need to separate this out here because otherwise the borrow checker claims that
             // `line` doesn't live long enough even though the references in both `Ok` and `Err` are
             // removed in the same expression.
+            // TODO: Remove unnecessary local when the compiler can handle it (2024 edition?).
             let res = sequence::separated_pair(
                 Hand::<CardWithJokers>::nom_parse,
                 bytes::tag(" "),

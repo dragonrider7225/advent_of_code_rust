@@ -5,8 +5,11 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use aoc_util::{geometry::Point2D, nom_extended::NomParse};
-use nom::{branch, bytes::complete as bytes, combinator, multi};
+use aoc_util::{
+    geometry::Point2D,
+    nom::{branch, bytes::complete as bytes, multi, IResult, Parser},
+    nom_extended::NomParse,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Tile {
@@ -16,11 +19,11 @@ enum Tile {
 }
 
 impl<'s> NomParse<&'s str> for Tile {
-    fn nom_parse(input: &'s str) -> nom::IResult<&'s str, Self> {
+    fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            combinator::value(Self::Start, bytes::tag("S")),
-            combinator::value(Self::GardenPlot, bytes::tag(".")),
-            combinator::value(Self::Rock, bytes::tag("#")),
+            bytes::tag("S").map(|_| Self::Start),
+            bytes::tag(".").map(|_| Self::GardenPlot),
+            bytes::tag("#").map(|_| Self::Rock),
         ))(input)
     }
 }

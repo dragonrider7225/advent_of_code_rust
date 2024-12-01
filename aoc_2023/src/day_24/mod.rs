@@ -1,3 +1,9 @@
+use aoc_util::{
+    geometry::Point3D,
+    nom::{character::complete as character, combinator, sequence, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs::File,
@@ -5,9 +11,6 @@ use std::{
     num::NonZeroI128,
     ops::RangeInclusive,
 };
-
-use aoc_util::{geometry::Point3D, nom_extended::NomParse};
-use nom::{character::complete as character, combinator, sequence, IResult};
 
 mod numbers;
 use numbers::Fraction;
@@ -172,28 +175,25 @@ impl Display for Hailstone {
 impl<'a> NomParse<&'a str> for Hailstone {
     fn nom_parse(input: &'a str) -> IResult<&'a str, Self> {
         fn number(s: &str) -> IResult<&str, i128> {
-            combinator::map_res(
-                sequence::preceded(
-                    character::space0,
-                    combinator::recognize(sequence::preceded(
-                        combinator::opt(character::char('-')),
-                        character::digit1,
-                    )),
-                ),
-                |n: &str| n.parse(),
-            )(s)
+            character::space0
+                .precedes(
+                    character::char('-')
+                        .opt()
+                        .precedes(character::digit1)
+                        .recognize(),
+                )
+                .map_res(str::parse)
+                .parse(s)
         }
 
         fn point3d(s: &str) -> IResult<&str, Point3D<i128>> {
             combinator::map(
                 sequence::tuple((
                     number,
-                    character::char(','),
-                    number,
-                    character::char(','),
-                    number,
+                    character::char(',').precedes(number),
+                    character::char(',').precedes(number),
                 )),
-                |(x, _, y, _, z)| Point3D::at(x, y, z),
+                |(x, y, z)| Point3D::at(x, y, z),
             )(s)
         }
 

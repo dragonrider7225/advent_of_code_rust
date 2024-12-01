@@ -1,13 +1,12 @@
+use aoc_util::nom::{
+    branch, bytes::complete as bytes, character::complete as character, multi, sequence, IResult,
+    Parser,
+};
 use std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
 };
 
 macro_rules! say {
@@ -27,9 +26,9 @@ enum Spring {
 impl Spring {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::Operational, bytes::tag(".")),
-            combinator::value(Self::Damaged, bytes::tag("#")),
-            combinator::value(Self::Unknown, bytes::tag("?")),
+            bytes::tag(".").map(|_| Self::Operational),
+            bytes::tag("#").map(|_| Self::Damaged),
+            bytes::tag("?").map(|_| Self::Unknown),
         ))(s)
     }
 }
@@ -52,20 +51,16 @@ struct SpringRow {
 
 impl SpringRow {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            sequence::separated_pair(
-                multi::many1(Spring::nom_parse),
-                bytes::tag(" "),
-                multi::separated_list1(
-                    bytes::tag(","),
-                    combinator::map(character::u32, |n| n as usize),
-                ),
-            ),
-            |(springs, damaged_groups)| Self {
-                springs,
-                damaged_groups,
-            },
-        )(s)
+        sequence::separated_pair(
+            multi::many1(Spring::nom_parse),
+            bytes::tag(" "),
+            multi::separated_list1(bytes::tag(","), character::u32.map(|n| n as usize)),
+        )
+        .map(|(springs, damaged_groups)| Self {
+            springs,
+            damaged_groups,
+        })
+        .parse(s)
     }
 
     fn is_empty(&self) -> bool {

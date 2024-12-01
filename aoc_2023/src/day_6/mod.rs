@@ -1,10 +1,12 @@
+use aoc_util::{
+    nom::{
+        self, bytes::complete as bytes, character::complete as character, multi, sequence, Parser,
+    },
+    nom_supreme::final_parser,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator, multi, sequence, Parser,
 };
 
 macro_rules! read_line {
@@ -18,24 +20,17 @@ macro_rules! read_line {
 fn nom_parse_nums(header: &str) -> impl Parser<&str, Vec<f64>, nom::error::Error<&str>> {
     sequence::preceded(
         sequence::tuple((bytes::tag(header), bytes::tag(":"), character::space1)),
-        multi::separated_list1(
-            multi::many1(bytes::tag(" ")),
-            combinator::map(character::u32, f64::from),
-        ),
+        multi::separated_list1(multi::many1(bytes::tag(" ")), character::u32.map(f64::from)),
     )
 }
 
 fn parse_times(s: &str) -> io::Result<Vec<f64>> {
-    nom_parse_nums("Time")
-        .parse(s)
-        .map(|(_, times)| times)
+    final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(nom_parse_nums("Time"))(s)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
 }
 
 fn parse_distances(s: &str) -> io::Result<Vec<f64>> {
-    nom_parse_nums("Distance")
-        .parse(s)
-        .map(|(_, times)| times)
+    final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(nom_parse_nums("Distance"))(s)
         .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
 }
 

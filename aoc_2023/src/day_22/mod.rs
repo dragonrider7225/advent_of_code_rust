@@ -7,9 +7,12 @@ use std::{
     sync::atomic::AtomicUsize,
 };
 
-use aoc_util::{geometry::Point3D, nom_extended::NomParse};
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator, sequence, IResult,
+use aoc_util::{
+    geometry::Point3D,
+    nom::{
+        bytes::complete as bytes, character::complete as character, combinator, sequence, IResult,
+    },
+    nom_extended::NomParse,
 };
 
 type Point = Point3D<u32>;
@@ -58,7 +61,7 @@ impl Brick {
 }
 
 impl<'s> NomParse<&'s str> for Brick {
-    fn nom_parse(input: &'s str) -> nom::IResult<&'s str, Self> {
+    fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         static BRICK_ID: AtomicUsize = AtomicUsize::new(0);
 
         combinator::map(
