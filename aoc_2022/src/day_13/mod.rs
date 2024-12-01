@@ -3,35 +3,19 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
-    num::ParseIntError,
-    str::FromStr,
 };
 
-use nom::{branch, character::complete as character, combinator as comb, multi, sequence};
+use aoc_util::{
+    impl_from_str_for_nom_parse,
+    nom::{branch, character::complete as character, multi, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 
 #[derive(Clone, Eq, PartialEq)]
 enum Packet {
     List(Vec<Self>),
     Int(u32),
-}
-
-// TODO: Switch to NomParse trait when it's moved into aoc_util
-impl Packet {
-    fn nom_parse<'s>(i: &'s str) -> nom::IResult<&'s str, Self> {
-        branch::alt((
-            comb::map(
-                sequence::delimited(
-                    character::char('['),
-                    multi::separated_list0(character::char(','), Self::nom_parse),
-                    character::char(']'),
-                ),
-                Self::List,
-            ),
-            comb::map_res(character::digit1, |s: &'s str| {
-                Result::<_, ParseIntError>::Ok(Self::Int(s.parse()?))
-            }),
-        ))(i)
-    }
 }
 
 impl Debug for Packet {
@@ -59,16 +43,20 @@ impl Display for Packet {
     }
 }
 
-impl FromStr for Packet {
-    type Err = String;
+impl_from_str_for_nom_parse!(Packet);
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
+impl NomParse<&'_ str> for Packet {
+    fn nom_parse(input: &'_ str) -> IResult<&'_ str, Self> {
+        branch::alt((
+            character::char('[')
+                .precedes(multi::separated_list0(
+                    character::char(','),
+                    Self::nom_parse,
+                ))
+                .terminated(character::char(']'))
+                .map(Self::List),
+            character::digit1.map_res(str::parse).map(Self::Int),
+        ))(input)
     }
 }
 

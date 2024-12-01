@@ -1,13 +1,14 @@
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, multi, IResult, Parser,
+    },
+    nom_supreme::ParserExt,
+};
 use std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
 };
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -20,9 +21,9 @@ enum Tile {
 impl Tile {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Tile::Empty, bytes::tag(".")),
-            combinator::value(Tile::Round, bytes::tag("O")),
-            combinator::value(Tile::Cube, bytes::tag("#")),
+            bytes::tag(".").map(|_| Tile::Empty),
+            bytes::tag("O").map(|_| Tile::Round),
+            bytes::tag("#").map(|_| Tile::Cube),
         ))(s)
     }
 }
@@ -42,13 +43,9 @@ struct Platform(Vec<Vec<Tile>>);
 
 impl Platform {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            multi::many1(sequence::terminated(
-                multi::many1(Tile::nom_parse),
-                character::newline,
-            )),
-            Self,
-        )(s)
+        multi::many1(multi::many1(Tile::nom_parse).terminated(character::newline))
+            .map(Self)
+            .parse(s)
     }
 
     fn total_northward_load(&self) -> usize {

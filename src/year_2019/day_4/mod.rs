@@ -1,19 +1,18 @@
+use aoc_util::{
+    nom::{bytes::complete as bytes, character::complete as character, IResult, Parser},
+    nom_supreme::ParserExt,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
     ops::Range,
 };
 
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
-};
-
 fn parse_range(s: &str) -> IResult<&str, Range<u32>> {
-    comb::map(
-        sequence::separated_pair(character::u32, bytes::tag("-"), character::u32),
-        |(least, most)| least..most,
-    )(s)
+    character::u32
+        .and(character::u32.preceded_by(bytes::tag("-")))
+        .map(|(least, most)| least..most)
+        .parse(s)
 }
 
 fn possible_pw(pw: u32) -> bool {

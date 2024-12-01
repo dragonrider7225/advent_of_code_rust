@@ -1,5 +1,7 @@
-use aoc_util::nom_extended::NomParse;
-use nom::{branch, character::complete as character, combinator as comb, sequence, IResult};
+use aoc_util::{
+    nom::{branch, character::complete as character, combinator as comb, sequence, IResult},
+    nom_extended::NomParse,
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs, io, iter,

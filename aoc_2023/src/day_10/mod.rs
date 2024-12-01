@@ -3,7 +3,7 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-use nom::{branch, bytes::complete as bytes, combinator, multi};
+use aoc_util::nom::{branch, bytes::complete as bytes, multi, IResult, Parser};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Pipe {
@@ -18,16 +18,16 @@ enum Pipe {
 }
 
 impl Pipe {
-    fn nom_parse(s: &str) -> nom::IResult<&str, Self> {
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::Vertical, bytes::tag("|")),
-            combinator::value(Self::Horizontal, bytes::tag("-")),
-            combinator::value(Self::NorthEast, bytes::tag("L")),
-            combinator::value(Self::NorthWest, bytes::tag("J")),
-            combinator::value(Self::SouthWest, bytes::tag("7")),
-            combinator::value(Self::SouthEast, bytes::tag("F")),
-            combinator::value(Self::Ground, bytes::tag(".")),
-            combinator::value(Self::Start, bytes::tag("S")),
+            bytes::tag("|").map(|_| Self::Vertical),
+            bytes::tag("-").map(|_| Self::Horizontal),
+            bytes::tag("L").map(|_| Self::NorthEast),
+            bytes::tag("J").map(|_| Self::NorthWest),
+            bytes::tag("7").map(|_| Self::SouthWest),
+            bytes::tag("F").map(|_| Self::SouthEast),
+            bytes::tag(".").map(|_| Self::Ground),
+            bytes::tag("S").map(|_| Self::Start),
         ))(s)
     }
 

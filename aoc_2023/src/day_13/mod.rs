@@ -1,12 +1,13 @@
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, multi, IResult, Parser,
+    },
+    nom_supreme::ParserExt,
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -18,8 +19,8 @@ enum Tile {
 impl Tile {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::Ash, bytes::tag(".")),
-            combinator::value(Self::Rocks, bytes::tag("#")),
+            bytes::tag(".").map(|_| Self::Ash),
+            bytes::tag("#").map(|_| Self::Rocks),
         ))(s)
     }
 }
@@ -40,13 +41,9 @@ struct Array {
 
 impl Array {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            multi::many1(sequence::terminated(
-                multi::many1(Tile::nom_parse),
-                character::newline,
-            )),
-            |rows| Self { rows },
-        )(s)
+        multi::many1(multi::many1(Tile::nom_parse).terminated(character::newline))
+            .map(|rows| Self { rows })
+            .parse(s)
     }
 
     fn find_mirror(&self) -> usize {

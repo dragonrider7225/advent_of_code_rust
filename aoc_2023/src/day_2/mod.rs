@@ -1,10 +1,14 @@
+use aoc_util::{
+    nom::{
+        self, branch, bytes::complete as bytes, character::complete as character, multi, sequence,
+        IResult, Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::final_parser,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi, sequence,
 };
 
 #[derive(Clone, Copy, Default)]
@@ -22,39 +26,39 @@ impl Reveal {
     fn power(&self) -> u32 {
         self.red * self.green * self.blue
     }
+}
 
-    fn nom_parse(s: &str) -> nom::IResult<&str, Self> {
-        combinator::map(
-            multi::separated_list1(
-                bytes::tag(", "),
-                sequence::separated_pair(
-                    character::u32,
-                    bytes::tag(" "),
-                    branch::alt((bytes::tag("red"), bytes::tag("green"), bytes::tag("blue"))),
-                ),
+impl NomParse<&'_ str> for Reveal {
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
+        multi::separated_list1(
+            bytes::tag(", "),
+            sequence::separated_pair(
+                character::u32,
+                bytes::tag(" "),
+                branch::alt((bytes::tag("red"), bytes::tag("green"), bytes::tag("blue"))),
             ),
-            |groups| {
-                let mut res = Self::default();
-                for group in groups {
-                    match group {
-                        (red, "red") => res.red = red,
-                        (green, "green") => res.green = green,
-                        (blue, "blue") => res.blue = blue,
-                        _ => {}
-                    }
+        )
+        .map(|groups| {
+            let mut res = Self::default();
+            for group in groups {
+                match group {
+                    (red, "red") => res.red = red,
+                    (green, "green") => res.green = green,
+                    (blue, "blue") => res.blue = blue,
+                    _ => {}
                 }
-                res
-            },
-        )(s)
+            }
+            res
+        })
+        .parse(s)
     }
 }
 
 fn parse_game(line: &str) -> io::Result<(u32, Vec<Reveal>)> {
-    sequence::tuple((
+    final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(sequence::tuple((
         sequence::delimited(bytes::tag("Game "), character::u32, bytes::tag(": ")),
         multi::separated_list1(bytes::tag("; "), Reveal::nom_parse),
-    ))(line)
-    .map(|(_, res)| res)
+    )))(line)
     .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")))
 }
 

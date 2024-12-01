@@ -1,9 +1,8 @@
+use aoc_util::nom::{branch, bytes::complete as bytes, multi, IResult, Parser};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
 };
-
-use nom::{branch, bytes::complete as bytes, combinator, multi, IResult};
 
 #[derive(Clone, Copy, Debug)]
 enum Pixel {
@@ -14,8 +13,8 @@ enum Pixel {
 impl Pixel {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            combinator::value(Self::Space, bytes::tag(".")),
-            combinator::value(Self::Galaxy, bytes::tag("#")),
+            bytes::tag(".").map(|_| Self::Space),
+            bytes::tag("#").map(|_| Self::Galaxy),
         ))(s)
     }
 }

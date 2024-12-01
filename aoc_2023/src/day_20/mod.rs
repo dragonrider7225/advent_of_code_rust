@@ -6,10 +6,13 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use aoc_util::nom_extended::NomParse;
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, multi, sequence,
+        IResult, Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq)]
@@ -31,9 +34,11 @@ impl Display for ModuleId {
 
 impl<'s> NomParse<&'s str> for ModuleId {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
-        combinator::map(character::alpha1, |s: &'s str| Self {
-            inner: Box::leak(s.to_string().into_boxed_str()),
-        })(input)
+        character::alpha1
+            .map(|s: &'s str| Self {
+                inner: Box::leak(s.to_string().into_boxed_str()),
+            })
+            .parse(input)
     }
 }
 
@@ -75,20 +80,6 @@ impl FlipFlopModule {
             outputs,
         }
     }
-
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
-        sequence::preceded(
-            bytes::tag("%"),
-            combinator::map(
-                sequence::separated_pair(
-                    ModuleId::nom_parse,
-                    bytes::tag(" -> "),
-                    multi::separated_list1(bytes::tag(", "), ModuleId::nom_parse),
-                ),
-                |(name, outputs)| Self::new(name, outputs),
-            ),
-        )(s)
-    }
 }
 
 impl Module for FlipFlopModule {
@@ -117,6 +108,21 @@ impl Module for FlipFlopModule {
     }
 }
 
+impl NomParse<&str> for FlipFlopModule {
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
+        bytes::tag("%")
+            .precedes(
+                sequence::separated_pair(
+                    ModuleId::nom_parse,
+                    bytes::tag(" -> "),
+                    multi::separated_list1(bytes::tag(", "), ModuleId::nom_parse),
+                )
+                .map(|(name, outputs)| Self::new(name, outputs)),
+            )
+            .parse(s)
+    }
+}
+
 #[derive(Clone, Debug)]
 struct ConjunctionModule {
     name: ModuleId,
@@ -131,20 +137,6 @@ impl ConjunctionModule {
             outputs,
             memory: HashMap::new(),
         }
-    }
-
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
-        sequence::preceded(
-            bytes::tag("&"),
-            combinator::map(
-                sequence::separated_pair(
-                    ModuleId::nom_parse,
-                    bytes::tag(" -> "),
-                    multi::separated_list1(bytes::tag(", "), ModuleId::nom_parse),
-                ),
-                |(name, outputs)| Self::new(name, outputs),
-            ),
-        )(s)
     }
 }
 
@@ -174,6 +166,21 @@ impl Module for ConjunctionModule {
     }
 }
 
+impl NomParse<&str> for ConjunctionModule {
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
+        bytes::tag("&")
+            .precedes(
+                sequence::separated_pair(
+                    ModuleId::nom_parse,
+                    bytes::tag(" -> "),
+                    multi::separated_list1(bytes::tag(", "), ModuleId::nom_parse),
+                )
+                .map(|(name, outputs)| Self::new(name, outputs)),
+            )
+            .parse(s)
+    }
+}
+
 #[derive(Clone, Debug)]
 struct BroadcastModule {
     outputs: Vec<ModuleId>,
@@ -183,16 +190,6 @@ impl BroadcastModule {
     const NAME: ModuleId = ModuleId {
         inner: "broadcaster",
     };
-
-    fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            sequence::preceded(
-                bytes::tag("broadcaster -> "),
-                multi::separated_list1(bytes::tag(", "), ModuleId::nom_parse),
-            ),
-            |outputs| Self { outputs },
-        )(s)
-    }
 }
 
 impl Module for BroadcastModule {
@@ -208,6 +205,18 @@ impl Module for BroadcastModule {
 
     fn receive_signal(&mut self, signal: Pulse, _: &ModuleId) -> Option<Pulse> {
         Some(signal)
+    }
+}
+
+impl NomParse<&str> for BroadcastModule {
+    fn nom_parse(s: &str) -> IResult<&str, Self> {
+        bytes::tag("broadcaster -> ")
+            .precedes(multi::separated_list1(
+                bytes::tag(", "),
+                ModuleId::nom_parse,
+            ))
+            .map(|outputs| Self { outputs })
+            .parse(s)
     }
 }
 
@@ -242,9 +251,9 @@ impl DerefMut for WrappedModule {
 
 fn parse_module(s: &str) -> IResult<&str, WrappedModule> {
     branch::alt((
-        combinator::map(FlipFlopModule::nom_parse, WrappedModule::FlipFlop),
-        combinator::map(ConjunctionModule::nom_parse, WrappedModule::Conjunction),
-        combinator::map(BroadcastModule::nom_parse, WrappedModule::Broadcast),
+        FlipFlopModule::nom_parse.map(WrappedModule::FlipFlop),
+        ConjunctionModule::nom_parse.map(WrappedModule::Conjunction),
+        BroadcastModule::nom_parse.map(WrappedModule::Broadcast),
     ))(s)
 }
 

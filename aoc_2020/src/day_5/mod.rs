@@ -1,5 +1,7 @@
-use aoc_util::nom_extended::NomParse;
-use nom::{bytes::complete as bytes, combinator as comb, sequence, IResult};
+use aoc_util::{
+    nom::{bytes::complete as bytes, combinator as comb, sequence, IResult},
+    nom_extended::NomParse,
+};
 use std::{
     cmp::Ordering,
     fs::File,

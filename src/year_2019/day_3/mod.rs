@@ -1,15 +1,14 @@
-use aoc_util::nom_extended::NomParse;
-
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, multi, IResult, Parser,
+    },
+    nom_extended::NomParse,
+};
 use std::{
     collections::{HashMap, HashSet},
     fs::File,
     io::{self, BufRead, BufReader},
     mem,
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, IResult,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -23,10 +22,10 @@ enum Direction {
 impl<'s> NomParse<&'s str> for Direction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            comb::value(Direction::Up, bytes::tag("U")),
-            comb::value(Direction::Down, bytes::tag("D")),
-            comb::value(Direction::Left, bytes::tag("L")),
-            comb::value(Direction::Right, bytes::tag("R")),
+            bytes::tag("U").map(|_| Direction::Up),
+            bytes::tag("D").map(|_| Direction::Down),
+            bytes::tag("L").map(|_| Direction::Left),
+            bytes::tag("R").map(|_| Direction::Right),
         ))(s)
     }
 }
@@ -35,10 +34,10 @@ struct Movement(Direction, u32);
 
 impl<'s> NomParse<&'s str> for Movement {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::pair(Direction::nom_parse, character::u32),
-            |(direction, distance)| Movement(direction, distance),
-        )(s)
+        Direction::nom_parse
+            .and(character::u32)
+            .map(|(direction, distance)| Movement(direction, distance))
+            .parse(s)
     }
 }
 
@@ -133,10 +132,9 @@ impl Wire {
 
 impl<'s> NomParse<&'s str> for Wire {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::separated_list1(bytes::tag(","), Movement::nom_parse),
-            |ms| Wire::from_movements(&ms[..]),
-        )(s)
+        multi::separated_list1(bytes::tag(","), Movement::nom_parse)
+            .map(|ms| Wire::from_movements(&ms[..]))
+            .parse(s)
     }
 }
 

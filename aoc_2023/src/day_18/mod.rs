@@ -1,20 +1,22 @@
+use aoc_util::{
+    geometry::Direction,
+    nom::{
+        self, branch, bytes::complete as bytes, character::complete as character, multi, sequence,
+        IResult, Parser,
+    },
+    nom_supreme::{final_parser, ParserExt},
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
 };
 
-use aoc_util::geometry::Direction;
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
-};
-
 fn parse_direction(s: &str) -> IResult<&str, Direction> {
     branch::alt((
-        combinator::value(Direction::Up, bytes::tag("U")),
-        combinator::value(Direction::Down, bytes::tag("D")),
-        combinator::value(Direction::Left, bytes::tag("L")),
-        combinator::value(Direction::Right, bytes::tag("R")),
+        bytes::tag("U").map(|_| Direction::Up),
+        bytes::tag("D").map(|_| Direction::Down),
+        bytes::tag("L").map(|_| Direction::Left),
+        bytes::tag("R").map(|_| Direction::Right),
     ))(s)
 }
 
@@ -54,15 +56,14 @@ where
 
 fn part1(input: &mut dyn BufRead) -> io::Result<i64> {
     let pit = parse_instructions(input, |s| {
-        sequence::terminated(
-            sequence::separated_pair(parse_direction, bytes::tag(" "), character::i64),
-            sequence::delimited(
+        final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(sequence::pair(
+            parse_direction.terminated(bytes::tag(" ")),
+            character::i64.terminated(sequence::delimited(
                 bytes::tag(" (#"),
-                multi::many_m_n(6, 6, character::one_of("0123456789abcdef")),
+                multi::count(character::one_of("0123456789abcdef"), 6),
                 bytes::tag(")"),
-            ),
-        )(s)
-        .map(|(_, x)| x)
+            )),
+        ))(s)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
     })?;
     Ok(calculate_area(&pit))
@@ -70,16 +71,14 @@ fn part1(input: &mut dyn BufRead) -> io::Result<i64> {
 
 fn part2(input: &mut dyn BufRead) -> io::Result<i64> {
     let pit = parse_instructions(input, |s| {
-        sequence::delimited(
-            sequence::tuple((
-                parse_direction,
-                bytes::tag(" "),
-                character::i64,
-                bytes::tag(" (#"),
-            )),
-            combinator::map(
-                multi::many_m_n(6, 6, character::one_of("0123456789abcdef")),
-                |chars| {
+        final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(sequence::delimited(
+            parse_direction
+                .precedes(bytes::tag(" "))
+                .precedes(character::i64)
+                .precedes(bytes::tag(" (#")),
+            character::one_of("0123456789abcdef")
+                .array()
+                .map(|chars: [_; 6]| {
                     let ret = chars.into_iter().fold(0, |acc, c| {
                         if c.is_ascii_digit() {
                             acc * 16 + (c as u8 - b'0') as i64
@@ -95,11 +94,9 @@ fn part2(input: &mut dyn BufRead) -> io::Result<i64> {
                         _ => unreachable!(),
                     };
                     (direction, ret / 16)
-                },
-            ),
+                }),
             bytes::tag(")"),
-        )(s)
-        .map(|(_, x)| x)
+        ))(s)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
     })?;
     Ok(calculate_area(&pit))

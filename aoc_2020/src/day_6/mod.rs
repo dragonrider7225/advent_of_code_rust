@@ -1,4 +1,7 @@
-use aoc_util::nom_extended::NomParse;
+use aoc_util::{
+    nom::{character::complete as character, combinator as comb, multi, IResult},
+    nom_extended::NomParse,
+};
 
 use std::{
     convert::TryFrom,
@@ -6,8 +9,6 @@ use std::{
     iter::{FromIterator, Product, Sum},
     ops::{Add, Index, Mul},
 };
-
-use nom::{character::complete as character, combinator as comb, multi, IResult};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 struct QuestionId(u8);

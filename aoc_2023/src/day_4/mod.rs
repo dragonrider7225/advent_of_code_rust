@@ -1,11 +1,12 @@
+use aoc_util::{
+    impl_from_str_for_nom_parse,
+    nom::{bytes::complete as bytes, character::complete as character, multi, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator, multi, sequence,
-    IResult,
 };
 
 #[derive(Clone, Debug)]
@@ -15,33 +16,6 @@ struct Scratchcard {
 }
 
 impl Scratchcard {
-    fn nom_parse(s: &str) -> io::Result<Scratchcard> {
-        fn number_list(s: &str) -> IResult<&str, Vec<u32>> {
-            multi::many1(sequence::preceded(character::space1, character::u32))(s)
-        }
-
-        combinator::map(
-            sequence::tuple((
-                sequence::preceded(
-                    sequence::tuple((
-                        bytes::tag("Card"),
-                        character::space1,
-                        character::u32,
-                        bytes::tag(":"),
-                    )),
-                    number_list,
-                ),
-                sequence::preceded(bytes::tag(" |"), number_list),
-            )),
-            |(winning_numbers, available_numbers)| Self {
-                winning_numbers,
-                available_numbers,
-            },
-        )(s)
-        .map(|(_, card)| card)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
-    }
-
     fn count_matches(&self) -> usize {
         self.available_numbers
             .iter()
@@ -51,10 +25,37 @@ impl Scratchcard {
     }
 }
 
+impl_from_str_for_nom_parse!(Scratchcard);
+
+impl NomParse<&str> for Scratchcard {
+    fn nom_parse(s: &str) -> IResult<&str, Scratchcard> {
+        fn number_list(s: &str) -> IResult<&str, Vec<u32>> {
+            multi::many1(character::space1.precedes(character::u32))(s)
+        }
+
+        bytes::tag("Card")
+            .precedes(character::space1)
+            .precedes(character::u32)
+            .precedes(bytes::tag(":"))
+            .precedes(number_list)
+            .and(bytes::tag(" |").precedes(number_list))
+            .map(|(winning_numbers, available_numbers)| Self {
+                winning_numbers,
+                available_numbers,
+            })
+            .parse(s)
+    }
+}
+
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     input
         .lines()
-        .map::<io::Result<_>, _>(|line| Ok(Scratchcard::nom_parse(&line?)?.count_matches()))
+        .map::<io::Result<_>, _>(|line| {
+            line?
+                .parse::<Scratchcard>()
+                .map(|card| card.count_matches())
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
         .filter_map(|num_matches| match num_matches {
             Ok(0) => None,
             Ok(n) => Some(Ok(2u32.pow(n as u32 - 1))),
@@ -66,7 +67,12 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
 fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
     let mut cards = input
         .lines()
-        .map(|line| Scratchcard::nom_parse(&line?).map(|card| (1, card)))
+        .map(|line| {
+            line?
+                .parse::<Scratchcard>()
+                .map(|card| (1, card))
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        })
         .collect::<io::Result<Vec<_>>>()?;
     for i in 0..cards.len() {
         let &(num_copies, ref card) = &cards[i];

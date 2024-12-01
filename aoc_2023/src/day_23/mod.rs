@@ -8,8 +8,11 @@ use std::{
     sync::atomic::AtomicUsize,
 };
 
-use aoc_util::{geometry::Point2D, nom_extended::NomParse};
-use nom::{branch, bytes::complete as bytes, combinator, multi};
+use aoc_util::{
+    geometry::Point2D,
+    nom::{branch, bytes::complete as bytes, combinator, multi, IResult},
+    nom_extended::NomParse,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Tile {
@@ -22,7 +25,7 @@ enum Tile {
 }
 
 impl<'s> NomParse<&'s str> for Tile {
-    fn nom_parse(input: &'s str) -> nom::IResult<&'s str, Self> {
+    fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
             combinator::value(Self::Path, bytes::tag(".")),
             combinator::value(Self::Forest, bytes::tag("#")),

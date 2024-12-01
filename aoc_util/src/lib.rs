@@ -14,6 +14,10 @@ pub mod a_star;
 /// Collection types that are not provided by the standard library.
 pub mod collections;
 
+/// Reexport nom for use with [`nom_extended`].
+pub use nom;
+pub use nom_supreme;
+
 /// Extensions to the `nom` crate.
 pub mod nom_extended;
 

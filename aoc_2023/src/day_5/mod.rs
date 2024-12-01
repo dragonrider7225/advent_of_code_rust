@@ -1,12 +1,15 @@
+use aoc_util::{
+    nom::{
+        bytes::complete as bytes, character::complete as character, multi, sequence, IResult,
+        Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::{
     fmt::Debug,
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator, multi, sequence,
-    IResult,
 };
 
 type Id = u64;
@@ -19,15 +22,20 @@ fn id_nom_parse(s: &str) -> IResult<&str, Id> {
 struct SeedList(Vec<Id>);
 
 impl SeedList {
+    fn unwrap(self) -> Vec<Id> {
+        self.0
+    }
+}
+
+impl NomParse<&str> for SeedList {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            sequence::delimited(
-                bytes::tag("seeds: "),
-                multi::separated_list1(bytes::tag(" "), id_nom_parse),
-                character::newline,
-            ),
-            Self,
-        )(s)
+        sequence::delimited(
+            bytes::tag("seeds: "),
+            multi::separated_list1(bytes::tag(" "), id_nom_parse),
+            character::newline,
+        )
+        .map(Self)
+        .parse(s)
     }
 }
 
@@ -40,14 +48,13 @@ struct MapRange {
 
 impl MapRange {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            sequence::tuple((
-                sequence::terminated(id_nom_parse, bytes::tag(" ")),
-                sequence::terminated(id_nom_parse, bytes::tag(" ")),
-                sequence::terminated(id_nom_parse, character::newline),
-            )),
-            |(to, from, len)| Self { to, from, len },
-        )(s)
+        sequence::tuple((
+            id_nom_parse.terminated(bytes::tag(" ")),
+            id_nom_parse.terminated(bytes::tag(" ")),
+            id_nom_parse.terminated(character::newline),
+        ))
+        .map(|(to, from, len)| Self { to, from, len })
+        .parse(s)
     }
 }
 
@@ -56,10 +63,12 @@ struct Map(Vec<MapRange>);
 
 impl Map {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(multi::many0(MapRange::nom_parse), |mut ranges| {
-            ranges.sort_by_key(|range| range.from);
-            Self(ranges)
-        })(s)
+        multi::many0(MapRange::nom_parse)
+            .map(|mut ranges| {
+                ranges.sort_by_key(|range| range.from);
+                Self(ranges)
+            })
+            .parse(s)
     }
 
     fn get(&self, from: Id) -> Id {
@@ -112,17 +121,17 @@ macro_rules! mk_maps {
             struct $struct_name(Map);
 
             impl $struct_name {
+                fn unwrap(self) -> Map {
+                    self.0
+                }
+            }
+
+            impl NomParse<&str> for $struct_name {
                 fn nom_parse(s: &str) -> IResult<&str, Self> {
-                    combinator::map(
-                        sequence::preceded(
-                            sequence::pair(
-                                bytes::tag(concat!($header, " map:")),
-                                character::newline,
-                            ),
-                            Map::nom_parse,
-                        ),
-                        Self,
-                    )(s)
+                    sequence::pair(bytes::tag(concat!($header, " map:")), character::newline)
+                        .precedes(Map::nom_parse)
+                        .map(Self)
+                        .parse(s)
                 }
             }
         )*
@@ -162,30 +171,45 @@ impl Almanac {
             .map(|(_, almanac)| almanac)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
     }
+}
 
+impl NomParse<&str> for Almanac {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        combinator::map(
-            sequence::tuple((
-                sequence::terminated(SeedList::nom_parse, character::newline),
-                sequence::terminated(SeedToSoilMap::nom_parse, character::newline),
-                sequence::terminated(SoilToFertilizerMap::nom_parse, character::newline),
-                sequence::terminated(FertilizerToWaterMap::nom_parse, character::newline),
-                sequence::terminated(WaterToLightMap::nom_parse, character::newline),
-                sequence::terminated(LightToTemperatureMap::nom_parse, character::newline),
-                sequence::terminated(TemperatureToHumidityMap::nom_parse, character::newline),
-                HumidityToLocationMap::nom_parse,
-            )),
-            |almanac| Self {
-                seeds: almanac.0 .0,
-                seed_to_soil: almanac.1 .0,
-                soil_to_fertilizer: almanac.2 .0,
-                fertilizer_to_water: almanac.3 .0,
-                water_to_light: almanac.4 .0,
-                light_to_temperature: almanac.5 .0,
-                temperature_to_humidity: almanac.6 .0,
-                humidity_to_location: almanac.7 .0,
-            },
-        )(s)
+        sequence::tuple((
+            SeedList::nom_parse
+                .map(SeedList::unwrap)
+                .terminated(character::newline),
+            SeedToSoilMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            SoilToFertilizerMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            FertilizerToWaterMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            WaterToLightMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            LightToTemperatureMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            TemperatureToHumidityMap::nom_parse
+                .map(|map| map.unwrap())
+                .terminated(character::newline),
+            HumidityToLocationMap::nom_parse.map(|map| map.unwrap()),
+        ))
+        .map(|almanac| Self {
+            seeds: almanac.0,
+            seed_to_soil: almanac.1,
+            soil_to_fertilizer: almanac.2,
+            fertilizer_to_water: almanac.3,
+            water_to_light: almanac.4,
+            light_to_temperature: almanac.5,
+            temperature_to_humidity: almanac.6,
+            humidity_to_location: almanac.7,
+        })
+        .parse(s)
     }
 }
 

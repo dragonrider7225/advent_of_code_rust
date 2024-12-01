@@ -1,14 +1,15 @@
+use aoc_util::{
+    impl_from_str_for_nom_parse,
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+        sequence, IResult,
+    },
+    nom_extended::NomParse,
+};
 use std::{
     collections::HashMap,
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use aoc_util::{impl_from_str_for_nom_parse, nom_extended::NomParse};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-    sequence, IResult,
 };
 
 #[derive(Clone, Debug, Default)]

@@ -1,8 +1,9 @@
+use aoc_util::{
+    nom::{self, character::complete as character, multi, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::io;
-
-use aoc_util::nom_extended::NomParse;
-
-use nom::{character::complete as character, combinator as comb, multi, IResult};
 
 #[derive(Clone, Copy)]
 struct SIFLayer {
@@ -11,20 +12,13 @@ struct SIFLayer {
 
 impl<'s> NomParse<&'s str> for SIFLayer {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::count(multi::count(character::one_of("0123456789"), 25), 6),
-            |pixels_vec| {
-                let mut pixels = [[0; 25]; 6];
-                for row in 0..6 {
-                    for col in 0..25 {
-                        let mut s = String::new();
-                        s.push(pixels_vec[row][col]);
-                        pixels[row][col] = s.parse().unwrap();
-                    }
-                }
-                Self { pixels }
-            },
-        )(s)
+        ParserExt::<_, [_; 25], _>::array(
+            character::one_of::<_, _, nom::error::Error<_>>("0123456789")
+                .map(|c| c as u8 - b'0')
+                .array(),
+        )
+        .map(|pixels| Self { pixels })
+        .parse(s)
     }
 }
 
@@ -35,7 +29,9 @@ struct SpaceImageFormat {
 
 impl<'s> NomParse<&'s str> for SpaceImageFormat {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(multi::many1(SIFLayer::nom_parse), |layers| Self { layers })(s)
+        multi::many1(SIFLayer::nom_parse)
+            .map(|layers| Self { layers })
+            .parse(s)
     }
 }
 

@@ -1,3 +1,11 @@
+use aoc_util::{
+    nom::{
+        bytes::complete as bytes, character::complete as character, multi, sequence, IResult,
+        Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::{
     cmp::Ordering,
     collections::HashMap,
@@ -7,13 +15,6 @@ use std::{
     io::{self, BufRead, BufReader},
     ops::Mul,
 };
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, IResult,
-};
-
-use aoc_util::nom_extended::NomParse;
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
 struct Material(u64, String);
@@ -68,14 +69,15 @@ impl Mul<&'_ u64> for &'_ Material {
 
 impl<'s> NomParse<&'s str> for Material {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::separated_pair(
-                character::u64,
-                bytes::tag(" "),
-                multi::many1(character::one_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ")),
-            ),
-            |(n, name)| Material(n, name.into_iter().collect()),
-        )(s)
+        sequence::separated_pair(
+            character::u64,
+            bytes::tag(" "),
+            multi::many1(character::one_of("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+                .recognize()
+                .map(str::to_string),
+        )
+        .map(|(n, name)| Self(n, name))
+        .parse(s)
     }
 }
 
@@ -150,14 +152,13 @@ impl Mul<&'_ u64> for &'_ Reaction {
 
 impl<'s> NomParse<&'s str> for Reaction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::separated_pair(
-                multi::separated_list1(bytes::tag(", "), Material::nom_parse),
-                bytes::tag(" => "),
-                Material::nom_parse,
-            ),
-            |(ingredients, result)| Reaction(ingredients, result),
-        )(s)
+        sequence::separated_pair(
+            multi::separated_list1(bytes::tag(", "), Material::nom_parse),
+            bytes::tag(" => "),
+            Material::nom_parse,
+        )
+        .map(|(ingredients, result)| Self(ingredients, result))
+        .parse(s)
     }
 }
 

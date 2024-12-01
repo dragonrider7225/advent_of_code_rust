@@ -8,10 +8,13 @@ use std::{
     ops::{ControlFlow, Range},
 };
 
-use aoc_util::nom_extended::NomParse;
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator, multi,
-    sequence, IResult,
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, multi, sequence,
+        IResult, Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -23,22 +26,21 @@ enum Terminal {
 impl<'s> NomParse<&'s str> for Terminal {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            combinator::value(Self::Accept, bytes::tag("A")),
-            combinator::value(Self::Reject, bytes::tag("R")),
+            bytes::tag("A").map(|_| Self::Accept),
+            bytes::tag("R").map(|_| Self::Reject),
         ))(input)
     }
 }
 
 type RuleTarget = ControlFlow<Terminal, String>;
+
 fn parse_rule_target(s: &str) -> IResult<&str, RuleTarget> {
     branch::alt((
-        combinator::map(Terminal::nom_parse, ControlFlow::Break),
-        combinator::map(
-            combinator::recognize(multi::many1(character::one_of(
-                "abcdefghijklmnopqrstuvwxyz",
-            ))),
-            |name: &str| ControlFlow::Continue(name.to_string()),
-        ),
+        Terminal::nom_parse.map(ControlFlow::Break),
+        multi::many1(character::one_of("abcdefghijklmnopqrstuvwxyz"))
+            .recognize()
+            .map(str::to_string)
+            .map(ControlFlow::Continue),
     ))(s)
 }
 
@@ -55,10 +57,10 @@ enum Field {
 impl<'s> NomParse<&'s str> for Field {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            combinator::value(Self::X, bytes::tag("x")),
-            combinator::value(Self::M, bytes::tag("m")),
-            combinator::value(Self::A, bytes::tag("a")),
-            combinator::value(Self::S, bytes::tag("s")),
+            bytes::tag("x").map(|_| Self::X),
+            bytes::tag("m").map(|_| Self::M),
+            bytes::tag("a").map(|_| Self::A),
+            bytes::tag("s").map(|_| Self::S),
         ))(input)
     }
 }
@@ -72,29 +74,22 @@ struct Rule {
 
 impl<'s> NomParse<&'s str> for Rule {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
-        combinator::map(
-            sequence::tuple((
-                Field::nom_parse,
-                character::one_of("<>"),
-                character::u64,
-                sequence::preceded(bytes::tag(":"), parse_rule_target),
+        sequence::tuple((
+            Field::nom_parse,
+            branch::alt((
+                bytes::tag("<").map(|_| Ordering::Less),
+                bytes::tag(">").map(|_| Ordering::Greater),
             )),
-            |(field, comparison, value, target)| match comparison {
-                '<' => Self {
-                    field,
-                    order: Ordering::Less,
-                    value,
-                    target,
-                },
-                '>' => Self {
-                    field,
-                    order: Ordering::Greater,
-                    value,
-                    target,
-                },
-                _ => unreachable!(),
-            },
-        )(input)
+            character::u64,
+            bytes::tag(":").precedes(parse_rule_target),
+        ))
+        .map(|(field, order, value, target)| Self {
+            field,
+            order,
+            value,
+            target,
+        })
+        .parse(input)
     }
 }
 
@@ -319,27 +314,19 @@ impl Fn<(PartRange,)> for Workflow {
 
 impl<'s> NomParse<&'s str> for Workflow {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
-        combinator::map(
-            sequence::pair(
-                character::alpha1,
-                sequence::delimited(
-                    bytes::tag("{"),
-                    sequence::pair(
-                        multi::many0(sequence::terminated(Rule::nom_parse, bytes::tag(","))),
-                        parse_rule_target,
-                    ),
-                    bytes::tag("}"),
-                ),
-            ),
-            |(name, (rules, default))| {
-                let name = name.to_string();
-                Self {
-                    name,
-                    rules,
-                    default,
-                }
-            },
-        )(input)
+        character::alpha1
+            .map(str::to_string)
+            .and(sequence::delimited(
+                bytes::tag("{"),
+                multi::many0(Rule::nom_parse.terminated(bytes::tag(","))).and(parse_rule_target),
+                bytes::tag("}"),
+            ))
+            .map(|(name, (rules, default))| Self {
+                name,
+                rules,
+                default,
+            })
+            .parse(input)
     }
 }
 
@@ -369,19 +356,18 @@ impl Display for Part {
 
 impl<'s> NomParse<&'s str> for Part {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
-        combinator::map(
-            sequence::delimited(
-                bytes::tag("{"),
-                sequence::tuple((
-                    sequence::delimited(bytes::tag("x="), character::u64, bytes::tag(",")),
-                    sequence::delimited(bytes::tag("m="), character::u64, bytes::tag(",")),
-                    sequence::delimited(bytes::tag("a="), character::u64, bytes::tag(",")),
-                    sequence::preceded(bytes::tag("s="), character::u64),
-                )),
-                bytes::tag("}"),
-            ),
-            |(x, m, a, s)| Self { x, m, a, s },
-        )(input)
+        sequence::delimited(
+            bytes::tag("{"),
+            sequence::tuple((
+                sequence::delimited(bytes::tag("x="), character::u64, bytes::tag(",")),
+                sequence::delimited(bytes::tag("m="), character::u64, bytes::tag(",")),
+                sequence::delimited(bytes::tag("a="), character::u64, bytes::tag(",")),
+                sequence::preceded(bytes::tag("s="), character::u64),
+            )),
+            bytes::tag("}"),
+        )
+        .map(|(x, m, a, s)| Self { x, m, a, s })
+        .parse(input)
     }
 }
 

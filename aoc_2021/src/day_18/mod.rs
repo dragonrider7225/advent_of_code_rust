@@ -1,3 +1,6 @@
+use aoc_util::nom::{
+    branch, character::complete as character, combinator as comb, sequence, Finish, IResult,
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs::File,
@@ -5,10 +8,6 @@ use std::{
     iter::Sum,
     mem,
     ops::{Add, Index, IndexMut},
-};
-
-use nom::{
-    branch, character::complete as character, combinator as comb, sequence, Finish, IResult,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -5,8 +5,11 @@ use std::{
     iter,
 };
 
-use aoc_util::{geometry::Direction, nom_extended::NomParse};
-use nom::{branch, bytes::complete as bytes, combinator, multi, IResult};
+use aoc_util::{
+    geometry::Direction,
+    nom::{branch, bytes::complete as bytes, multi, IResult, Parser},
+    nom_extended::NomParse,
+};
 
 #[derive(Clone, Copy, Debug)]
 enum Tile {
@@ -82,11 +85,11 @@ impl Tile {
 impl<'s> NomParse<&'s str> for Tile {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            combinator::value(Self::Empty, bytes::tag(".")),
-            combinator::value(Self::PositiveMirror, bytes::tag("/")),
-            combinator::value(Self::NegativeMirror, bytes::tag("\\")),
-            combinator::value(Self::VerticalSplitter, bytes::tag("|")),
-            combinator::value(Self::HorizontalSplitter, bytes::tag("-")),
+            bytes::tag(".").map(|_| Self::Empty),
+            bytes::tag("/").map(|_| Self::PositiveMirror),
+            bytes::tag("\\").map(|_| Self::NegativeMirror),
+            bytes::tag("|").map(|_| Self::VerticalSplitter),
+            bytes::tag("-").map(|_| Self::HorizontalSplitter),
         ))(input)
     }
 }

@@ -1,13 +1,13 @@
+use aoc_util::{
+    aabb::{Aabb, AabbSet},
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+        sequence, Finish, IResult,
+    },
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
-};
-
-use aoc_util::aabb::{Aabb, AabbSet};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-    sequence, Finish, IResult,
 };
 
 fn aabb_nom_parse(s: &str) -> IResult<&str, Aabb> {
