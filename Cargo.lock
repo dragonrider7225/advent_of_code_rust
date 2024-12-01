@@ -78,7 +78,6 @@ name = "aoc_2021"
 version = "0.1.0"
 dependencies = [
  "aoc_util",
- "nom",
 ]
 
 [[package]]

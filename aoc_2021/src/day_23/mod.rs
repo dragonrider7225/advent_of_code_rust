@@ -1,3 +1,7 @@
+use aoc_util::{
+    a_star::{self, AStarState},
+    nom::{branch, bytes::complete as bytes, combinator as comb, multi, sequence, Finish, IResult},
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs::File,
@@ -5,9 +9,6 @@ use std::{
     mem,
     ops::Sub,
 };
-
-use aoc_util::a_star::{self, AStarState};
-use nom::{branch, bytes::complete as bytes, combinator as comb, multi, sequence, Finish, IResult};
 
 fn abs_sub<T>(x: T, y: T) -> T
 where

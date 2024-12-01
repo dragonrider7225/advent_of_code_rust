@@ -1,13 +1,12 @@
+use aoc_util::nom::{
+    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
+    IResult,
+};
 use std::{
     collections::HashMap,
     fs::File,
     io::{self, BufRead, BufReader},
     mem,
-};
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
 };
 
 trait Rng {

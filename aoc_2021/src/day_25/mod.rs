@@ -1,15 +1,16 @@
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+        multi, sequence, IResult,
+    },
+    nom_extended::NomParse,
+};
 use std::{
     fmt::{self, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
     mem,
     ops::{Index, IndexMut},
-};
-
-use aoc_util::nom_extended::NomParse;
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-    sequence, IResult,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
