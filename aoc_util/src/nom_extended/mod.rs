@@ -1,4 +1,4 @@
-use nom::{character::complete as character, combinator, multi, IResult};
+use crate::nom::{character::complete as character, combinator, multi, IResult};
 
 /// Recognizes both `\n` and `\r\n`.
 #[deprecated = "Use character::line_ending"]
@@ -94,6 +94,54 @@ pub trait NomParse<I>: Sized {
     fn nom_parse(input: I) -> IResult<I, Self>;
 }
 
+/// Generate a basic `FromStr` impl using `NomParse<&str>`. The parser fails if the input does not
+/// contain exactly one value of type `$t`.
+#[macro_export]
+macro_rules! impl_from_str_for_nom_parse {
+    ($($t:ty)*) => {$(
+        /// An automatically generated `FromStr` impl which uses `NomParse<&str>` as a base. This
+        /// parser will fail if the input does not contain exactly one value of the target type.
+        impl ::std::str::FromStr for $t
+        where
+            Self: for<'s> NomParse<&'s str>,
+        {
+            type Err = String;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                use $crate::nom::{combinator, Finish};
+
+                combinator::complete(combinator::all_consuming(Self::nom_parse))(s)
+                    .finish()
+                    .map(|(_, o)| o)
+                    .map_err(|e| e.to_string())
+            }
+        }
+    )*};
+    ($t:ident $(<$($arg:tt),*>)? $(where $($a:tt : $bound:tt),*)?) => {
+        $crate::impl_from_str_for_nom_parse!($t $(<$($arg),*>)? $(where $($a:tt : $bound),*)?;);
+    };
+    ($($t:ident $(<$($arg:tt),*>)? $(where $($a:tt : $bound:tt),*)? ;)*) => {$(
+        /// An automatically generated `FromStr` impl which uses `NomParse<&str>` as a base. This
+        /// parser will fail if the input does not contain exactly one value of the target type.
+        impl$(<$($arg),*>)? ::std::str::FromStr for $t $(<$($arg),*>)?
+        where
+            Self: for<'s> NomParse<&'s str>,
+            $($($a: $bound),*)?
+        {
+            type Err = String;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                use $crate::nom::{combinator, Finish};
+
+                combinator::complete(combinator::all_consuming(Self::nom_parse))(s)
+                    .finish()
+                    .map(|(_, o)| o)
+                    .map_err(|e| e.to_string())
+            }
+        }
+    )*};
+}
+
 /// A wrapper around a `Vec` that can be parsed from a sequence of `T`s concatenated without any
 /// separator.
 #[derive(Clone, Debug)]
@@ -115,30 +163,7 @@ where
     }
 }
 
-/// Generate a basic `FromStr` impl using `NomParse<&str>`. The parser fails if the input does not
-/// contain exactly one value of type `$t`.
-#[macro_export]
-macro_rules! impl_from_str_for_nom_parse {
-    ($($t:ty)*) => {$(
-        /// An automatically generated `FromStr` impl which uses `NomParse<&str>` as a base. This
-        /// parser will fail if the input does not contain exactly one value of the target type.
-        impl ::std::str::FromStr for $t
-        where
-            $t: for<'s> NomParse<&'s str>,
-        {
-            type Err = String;
-
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                use ::nom::{combinator, Finish};
-
-                combinator::complete(combinator::all_consuming(Self::nom_parse))(s)
-                    .finish()
-                    .map(|(_, o)| o)
-                    .map_err(|e| e.to_string())
-            }
-        }
-    )*};
-}
+impl_from_str_for_nom_parse!(ConcatenatedList<T>;);
 
 #[cfg(test)]
 mod tests {
