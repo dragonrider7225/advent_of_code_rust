@@ -108,12 +108,8 @@ macro_rules! impl_from_str_for_nom_parse {
             type Err = String;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                use $crate::nom::{combinator, Finish};
-
-                combinator::complete(combinator::all_consuming(Self::nom_parse))(s)
-                    .finish()
-                    .map(|(_, o)| o)
-                    .map_err(|e| e.to_string())
+                $crate::nom_supreme::final_parser::final_parser::<_, _, _, $crate::nom::error::Error<&'_ str>>(Self::nom_parse)(s)
+                    .map_err(|e| format!("{e:?}"))
             }
         }
     )*};
