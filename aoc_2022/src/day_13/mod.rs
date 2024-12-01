@@ -3,13 +3,13 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
     fs::File,
     io::{self, BufRead, BufReader},
-    str::FromStr,
 };
 
 use aoc_util::{
-    nom::{self, branch, character::complete as character, multi, IResult, Parser},
+    impl_from_str_for_nom_parse,
+    nom::{branch, character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
-    nom_supreme::{final_parser, ParserExt},
+    nom_supreme::ParserExt,
 };
 
 #[derive(Clone, Eq, PartialEq)]
@@ -43,18 +43,7 @@ impl Display for Packet {
     }
 }
 
-impl FromStr for Packet {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use ::nom::Finish;
-
-        Self::nom_parse(s)
-            .finish()
-            .map(|(_, res)| res)
-            .map_err(|error| format!("{error:?}"))
-    }
-}
+impl_from_str_for_nom_parse!(Packet);
 
 impl NomParse<&'_ str> for Packet {
     fn nom_parse(input: &'_ str) -> IResult<&'_ str, Self> {
