@@ -14,7 +14,6 @@ dependencies = [
  "aoc_util",
  "clap",
  "extended_io",
- "nom",
 ]
 
 [[package]]

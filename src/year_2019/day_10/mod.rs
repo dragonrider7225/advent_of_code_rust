@@ -1,7 +1,9 @@
+use aoc_util::{
+    geometry::Point2D,
+    nom::{branch, character::complete as character, multi, IResult, Parser},
+    nom_extended::NomParse,
+};
 use std::{io, mem};
-
-use aoc_util::{geometry::Point2D, nom_extended::NomParse};
-use nom::{branch, character::complete as character, combinator as comb, multi, IResult};
 
 struct RatioGenerator {
     last_set: Vec<(bool, Point2D<usize>)>,
@@ -199,11 +201,15 @@ impl AsteroidField {
 
 impl<'s> NomParse<&'s str> for AsteroidField {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        let asteroid = comb::value(true, character::char('#'));
-        let blank = comb::value(false, character::char('.'));
-        let row_parser = multi::many1(branch::alt((asteroid, blank)));
-        let field_parser = multi::separated_list1(character::line_ending, row_parser);
-        comb::map(field_parser, |asteroids| Self { asteroids })(s)
+        multi::separated_list1(
+            character::line_ending,
+            multi::many1(branch::alt((
+                character::char('#').map(|_| true),
+                character::char('.').map(|_| false),
+            ))),
+        )
+        .map(|asteroids| Self { asteroids })
+        .parse(s)
     }
 }
 

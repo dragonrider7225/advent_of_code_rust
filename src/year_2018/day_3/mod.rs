@@ -1,16 +1,14 @@
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
+use aoc_util::{
+    nom::{bytes::complete as bytes, character::complete as character, sequence, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
-
 use std::{
     cmp::Ordering,
     fs::File,
     io::{self, BufRead, BufReader},
     iter::FromIterator,
 };
-
-use aoc_util::nom_extended::NomParse;
 
 #[derive(PartialEq, Eq, Clone)]
 struct Rect {
@@ -192,31 +190,17 @@ impl Ord for Rect {
 
 impl<'s> NomParse<&'s str> for Rect {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Rect> {
-        comb::map(
-            // Parse ((id, (left, bottom)), (width, height)) ("#{} @ {},{}: {}x{}")
-            sequence::pair(
-                // Parse (id, (left, bottom)) ("#{} @ {},{}")
-                sequence::pair(
-                    // Parse id ("#{} @ ")
-                    sequence::terminated(
-                        // Parse id ("#{}")
-                        sequence::preceded(bytes::tag("#"), character::u32),
-                        bytes::tag(" @ "),
-                    ),
-                    // Parse (left, bottom) ("{},{}")
-                    sequence::separated_pair(character::u32, bytes::tag(","), character::u32),
-                ),
-                // Parse (width, height) (": {}x{}")
-                sequence::preceded(
-                    bytes::tag(": "),
-                    // Parse (width, height) ("{}x{}")
-                    sequence::separated_pair(character::u32, bytes::tag("x"), character::u32),
-                ),
-            ),
-            |((id, (left, bottom)), (width, height))| {
-                Rect::with_id(id, left, bottom, width, height)
-            },
-        )(s)
+        sequence::tuple((
+            character::u32
+                .preceded_by(bytes::tag("#"))
+                .terminated(bytes::tag(" @ ")),
+            character::u32.terminated(bytes::tag(",")),
+            character::u32.terminated(bytes::tag(": ")),
+            character::u32.terminated(bytes::tag("x")),
+            character::u32,
+        ))
+        .map(|(id, left, bottom, width, height)| Rect::with_id(id, left, bottom, width, height))
+        .parse(s)
     }
 }
 

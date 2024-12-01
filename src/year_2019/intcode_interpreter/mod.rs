@@ -1,20 +1,17 @@
+use aoc_util::{
+    nom::{bytes::complete as bytes, character::complete as character, multi, IResult, Parser},
+    nom_extended::NomParse,
+};
+use extended_io::{
+    self as eio,
+    pipe::{PipeRead, PipeWrite},
+};
 use std::{
     convert::{TryFrom, TryInto},
     io::{self, BufRead, Write},
     ops::{Index, IndexMut},
     path::Path,
     str::FromStr,
-};
-
-use aoc_util::nom_extended::NomParse;
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, multi, IResult,
-};
-
-use extended_io::{
-    self as eio,
-    pipe::{PipeRead, PipeWrite},
 };
 
 enum ParamMode {
@@ -519,10 +516,9 @@ where
     W: Write + Sized,
 {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
-        comb::map(
-            multi::separated_list1(bytes::tag(","), character::i64),
-            Self::from,
-        )(s)
+        multi::separated_list1(bytes::tag(","), character::i64)
+            .map(Self::from)
+            .parse(s)
     }
 }
 

@@ -1,15 +1,13 @@
-use aoc_util::nom_extended::NomParse;
-
+use aoc_util::{
+    nom::{bytes::complete as bytes, character::complete as character, sequence, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
+};
 use std::{
     cmp::Ordering,
     fs::File,
     io::{self, BufRead, BufReader},
     ops::{Add, AddAssign},
-};
-
-use nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
@@ -137,22 +135,19 @@ impl AddAssign<&'_ mut Vec3> for &'_ mut Vec3 {
 
 impl<'s> NomParse<&'s str> for Vec3 {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::delimited(
-                bytes::tag("<"),
-                sequence::separated_pair(
-                    sequence::preceded(bytes::tag("x="), character::i16),
-                    bytes::tag(", "),
-                    sequence::separated_pair(
-                        sequence::preceded(bytes::tag("y="), character::i16),
-                        bytes::tag(", "),
-                        sequence::preceded(bytes::tag("z="), character::i16),
-                    ),
-                ),
-                bytes::tag(">"),
-            ),
-            |(x, (y, z))| Vec3::new(x, y, z),
-        )(s)
+        sequence::tuple((
+            character::i16
+                .preceded_by(bytes::tag("x="))
+                .terminated(bytes::tag(", ")),
+            character::i16
+                .preceded_by(bytes::tag("y="))
+                .terminated(bytes::tag(", ")),
+            character::i16.preceded_by(bytes::tag("z=")),
+        ))
+        .preceded_by(bytes::tag("<"))
+        .terminated(bytes::tag(">"))
+        .map(|(x, y, z)| Vec3::new(x, y, z))
+        .parse(s)
     }
 }
 

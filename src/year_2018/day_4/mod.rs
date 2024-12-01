@@ -1,8 +1,11 @@
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-    sequence, IResult,
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, sequence, IResult,
+        Parser,
+    },
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
-
 use std::{
     collections::HashMap,
     convert::TryFrom,
@@ -11,8 +14,6 @@ use std::{
     io::{self, BufRead, BufReader},
     ops::Range,
 };
-
-use aoc_util::nom_extended::NomParse;
 
 #[derive(PartialOrd, Ord, PartialEq, Eq, Clone, Copy)]
 struct Date {
@@ -35,18 +36,13 @@ impl Display for Date {
 
 impl<'s> NomParse<&'s str> for Date {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Date> {
-        comb::map(
-            sequence::separated_pair(
-                character::u32, // Parse year ("{u32}")
-                bytes::tag("-"),
-                sequence::separated_pair(
-                    character::u8, // Parse month ("{u8}")
-                    bytes::tag("-"),
-                    character::u8, // Parse day ("{u8}")
-                ), // Parse (month, day) ("{u8}-{u8}")
-            ), // Parse (year, (month, day)) ("{u32}-{u8}-{u8}")
-            |(year, (month, day))| Date::new(year, month, day),
-        )(s)
+        sequence::tuple((
+            character::u32.terminated(bytes::tag("-")),
+            character::u8.terminated(bytes::tag("-")),
+            character::u8,
+        ))
+        .map(|(year, month, day)| Date::new(year, month, day))
+        .parse(s)
     }
 }
 
@@ -114,14 +110,10 @@ impl_try_from_integer_for_time!(u16 u32 u64 u128 usize i16 i32 i64 i128 isize);
 
 impl<'s> NomParse<&'s str> for Time {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Time> {
-        comb::map(
-            sequence::separated_pair(
-                character::u8, // Parse hour ("{u8}")
-                bytes::tag(":"),
-                character::u8, // Parse minute ("{u8}")
-            ), // Parse (hour, minute) ("{u8}:{u8}")
-            |(hour, minute)| Time::new(hour, minute),
-        )(s)
+        character::u8
+            .and(character::u8.preceded_by(bytes::tag(":")))
+            .map(|(hour, minute)| Time::new(hour, minute))
+            .parse(s)
     }
 }
 
@@ -153,11 +145,11 @@ impl Display for Datetime {
 
 impl<'s> NomParse<&'s str> for Datetime {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Datetime> {
-        comb::map(
-            // Parse (date, time) ("{u32}-{u8}-{u8} {u8}:{u8}")
-            sequence::separated_pair(Date::nom_parse, bytes::tag(" "), Time::nom_parse),
-            |(date, time)| Datetime::new(date, time),
-        )(s)
+        // Parse (date, time) ("{u32}-{u8}-{u8} {u8}:{u8}")
+        Date::nom_parse
+            .and(Time::nom_parse.preceded_by(bytes::tag(" ")))
+            .map(|(date, time)| Datetime::new(date, time))
+            .parse(s)
     }
 }
 
@@ -181,16 +173,12 @@ impl Display for Day4Event {
 impl<'s> NomParse<&'s str> for Day4Event {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Day4Event> {
         branch::alt((
-            comb::value(Day4Event::WakesUp, bytes::tag("wakes up")),
-            comb::value(Day4Event::FallsAsleep, bytes::tag("falls asleep")),
-            comb::map(
-                sequence::delimited(
-                    bytes::tag("Guard #"),
-                    character::u32, // Parse guard_num ("{u32}")
-                    bytes::tag(" begins shift"),
-                ), // Parse guard_num ("Guard #{u32} begins shift")
-                Day4Event::BeginsShift,
-            ),
+            bytes::tag("wakes up").map(|_| Day4Event::WakesUp),
+            bytes::tag("falls asleep").map(|_| Day4Event::FallsAsleep),
+            character::u32
+                .preceded_by(bytes::tag("Guard #"))
+                .terminated(bytes::tag(" begins shift"))
+                .map(Day4Event::BeginsShift),
         ))(s)
     }
 }
@@ -222,13 +210,14 @@ impl Display for Day4Entry {
 
 impl<'s> NomParse<&'s str> for Day4Entry {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Day4Entry> {
-        comb::map(
-            sequence::pair(
-                sequence::delimited(bytes::tag("["), Datetime::nom_parse, bytes::tag("] ")),
-                Day4Event::nom_parse,
-            ),
-            |(datetime, event)| Day4Entry::new(datetime, event),
-        )(s)
+        sequence::pair(
+            Datetime::nom_parse
+                .preceded_by(bytes::tag("["))
+                .terminated(bytes::tag("] ")),
+            Day4Event::nom_parse,
+        )
+        .map(|(datetime, event)| Day4Entry::new(datetime, event))
+        .parse(s)
     }
 }
 
