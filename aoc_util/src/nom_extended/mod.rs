@@ -1,4 +1,6 @@
-use crate::nom::{character::complete as character, combinator, multi, IResult};
+use nom::Parser;
+
+use crate::nom::{character::complete as character, multi, IResult};
 
 /// Recognizes both `\n` and `\r\n`.
 #[deprecated = "Use character::line_ending"]
@@ -73,19 +75,15 @@ pub trait NomParse<I>: Sized {
     /// NomParse<_>>::Error: Debug` as
     ///
     /// ```rust.ignore
-    /// use nom::{
-    ///     self,
-    ///     combinator as comb,
-    /// };
-    ///
     /// impl<T: NomParse<&str>> FromStr for T {
     ///     type Err = String;
     ///
     ///     fn from_str(s: &str) -> Result<T, <Self as FromStr>::Err> {
-    ///         Self::nom_parse(s)
-    ///             .finish()
-    ///             .map(|(_, res)| res)
-    ///             .map_err(|e| e.to_string())
+    ///         use nom::error::Error;
+    ///         use nom_supreme::final_parser;
+    ///
+    ///         final_parser::final_parser::<_, _, _, Error<&'_ str>>(Self::nom_parse)(s)
+    ///             .map_err(|e| format!("{e:?}"))
     ///     }
     /// }
     /// ```
@@ -108,7 +106,9 @@ macro_rules! impl_from_str_for_nom_parse {
             type Err = String;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::nom_supreme::final_parser::final_parser::<_, _, _, $crate::nom::error::Error<&'_ str>>(Self::nom_parse)(s)
+                use $crate::{nom::error::Error, nom_supreme::final_parser};
+
+                final_parser::final_parser::<_, _, _, Error<&'_ str>>(Self::nom_parse)(s)
                     .map_err(|e| format!("{e:?}"))
             }
         }
@@ -127,12 +127,10 @@ macro_rules! impl_from_str_for_nom_parse {
             type Err = String;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                use $crate::nom::{combinator, Finish};
+                use $crate::{nom::error::Error, nom_supreme::final_parser};
 
-                combinator::complete(combinator::all_consuming(Self::nom_parse))(s)
-                    .finish()
-                    .map(|(_, o)| o)
-                    .map_err(|e| e.to_string())
+                final_parser::final_parser::<_, _, _, Error<&'_ str>>(Self::nom_parse)(s)
+                    .map_err(|e| format!("{e:?}"))
             }
         }
     )*};
@@ -155,7 +153,7 @@ where
     T: NomParse<&'input str>,
 {
     fn nom_parse(s: &'input str) -> IResult<&'input str, Self> {
-        combinator::map(multi::many0(T::nom_parse), Self)(s)
+        multi::many0(T::nom_parse).map(Self).parse(s)
     }
 }
 
@@ -165,8 +163,6 @@ impl_from_str_for_nom_parse!(ConcatenatedList<T>;);
 mod tests {
     use super::*;
 
-    use nom::combinator;
-
     #[derive(Clone, Copy)]
     struct A;
 
@@ -174,7 +170,9 @@ mod tests {
         fn nom_parse(input: &str) -> IResult<&str, Self> {
             use nom::{branch, bytes::complete as bytes};
 
-            combinator::value(A, branch::alt((bytes::tag("a"), bytes::tag("1"))))(input)
+            branch::alt((bytes::tag("a"), bytes::tag("1")))
+                .map(|_| A)
+                .parse(input)
         }
     }
 

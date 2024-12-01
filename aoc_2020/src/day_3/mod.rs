@@ -1,6 +1,7 @@
 use aoc_util::{
-    nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult},
+    nom::{branch, character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 
 use std::{fs, io, iter};
@@ -14,8 +15,8 @@ enum Tile {
 impl<'s> NomParse<&'s str> for Tile {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            comb::value(Self::Snow, character::char('.')),
-            comb::value(Self::Tree, character::char('#')),
+            character::char('.').map(|_| Self::Snow),
+            character::char('#').map(|_| Self::Tree),
         ))(s)
     }
 }
@@ -37,15 +38,9 @@ impl TreeMap {
 
 impl<'s> NomParse<&'s str> for TreeMap {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        let (_, first_line) =
-            sequence::terminated(multi::many1(Tile::nom_parse), character::line_ending)(s)?;
-        comb::map(
-            multi::many1(sequence::terminated(
-                multi::many_m_n(first_line.len(), first_line.len(), Tile::nom_parse),
-                character::line_ending,
-            )),
-            Self,
-        )(s)
+        multi::many1(multi::many1(Tile::nom_parse).terminated(character::line_ending))
+            .map(Self)
+            .parse(s)
     }
 }
 

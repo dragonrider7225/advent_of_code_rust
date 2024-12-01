@@ -1,6 +1,6 @@
 use aoc_util::{
     geometry::Point3D,
-    nom::{character::complete as character, combinator, sequence, IResult, Parser},
+    nom::{character::complete as character, sequence, IResult, Parser},
     nom_extended::NomParse,
     nom_supreme::ParserExt,
 };
@@ -187,24 +187,22 @@ impl<'a> NomParse<&'a str> for Hailstone {
         }
 
         fn point3d(s: &str) -> IResult<&str, Point3D<i128>> {
-            combinator::map(
-                sequence::tuple((
-                    number,
-                    character::char(',').precedes(number),
-                    character::char(',').precedes(number),
-                )),
-                |(x, y, z)| Point3D::at(x, y, z),
-            )(s)
+            sequence::tuple((
+                number.terminated(character::char(',')),
+                number.terminated(character::char(',')),
+                number,
+            ))
+            .map(|(x, y, z)| Point3D::at(x, y, z))
+            .parse(s)
         }
 
-        combinator::map(
-            sequence::separated_pair(
-                point3d,
-                sequence::tuple((character::space1, character::char('@'), character::space1)),
-                point3d,
-            ),
-            |(position, velocity)| Self { position, velocity },
-        )(input)
+        sequence::separated_pair(
+            point3d,
+            sequence::tuple((character::space1, character::char('@'), character::space1)),
+            point3d,
+        )
+        .map(|(position, velocity)| Self { position, velocity })
+        .parse(input)
     }
 }
 

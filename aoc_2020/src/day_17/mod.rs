@@ -1,10 +1,10 @@
 use aoc_util::{
-    nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult},
+    nom::{branch, character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::HashSet,
-    convert::TryFrom,
     fmt::{self, Debug, Formatter},
     fs, io,
 };
@@ -201,29 +201,23 @@ aoc_util::impl_from_str_for_nom_parse!(ConwayCubes);
 
 impl<'s> NomParse<&'s str> for ConwayCubes {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::many0(sequence::terminated(
-                multi::many0(branch::alt((
-                    comb::value(true, character::char('#')),
-                    comb::value(false, character::char('.')),
-                ))),
-                character::line_ending,
-            )),
-            |lines| {
-                let active = lines
-                    .into_iter()
+        multi::many0(
+            multi::many0(branch::alt((
+                character::char('#').map(|_| true),
+                character::char('.').map(|_| false),
+            )))
+            .terminated(character::line_ending),
+        )
+        .map(|lines| {
+            Self::new(lines.into_iter().enumerate().flat_map(|(x, line)| {
+                let x = x as i64;
+                line.into_iter()
                     .enumerate()
-                    .flat_map(|(x, line)| {
-                        let x = i64::try_from(x).unwrap();
-                        line.into_iter()
-                            .enumerate()
-                            .filter_map(|(y, active)| Some(y).filter(|_| active))
-                            .map(move |y| (x, i64::try_from(y).unwrap()))
-                    })
-                    .collect::<Vec<_>>();
-                Self::new(active)
-            },
-        )(s)
+                    .filter(|&(_, active)| active)
+                    .map(move |(y, _)| (x, y as i64))
+            }))
+        })
+        .parse(s)
     }
 }
 

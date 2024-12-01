@@ -1,9 +1,9 @@
 use aoc_util::{
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        multi, sequence, IResult,
+        branch, bytes::complete as bytes, character::complete as character, multi, IResult, Parser,
     },
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::HashMap,
@@ -57,7 +57,7 @@ impl BitXor for Value {
 
 impl<'s> NomParse<&'s str> for Value {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map_res(character::u64, Self::try_from)(s)
+        character::u64.map_res(Self::try_from).parse(s)
     }
 }
 
@@ -130,7 +130,9 @@ impl<'s> NomParse<&'s str> for Mask {
             })
         }
 
-        comb::map_res(multi::many_m_n(36, 36, character::one_of("X01")), build)(s)
+        multi::count(character::one_of("X01"), 36)
+            .map_res(build)
+            .parse(s)
     }
 }
 
@@ -165,21 +167,10 @@ impl Instruction {
 impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            comb::map(
-                sequence::preceded(bytes::tag("mask = "), Mask::nom_parse),
-                Self::SetMask,
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("mem["),
-                    sequence::separated_pair(
-                        Value::nom_parse,
-                        bytes::tag("] = "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(idx, value)| Self::SetValue { idx, value },
-            ),
+            bytes::tag("mask = ").precedes(Mask::nom_parse.map(Self::SetMask)),
+            bytes::tag("mem[")
+                .precedes(Value::nom_parse.and(Value::nom_parse.preceded_by(bytes::tag("] = "))))
+                .map(|(idx, value)| Self::SetValue { idx, value }),
         ))(s)
     }
 }
@@ -235,13 +226,10 @@ impl Program {
 
 impl<'s> NomParse<&'s str> for Program {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::terminated(
-                multi::separated_list0(character::line_ending, Instruction::nom_parse),
-                comb::opt(character::line_ending),
-            ),
-            |instructions| Self { instructions },
-        )(s)
+        multi::separated_list0(character::line_ending, Instruction::nom_parse)
+            .terminated(character::line_ending.opt())
+            .map(|instructions| Self { instructions })
+            .parse(s)
     }
 }
 

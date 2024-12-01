@@ -1,10 +1,8 @@
 use aoc_util::{
     impl_from_str_for_nom_parse,
-    nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        sequence, IResult,
-    },
+    nom::{branch, bytes::complete as bytes, character::complete as character, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::HashMap,
@@ -84,10 +82,10 @@ enum Variable {
 impl NomParse<&'_ str> for Variable {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::value(Self::W, bytes::tag("w")),
-            comb::value(Self::X, bytes::tag("x")),
-            comb::value(Self::Y, bytes::tag("y")),
-            comb::value(Self::Z, bytes::tag("z")),
+            bytes::tag("w").map(|_| Self::W),
+            bytes::tag("x").map(|_| Self::X),
+            bytes::tag("y").map(|_| Self::Y),
+            bytes::tag("z").map(|_| Self::Z),
         ))(s)
     }
 }
@@ -101,8 +99,8 @@ enum Value {
 impl NomParse<&'_ str> for Value {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::map(Variable::nom_parse, Self::Variable),
-            comb::map(character::i128, Self::Literal),
+            Variable::nom_parse.map(Self::Variable),
+            character::i128.map(Self::Literal),
         ))(s)
     }
 }
@@ -129,65 +127,44 @@ enum Instruction {
 impl NomParse<&'_ str> for Instruction {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::map(
-                sequence::preceded(bytes::tag("inp "), Variable::nom_parse),
-                Self::Inp,
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("add "),
-                    sequence::separated_pair(
-                        Variable::nom_parse,
-                        bytes::tag(" "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(dest, addend)| Self::Add { dest, addend },
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("mul "),
-                    sequence::separated_pair(
-                        Variable::nom_parse,
-                        bytes::tag(" "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(dest, multiplicand)| Self::Mul { dest, multiplicand },
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("div "),
-                    sequence::separated_pair(
-                        Variable::nom_parse,
-                        bytes::tag(" "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(dest, denominator)| Self::Div { dest, denominator },
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("mod "),
-                    sequence::separated_pair(
-                        Variable::nom_parse,
-                        bytes::tag(" "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(dest, denominator)| Self::Mod { dest, denominator },
-            ),
-            comb::map(
-                sequence::preceded(
-                    bytes::tag("eql "),
-                    sequence::separated_pair(
-                        Variable::nom_parse,
-                        bytes::tag(" "),
-                        Value::nom_parse,
-                    ),
-                ),
-                |(dest, rhs)| Self::Eql { dest, rhs },
-            ),
+            bytes::tag("inp ")
+                .precedes(Variable::nom_parse)
+                .map(Self::Inp),
+            bytes::tag("add ")
+                .precedes(
+                    Variable::nom_parse
+                        .terminated(bytes::tag(" "))
+                        .and(Value::nom_parse),
+                )
+                .map(|(dest, addend)| Self::Add { dest, addend }),
+            bytes::tag("mul ")
+                .precedes(
+                    Variable::nom_parse
+                        .terminated(bytes::tag(" "))
+                        .and(Value::nom_parse),
+                )
+                .map(|(dest, multiplicand)| Self::Mul { dest, multiplicand }),
+            bytes::tag("div ")
+                .precedes(
+                    Variable::nom_parse
+                        .terminated(bytes::tag(" "))
+                        .and(Value::nom_parse),
+                )
+                .map(|(dest, denominator)| Self::Div { dest, denominator }),
+            bytes::tag("mod ")
+                .precedes(
+                    Variable::nom_parse
+                        .terminated(bytes::tag(" "))
+                        .and(Value::nom_parse),
+                )
+                .map(|(dest, denominator)| Self::Mod { dest, denominator }),
+            bytes::tag("eql ")
+                .precedes(
+                    Variable::nom_parse
+                        .terminated(bytes::tag(" "))
+                        .and(Value::nom_parse),
+                )
+                .map(|(dest, rhs)| Self::Eql { dest, rhs }),
         ))(s)
     }
 }

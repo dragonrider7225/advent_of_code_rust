@@ -1,5 +1,5 @@
 use aoc_util::{
-    nom::{character::complete as character, combinator as comb, multi, IResult},
+    nom::{character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
 };
 
@@ -15,9 +15,10 @@ struct QuestionId(u8);
 
 impl<'s> NomParse<&'s str> for QuestionId {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(character::one_of(&*('a'..='z').collect::<String>()), |c| {
-            Self(u8::try_from(u32::from(c) - u32::from('a')).unwrap())
-        })(s)
+        character::one_of("abcdefghijklmnopqrstuvwxyz")
+            .map(|c| c as u8 - b'a')
+            .map(Self)
+            .parse(s)
     }
 }
 
@@ -80,7 +81,9 @@ impl Mul for Answers {
 
 impl<'s> NomParse<&'s str> for Answers {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(multi::many1(QuestionId::nom_parse), Answers::from_iter)(s)
+        multi::many1(QuestionId::nom_parse)
+            .map(Self::from_iter)
+            .parse(s)
     }
 }
 
@@ -117,10 +120,9 @@ impl GroupAnswers {
 
 impl<'s> NomParse<&'s str> for GroupAnswers {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::separated_list1(character::line_ending, Answers::nom_parse),
-            Self,
-        )(s)
+        multi::separated_list1(character::line_ending, Answers::nom_parse)
+            .map(Self)
+            .parse(s)
     }
 }
 

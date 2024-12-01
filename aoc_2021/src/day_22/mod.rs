@@ -1,9 +1,10 @@
 use aoc_util::{
     aabb::{Aabb, AabbSet},
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        sequence, Finish, IResult,
+        branch, bytes::complete as bytes, character::complete as character, sequence, Finish,
+        IResult, Parser,
     },
+    nom_supreme::ParserExt,
 };
 use std::{
     fs::File,
@@ -15,25 +16,24 @@ fn aabb_nom_parse(s: &str) -> IResult<&str, Aabb> {
         sequence::separated_pair(character::i64, bytes::tag(".."), character::i64)(s)
     }
 
-    comb::map(
-        sequence::separated_pair(
-            sequence::preceded(bytes::tag("x="), read_range),
-            bytes::tag(","),
-            sequence::separated_pair(
-                sequence::preceded(bytes::tag("y="), read_range),
-                bytes::tag(","),
-                sequence::preceded(bytes::tag("z="), read_range),
-            ),
-        ),
-        |((min_x, max_x), ((min_y, max_y), (min_z, max_z)))| Aabb {
-            min_x,
-            max_x,
-            min_y,
-            max_y,
-            min_z,
-            max_z,
-        },
-    )(s)
+    sequence::tuple((
+        read_range
+            .preceded_by(bytes::tag("x="))
+            .terminated(bytes::tag(",")),
+        read_range
+            .preceded_by(bytes::tag("y="))
+            .terminated(bytes::tag(",")),
+        read_range.preceded_by(bytes::tag("z=")),
+    ))
+    .map(|((min_x, max_x), (min_y, max_y), (min_z, max_z))| Aabb {
+        min_x,
+        max_x,
+        min_y,
+        max_y,
+        min_z,
+        max_z,
+    })
+    .parse(s)
 }
 
 fn read_boxes(input: &mut dyn BufRead) -> impl Iterator<Item = io::Result<(bool, Aabb)>> + '_ {
@@ -41,8 +41,8 @@ fn read_boxes(input: &mut dyn BufRead) -> impl Iterator<Item = io::Result<(bool,
         let line = line?;
         let parsed = sequence::separated_pair(
             branch::alt((
-                comb::value(true, bytes::tag("on")),
-                comb::value(false, bytes::tag("off")),
+                bytes::tag("on").map(|_| true),
+                bytes::tag("off").map(|_| false),
             )),
             bytes::tag(" "),
             aabb_nom_parse,

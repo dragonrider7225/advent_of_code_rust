@@ -1,7 +1,7 @@
 use aoc_util::{
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        sequence, IResult,
+        branch, bytes::complete as bytes, character::complete as character, combinator, sequence,
+        IResult,
     },
     nom_extended::NomParse,
 };
@@ -178,7 +178,11 @@ impl<'s> NomParse<&'s str> for Passport<'s> {
                 sequence::delimited(
                     sequence::pair(bytes::tag(field_name), bytes::tag(":")),
                     bytes::is_not(" \r\n"),
-                    branch::alt((character::line_ending, character::multispace1, comb::eof)),
+                    branch::alt((
+                        character::line_ending,
+                        character::multispace1,
+                        combinator::eof,
+                    )),
                 )(s)
             }
         }

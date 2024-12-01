@@ -1,5 +1,5 @@
 use aoc_util::{
-    nom::{branch, character::complete as character, combinator as comb, multi, IResult},
+    nom::{branch, character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
 };
 use std::{
@@ -82,7 +82,7 @@ aoc_util::impl_from_str_for_nom_parse!(Timestamp);
 
 impl<'s> NomParse<&'s str> for Timestamp {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(character::u128, Self)(s)
+        character::u128.map(Self).parse(s)
     }
 }
 
@@ -126,7 +126,7 @@ impl Display for BusNumber {
 
 impl<'s> NomParse<&'s str> for BusNumber {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(character::u128, Self)(s)
+        character::u128.map(Self).parse(s)
     }
 }
 
@@ -189,15 +189,12 @@ aoc_util::impl_from_str_for_nom_parse!(BusSchedule);
 
 impl<'s> NomParse<&'s str> for BusSchedule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::separated_list1(
-                character::char(','),
-                branch::alt((character::u128, comb::value(0, character::char('x')))),
-            ),
-            |buses| Self {
-                buses: buses.into_iter().map(BusNumber).collect(),
-            },
-        )(s)
+        multi::separated_list1(
+            character::char(','),
+            branch::alt((character::u128, character::char('x').map(|_| 0))).map(BusNumber),
+        )
+        .map(|buses| Self { buses })
+        .parse(s)
     }
 }
 

@@ -1,6 +1,7 @@
 use aoc_util::{
-    nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult},
+    nom::{branch, character::complete as character, multi, sequence, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     fmt::{self, Debug, Formatter},
@@ -68,9 +69,9 @@ impl Debug for Tile {
 impl<'s> NomParse<&'s str> for Tile {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            comb::value(Self::Floor, character::char('.')),
-            comb::value(Self::EmptyChair, character::char('L')),
-            comb::value(Self::OccupiedChair, character::char('#')),
+            character::char('.').map(|_| Self::Floor),
+            character::char('L').map(|_| Self::EmptyChair),
+            character::char('#').map(|_| Self::OccupiedChair),
         ))(s)
     }
 }
@@ -230,23 +231,15 @@ impl Eq for GameOfLife<'_> {}
 
 impl<'s> NomParse<&'s str> for GameOfLife<'static> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        let (s, first_line) =
-            sequence::terminated(multi::many0(Tile::nom_parse), character::line_ending)(s)?;
-        let (s, mut remaining_lines) = sequence::terminated(
-            multi::separated_list0(
-                character::line_ending,
-                multi::many_m_n(first_line.len(), first_line.len(), Tile::nom_parse),
-            ),
-            comb::opt(character::line_ending),
-        )(s)?;
-        remaining_lines.insert(0, first_line);
-        Ok((
-            s,
-            Self {
-                tiles: remaining_lines,
-                occupation_behavior: &BasicOccupationBehavior,
-            },
-        ))
+        sequence::terminated(
+            multi::separated_list0(character::line_ending, multi::many0(Tile::nom_parse)),
+            character::line_ending.opt(),
+        )
+        .map(|tiles| Self {
+            tiles,
+            occupation_behavior: &BasicOccupationBehavior,
+        })
+        .parse(s)
     }
 }
 

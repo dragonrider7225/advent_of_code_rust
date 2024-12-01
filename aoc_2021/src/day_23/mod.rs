@@ -1,6 +1,7 @@
 use aoc_util::{
     a_star::{self, AStarState},
-    nom::{branch, bytes::complete as bytes, combinator as comb, multi, sequence, Finish, IResult},
+    nom::{self, branch, bytes::complete as bytes, multi, sequence, IResult, Parser},
+    nom_supreme::final_parser,
 };
 use std::{
     fmt::{self, Display, Formatter},
@@ -32,10 +33,10 @@ enum Amphipod {
 impl Amphipod {
     fn nom_parse(s: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::value(Self::A, bytes::tag("A")),
-            comb::value(Self::B, bytes::tag("B")),
-            comb::value(Self::C, bytes::tag("C")),
-            comb::value(Self::D, bytes::tag("D")),
+            bytes::tag("A").map(|_| Self::A),
+            bytes::tag("B").map(|_| Self::B),
+            bytes::tag("C").map(|_| Self::C),
+            bytes::tag("D").map(|_| Self::D),
         ))(s)
     }
 }
@@ -156,24 +157,22 @@ impl State {
         let _ = read_line(input, &mut buf)?;
         let _ = read_line(input, &mut buf)?;
         let _ = read_line(input, &mut buf)?;
-        let upper = comb::all_consuming(sequence::delimited(
-            bytes::tag("###"),
-            multi::separated_list1(bytes::tag("#"), Amphipod::nom_parse),
-            bytes::tag("###"),
-        ))(buf.trim_end())
-        .finish()
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?
-        .1;
+        let upper =
+            final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(sequence::delimited(
+                bytes::tag("###"),
+                multi::separated_list1(bytes::tag("#"), Amphipod::nom_parse),
+                bytes::tag("###"),
+            ))(buf.trim_end())
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
         assert_eq!(upper.len(), 4);
         let _ = read_line(input, &mut buf)?;
-        let lower = comb::all_consuming(sequence::delimited(
-            bytes::tag("  #"),
-            multi::separated_list1(bytes::tag("#"), Amphipod::nom_parse),
-            bytes::tag("#"),
-        ))(buf.trim_end())
-        .finish()
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?
-        .1;
+        let lower =
+            final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(sequence::delimited(
+                bytes::tag("  #"),
+                multi::separated_list1(bytes::tag("#"), Amphipod::nom_parse),
+                bytes::tag("#"),
+            ))(buf.trim_end())
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
         assert_eq!(lower.len(), 4);
         let _ = read_line(input, &mut buf)?;
         let mut state = State {

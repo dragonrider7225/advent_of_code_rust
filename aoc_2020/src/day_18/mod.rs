@@ -1,6 +1,7 @@
 use aoc_util::{
-    nom::{branch, character::complete as character, combinator as comb, sequence, IResult},
+    nom::{branch, character::complete as character, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     fmt::{self, Display, Formatter},
@@ -31,17 +32,16 @@ impl Display for ExprToken {
 
 impl<'s> NomParse<&'s str> for ExprToken {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        sequence::delimited(
-            character::space0,
-            branch::alt((
-                comb::value(Self::LeftParen, character::char('(')),
-                comb::value(Self::RightParen, character::char(')')),
-                comb::value(Self::Add, character::char('+')),
-                comb::value(Self::Mul, character::char('*')),
-                comb::map(character::u64, Self::Val),
-            )),
-            character::space0,
-        )(s)
+        branch::alt((
+            character::char('(').map(|_| Self::LeftParen),
+            character::char(')').map(|_| Self::RightParen),
+            character::char('+').map(|_| Self::Add),
+            character::char('*').map(|_| Self::Mul),
+            character::u64.map(Self::Val),
+        ))
+        .preceded_by(character::space0)
+        .terminated(character::space0)
+        .parse(s)
     }
 }
 

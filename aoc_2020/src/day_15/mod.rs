@@ -1,9 +1,7 @@
 use aoc_util::{
-    nom::{
-        bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-        sequence, IResult,
-    },
+    nom::{bytes::complete as bytes, character::complete as character, multi, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::HashMap,
@@ -38,15 +36,6 @@ struct History {
 }
 
 impl History {
-    fn new(initial_values: &[u64]) -> Self {
-        let mut res = Self::default();
-        (1..)
-            .map(Turn)
-            .zip(initial_values)
-            .for_each(|(turn, &value)| res.insert(turn, value));
-        res
-    }
-
     fn insert(&mut self, turn: Turn, value: u64) {
         assert_eq!(self.turn_number + 1, turn);
         let last = self
@@ -78,17 +67,29 @@ impl History {
     }
 }
 
+impl FromIterator<u64> for History {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = u64>,
+    {
+        let mut res = Self::default();
+        (1..)
+            .map(Turn)
+            .zip(iter)
+            .for_each(|(turn, value)| res.insert(turn, value));
+        res
+    }
+}
+
 aoc_util::impl_from_str_for_nom_parse!(History);
 
 impl<'s> NomParse<&'s str> for History {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::terminated(
-                multi::separated_list1(bytes::tag(","), character::u64),
-                comb::opt(character::line_ending),
-            ),
-            |values| Self::new(&values),
-        )(s)
+        multi::separated_list1(bytes::tag(","), character::u64)
+            .terminated(character::line_ending.opt())
+            .map(Vec::into_iter)
+            .map(Iterator::collect)
+            .parse(s)
     }
 }
 
@@ -119,7 +120,11 @@ mod test {
     #[test]
     fn example_1() {
         let expected = 436;
-        let actual = History::new(&[0, 3, 6]).run_to(Turn(2020));
+        let actual = [0, 3, 6]
+            .iter()
+            .copied()
+            .collect::<History>()
+            .run_to(Turn(2020));
         assert_eq!(expected, actual);
     }
 }

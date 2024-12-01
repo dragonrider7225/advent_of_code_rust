@@ -1,10 +1,10 @@
 use aoc_util::{
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        error::ParseError, multi, sequence, AsChar, Finish, IResult, InputIter, InputLength,
-        Offset, Slice,
+        branch, bytes::complete as bytes, character::complete as character, error::ParseError,
+        multi, AsChar, Finish, IResult, InputIter, InputLength, Offset, Parser, Slice,
     },
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -116,7 +116,7 @@ aoc_util::impl_from_str_for_nom_parse!(UnnamedRule);
 
 impl<'s> NomParse<&'s str> for UnnamedRule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        fn satisfy_many1<I, E>(f: impl Fn(char) -> bool) -> impl FnMut(I) -> IResult<I, I, E>
+        fn satisfy_many1<I, E>(f: impl Fn(char) -> bool) -> impl Parser<I, I, E>
         where
             E: ParseError<I>,
             I: Slice<RangeFrom<usize>> + InputIter,
@@ -124,41 +124,37 @@ impl<'s> NomParse<&'s str> for UnnamedRule {
             I: Clone + InputLength,
             I: Clone + Offset + Slice<RangeTo<usize>>,
         {
-            comb::recognize(multi::many1(character::satisfy(f)))
+            multi::many1(character::satisfy(f)).recognize()
         }
 
-        comb::map(
-            sequence::pair(
-                comb::map(
-                    multi::separated_list1(
-                        bytes::tag(" "),
-                        branch::alt((
-                            comb::map(
-                                sequence::delimited(
-                                    bytes::tag(r#"""#),
-                                    satisfy_many1(|c| !c.is_whitespace() && c != '"'),
-                                    bytes::tag(r#"""#),
-                                ),
-                                |s: &str| Self::Literal(s.into()),
-                            ),
-                            comb::map(RuleId::nom_parse, Self::Proxy),
-                        )),
-                    ),
-                    |rules| {
-                        if rules.len() == 1 {
-                            rules.into_iter().next().unwrap()
-                        } else {
-                            Self::Sequence(rules.into_boxed_slice())
-                        }
-                    },
-                ),
-                comb::opt(sequence::preceded(bytes::tag(" | "), Self::nom_parse)),
-            ),
-            |(first, second)| match second {
-                None => first,
-                Some(second) => Self::Branch(Box::new([first, second])),
-            },
-        )(s)
+        multi::separated_list1(
+            bytes::tag(" "),
+            branch::alt((
+                satisfy_many1(|c| !c.is_whitespace() && c != '"')
+                    .map(str::to_string)
+                    .map(Self::Literal)
+                    .preceded_by(bytes::tag(r#"""#))
+                    .terminated(bytes::tag(r#"""#)),
+                RuleId::nom_parse.map(Self::Proxy),
+            )),
+        )
+        .map(Self::from)
+        .and(Self::nom_parse.preceded_by(bytes::tag(" | ")).opt())
+        .map(|(first, second)| match second {
+            None => first,
+            Some(second) => Self::Branch(Box::new([first, second])),
+        })
+        .parse(s)
+    }
+}
+
+impl From<Vec<Self>> for UnnamedRule {
+    fn from(mut value: Vec<Self>) -> Self {
+        if value.len() == 1 {
+            value.remove(0)
+        } else {
+            Self::Sequence(value.into_boxed_slice())
+        }
     }
 }
 
@@ -167,7 +163,7 @@ struct RuleId(u32);
 
 impl<'s> NomParse<&'s str> for RuleId {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(character::u32, Self)(s)
+        character::u32.map(Self).parse(s)
     }
 }
 
@@ -208,17 +204,11 @@ aoc_util::impl_from_str_for_nom_parse!(Rule);
 
 impl<'s> NomParse<&'s str> for Rule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::terminated(
-                sequence::separated_pair(
-                    RuleId::nom_parse,
-                    bytes::tag(": "),
-                    UnnamedRule::nom_parse,
-                ),
-                character::line_ending,
-            ),
-            |(id, inner)| Rule { id, inner },
-        )(s)
+        RuleId::nom_parse
+            .and(UnnamedRule::nom_parse.preceded_by(bytes::tag(": ")))
+            .map(|(id, inner)| Rule { id, inner })
+            .terminated(character::line_ending)
+            .parse(s)
     }
 }
 
@@ -226,9 +216,13 @@ struct Rules(HashMap<RuleId, Rule>);
 
 impl<'s> NomParse<&'s str> for Rules {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(multi::many1(Rule::nom_parse), |rules| {
-            Self(rules.into_iter().map(|rule| (rule.id, rule)).collect())
-        })(s)
+        multi::many1(Rule::nom_parse).map(Self::from).parse(s)
+    }
+}
+
+impl From<Vec<Rule>> for Rules {
+    fn from(rules: Vec<Rule>) -> Self {
+        Self(rules.into_iter().map(|rule| (rule.id, rule)).collect())
     }
 }
 
@@ -239,23 +233,18 @@ struct RulesAndStrings {
 
 impl<'s> NomParse<&'s str> for RulesAndStrings {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::separated_pair(
-                Rules::nom_parse,
-                character::line_ending,
-                comb::map(
-                    multi::many1(sequence::terminated(
-                        character::not_line_ending,
-                        character::line_ending,
-                    )),
-                    |strings| strings.into_iter().map(String::from).collect(),
-                ),
-            ),
-            |(rules, strings): (Rules, _)| Self {
-                rules: rules.0,
-                strings,
-            },
-        )(s)
+        Rules::nom_parse
+            .map(|rules| rules.0)
+            .and(
+                multi::many1(
+                    character::not_line_ending
+                        .map(String::from)
+                        .terminated(character::line_ending),
+                )
+                .preceded_by(character::line_ending),
+            )
+            .map(|(rules, strings)| Self { rules, strings })
+            .parse(s)
     }
 }
 
