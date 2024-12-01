@@ -1,7 +1,9 @@
-use aoc_util::nom_extended::NomParse;
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator,
-    combinator as comb, multi, sequence, Finish, IResult,
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, combinator,
+        combinator as comb, multi, sequence, Finish, IResult,
+    },
+    nom_extended::NomParse,
 };
 use std::{
     collections::{HashMap, HashSet},

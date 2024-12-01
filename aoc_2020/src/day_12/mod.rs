@@ -1,5 +1,8 @@
-use aoc_util::{geometry::Point2D as Point, nom_extended::NomParse};
-use nom::{character::complete as character, combinator as comb, sequence, IResult};
+use aoc_util::{
+    geometry::Point2D as Point,
+    nom::{character::complete as character, combinator as comb, sequence, IResult},
+    nom_extended::NomParse,
+};
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},

@@ -1,13 +1,14 @@
-use aoc_util::nom_extended::NomParse;
+use aoc_util::{
+    nom::{
+        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
+        sequence, IResult,
+    },
+    nom_extended::NomParse,
+};
 
 use std::{
     collections::{HashMap, HashSet},
     fs, io,
-};
-
-use nom::{
-    branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-    sequence, IResult,
 };
 
 #[derive(Clone, Copy)]

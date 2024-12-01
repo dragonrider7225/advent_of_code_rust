@@ -1,8 +1,9 @@
-use aoc_util::nom_extended::NomParse;
+use aoc_util::{
+    nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult},
+    nom_extended::NomParse,
+};
 
 use std::{fs, io, iter};
-
-use nom::{branch, character::complete as character, combinator as comb, multi, sequence, IResult};
 
 #[derive(Clone, Copy, Debug)]
 enum Tile {
