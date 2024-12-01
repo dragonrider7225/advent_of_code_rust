@@ -1,6 +1,6 @@
 use aoc_util::{
     geometry::Point2D as Point,
-    nom::{character::complete as character, combinator as comb, sequence, IResult},
+    nom::{character::complete as character, IResult, Parser},
     nom_extended::NomParse,
 };
 use std::{
@@ -156,19 +156,20 @@ aoc_util::impl_from_str_for_nom_parse!(Instruction);
 
 impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::pair(character::one_of("NSEWLRF"), character::u16),
-            |(c, distance)| match c {
-                'N' => Self::North(i32::from(distance)),
-                'S' => Self::South(i32::from(distance)),
-                'E' => Self::East(i32::from(distance)),
-                'W' => Self::West(i32::from(distance)),
-                'L' => Self::Left(i32::from(distance)),
-                'R' => Self::Right(i32::from(distance)),
-                'F' => Self::Forward(i32::from(distance)),
+        character::one_of("NSEWLRF")
+            .map(|c| match c {
+                'N' => Self::North,
+                'S' => Self::South,
+                'E' => Self::East,
+                'W' => Self::West,
+                'L' => Self::Left,
+                'R' => Self::Right,
+                'F' => Self::Forward,
                 _ => unreachable!(),
-            },
-        )(s)
+            })
+            .and(character::u16.map(i32::from))
+            .map(|(constructor, distance)| constructor(distance))
+            .parse(s)
     }
 }
 

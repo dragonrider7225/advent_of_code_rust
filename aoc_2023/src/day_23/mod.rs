@@ -10,7 +10,7 @@ use std::{
 
 use aoc_util::{
     geometry::Point2D,
-    nom::{branch, bytes::complete as bytes, combinator, multi, IResult},
+    nom::{branch, bytes::complete as bytes, multi, IResult, Parser},
     nom_extended::NomParse,
 };
 
@@ -27,12 +27,12 @@ enum Tile {
 impl<'s> NomParse<&'s str> for Tile {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            combinator::value(Self::Path, bytes::tag(".")),
-            combinator::value(Self::Forest, bytes::tag("#")),
-            combinator::value(Self::NorthSlope, bytes::tag("^")),
-            combinator::value(Self::EastSlope, bytes::tag(">")),
-            combinator::value(Self::SouthSlope, bytes::tag("v")),
-            combinator::value(Self::WestSlope, bytes::tag("<")),
+            bytes::tag(".").map(|_| Self::Path),
+            bytes::tag("#").map(|_| Self::Forest),
+            bytes::tag("^").map(|_| Self::NorthSlope),
+            bytes::tag(">").map(|_| Self::EastSlope),
+            bytes::tag("v").map(|_| Self::SouthSlope),
+            bytes::tag("<").map(|_| Self::WestSlope),
         ))(input)
     }
 }

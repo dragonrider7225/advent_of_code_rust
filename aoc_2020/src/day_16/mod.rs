@@ -1,9 +1,10 @@
 use aoc_util::{
     nom::{
-        bytes::complete as bytes, character::complete as character, combinator as comb, multi,
-        sequence, Finish, IResult,
+        bytes::complete as bytes, character::complete as character, multi, sequence, Finish,
+        IResult, Parser,
     },
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -23,16 +24,16 @@ impl FieldRule {
 impl<'s> NomParse<&'s str> for FieldRule {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn range(s: &str) -> IResult<&str, RangeInclusive<u64>> {
-            comb::map(
-                sequence::separated_pair(character::u64, bytes::tag("-"), character::u64),
-                |(start, end)| start..=end,
-            )(s)
+            character::u64
+                .and(character::u64.preceded_by(bytes::tag("-")))
+                .map(|(start, end)| start..=end)
+                .parse(s)
         }
 
-        comb::map(
-            sequence::separated_pair(range, bytes::tag(" or "), range),
-            |(first, second)| Self(first, second),
-        )(s)
+        range
+            .and(range.preceded_by(bytes::tag(" or ")))
+            .map(|(first, second)| Self(first, second))
+            .parse(s)
     }
 }
 
@@ -103,18 +104,16 @@ impl<'field> TicketRules<'field> {
 
 impl<'field> NomParse<&'field str> for TicketRules<'field> {
     fn nom_parse(s: &'field str) -> IResult<&'field str, Self> {
-        comb::map(
-            multi::many0(sequence::pair(
-                sequence::terminated(
-                    comb::recognize(multi::many1(character::none_of(":"))),
-                    bytes::tag(": "),
-                ),
-                sequence::terminated(FieldRule::nom_parse, character::line_ending),
-            )),
-            |rules| Self {
-                rules: rules.into_iter().collect(),
-            },
-        )(s)
+        multi::many0(
+            multi::many1(character::none_of(":")).recognize().and(
+                FieldRule::nom_parse
+                    .preceded_by(bytes::tag(": "))
+                    .terminated(character::line_ending),
+            ),
+        )
+        .map(|rules| rules.into_iter().collect::<HashMap<_, _>>())
+        .map(|rules| Self { rules })
+        .parse(s)
     }
 }
 
@@ -131,13 +130,10 @@ impl Ticket {
 
 impl<'s> NomParse<&'s str> for Ticket {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::terminated(
-                multi::separated_list0(bytes::tag(","), character::u64),
-                character::line_ending,
-            ),
-            |fields| Self { fields },
-        )(s)
+        multi::separated_list0(bytes::tag(","), character::u64)
+            .terminated(character::line_ending)
+            .map(|fields| Self { fields })
+            .parse(s)
     }
 }
 

@@ -1,9 +1,10 @@
 use aoc_util::{
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        multi, sequence, IResult,
+        branch, bytes::complete as bytes, character::complete as character, multi, sequence,
+        IResult, Parser,
     },
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     fmt::{self, Display, Formatter},
@@ -32,9 +33,9 @@ impl Cell {
 impl NomParse<&str> for Cell {
     fn nom_parse(input: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::value(Self(None), bytes::tag(".")),
-            comb::value(Self(Some(Direction::East)), bytes::tag(">")),
-            comb::value(Self(Some(Direction::South)), bytes::tag("v")),
+            bytes::tag(".").map(|_| Self(None)),
+            bytes::tag(">").map(|_| Self(Some(Direction::East))),
+            bytes::tag("v").map(|_| Self(Some(Direction::South))),
         ))(input)
     }
 }
@@ -180,7 +181,7 @@ impl NomParse<&str> for Seafloor {
                 character::line_ending,
                 multi::many_m_n(num_columns, num_columns, Cell::nom_parse),
             )),
-            comb::opt(character::line_ending),
+            character::line_ending.opt(),
         )(input)?;
         let num_rows = 1 + lines.len();
         let mut cells = first_line.into_iter().map(Cell::unwrap).collect::<Vec<_>>();

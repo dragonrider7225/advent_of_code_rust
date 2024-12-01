@@ -62,8 +62,8 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u64> {
     // maximum possible distance at 0.5n
     // n+1 ways to race, goal is number of latice points where x**2 - nx + d < 0
     // zeroes at x = (n \pm sqrt(n**2 - 4d))/2
-    let times = parse_times(&read_line!(input)?)?;
-    let distances = parse_distances(&read_line!(input)?)?;
+    let times = parse_times(read_line!(input)?.trim())?;
+    let distances = parse_distances(read_line!(input)?.trim())?;
     Ok(times
         .into_iter()
         .zip(distances)

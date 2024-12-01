@@ -1,9 +1,10 @@
 use aoc_util::{
     nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator,
-        combinator as comb, multi, sequence, Finish, IResult,
+        branch, bytes::complete as bytes, character::complete as character, multi, Finish, IResult,
+        Parser,
     },
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -22,13 +23,13 @@ impl Display for BagColor<'_> {
 
 impl<'s> NomParse<&'s str> for BagColor<'s> {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            comb::recognize(multi::separated_list1(
-                bytes::tag(" "),
-                comb::verify(character::alpha1, |s| !matches!(s, "bag" | "bags")),
-            )),
-            Self,
-        )(s)
+        multi::separated_list1(
+            bytes::tag(" "),
+            character::alpha1.verify(|&s| !matches!(s, "bag" | "bags")),
+        )
+        .recognize()
+        .map(Self)
+        .parse(s)
     }
 }
 
@@ -48,35 +49,26 @@ where
     's: 'color,
 {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            branch::alt((
-                comb::value(vec![], bytes::tag("no other bags")),
-                multi::separated_list1(
-                    bytes::tag(", "),
-                    branch::alt((
-                        comb::map(
-                            sequence::delimited(
-                                bytes::tag("1 "),
-                                BagColor::nom_parse,
-                                bytes::tag(" bag"),
-                            ),
-                            |bag_color| (bag_color, 1),
-                        ),
-                        comb::map(
-                            sequence::separated_pair(
-                                combinator::map(character::u64, |n| n as usize),
-                                bytes::tag(" "),
-                                sequence::terminated(BagColor::nom_parse, bytes::tag(" bags")),
-                            ),
-                            |(count, bag_color)| (bag_color, count),
-                        ),
-                    )),
-                ),
-            )),
-            |contents| Self {
-                contents: contents.into_iter().collect(),
-            },
-        )(s)
+        branch::alt((
+            bytes::tag("no other bags").map(|_| vec![]),
+            multi::separated_list1(
+                bytes::tag(", "),
+                branch::alt((
+                    BagColor::nom_parse
+                        .preceded_by(bytes::tag("1 "))
+                        .terminated(bytes::tag(" bag"))
+                        .map(|bag_color| (bag_color, 1)),
+                    character::u64
+                        .map(|n| n as usize)
+                        .and(BagColor::nom_parse.preceded_by(bytes::tag(" ")))
+                        .terminated(bytes::tag(" bags"))
+                        .map(|(count, bag_color)| (bag_color, count)),
+                )),
+            ),
+        ))
+        .map(|contents| contents.into_iter().collect())
+        .map(|contents| Self { contents })
+        .parse(s)
     }
 }
 
@@ -138,17 +130,14 @@ where
     's: 'color,
 {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            multi::many0(sequence::terminated(
-                sequence::separated_pair(
-                    BagColor::nom_parse,
-                    bytes::tag(" bags contain "),
-                    sequence::terminated(BagRule::nom_parse, bytes::tag(".")),
-                ),
-                character::line_ending,
-            )),
-            |rules| Self(rules.into_iter().collect()),
-        )(s)
+        multi::many0(
+            BagColor::nom_parse
+                .and(BagRule::nom_parse.preceded_by(bytes::tag(" bags contain ")))
+                .terminated(bytes::tag("."))
+                .terminated(character::line_ending),
+        )
+        .map(|rules| Self(rules.into_iter().collect()))
+        .parse(s)
     }
 }
 

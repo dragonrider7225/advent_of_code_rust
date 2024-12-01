@@ -1,9 +1,7 @@
 use aoc_util::{
-    nom::{
-        bytes::complete as bytes, character::complete as character, combinator, combinator as comb,
-        sequence, IResult,
-    },
+    nom::{bytes::complete as bytes, character::complete as character, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     fs::File,
@@ -68,21 +66,20 @@ impl PasswordPolicy {
 impl<'s> NomParse<&'s str> for PasswordPolicy {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         fn parse_usize(s: &str) -> IResult<&str, usize> {
-            combinator::map(character::u64, |n| n as usize)(s)
+            character::u64.map(|n| n as usize).parse(s)
         }
 
-        comb::map(
-            sequence::separated_pair(
-                sequence::separated_pair(parse_usize, bytes::tag("-"), parse_usize),
-                bytes::tag(" "),
-                character::one_of(&*('a'..='z').collect::<String>()),
-            ),
-            |((min_count, max_count), c)| PasswordPolicy::SingleLetterCount {
-                min_count,
-                max_count,
-                c,
-            },
-        )(s)
+        parse_usize
+            .and(parse_usize.preceded_by(bytes::tag("-")))
+            .and(character::one_of("abcdefghijklmnopqrstuvwxyz").preceded_by(bytes::tag(" ")))
+            .map(
+                |((min_count, max_count), c)| PasswordPolicy::SingleLetterCount {
+                    min_count,
+                    max_count,
+                    c,
+                },
+            )
+            .parse(s)
     }
 }
 
@@ -99,17 +96,14 @@ impl PasswordDatabaseEntry {
 
 impl<'s> NomParse<&'s str> for PasswordDatabaseEntry {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::separated_pair(
-                PasswordPolicy::nom_parse,
-                bytes::tag(": "),
-                character::alpha0,
-            ),
-            |(policy, password)| Self {
-                policy,
-                password: password.to_owned(),
-            },
-        )(s)
+        PasswordPolicy::nom_parse
+            .and(
+                character::alpha0
+                    .map(str::to_owned)
+                    .preceded_by(bytes::tag(": ")),
+            )
+            .map(|(policy, password)| Self { policy, password })
+            .parse(s)
     }
 }
 

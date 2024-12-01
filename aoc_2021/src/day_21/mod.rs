@@ -1,6 +1,7 @@
-use aoc_util::nom::{
-    bytes::complete as bytes, character::complete as character, combinator as comb, sequence,
-    IResult,
+use aoc_util::{
+    nom::{bytes::complete as bytes, character::complete as character, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     collections::HashMap,
@@ -75,6 +76,12 @@ impl Player {
 impl Default for Player {
     fn default() -> Self {
         Self { space: 1, score: 0 }
+    }
+}
+
+impl NomParse<&str> for Player {
+    fn nom_parse(input: &str) -> IResult<&str, Self> {
+        character::u32.map(Self::at).parse(input)
     }
 }
 
@@ -162,20 +169,12 @@ impl DiracGameState {
 }
 
 fn parse_players(s: &str) -> IResult<&str, (Player, Player)> {
-    sequence::terminated(
-        sequence::separated_pair(
-            comb::map(
-                sequence::preceded(bytes::tag("Player 1 starting position: "), character::u32),
-                Player::at,
-            ),
-            character::line_ending,
-            comb::map(
-                sequence::preceded(bytes::tag("Player 2 starting position: "), character::u32),
-                Player::at,
-            ),
-        ),
-        comb::opt(character::line_ending),
-    )(s)
+    Player::nom_parse
+        .preceded_by(bytes::tag("Player 1 starting position: "))
+        .terminated(character::line_ending)
+        .and(Player::nom_parse.preceded_by(bytes::tag("Player 2 starting position: ")))
+        .terminated(character::line_ending.opt())
+        .parse(s)
 }
 
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {

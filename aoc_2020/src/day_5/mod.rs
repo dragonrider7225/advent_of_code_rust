@@ -1,6 +1,7 @@
 use aoc_util::{
-    nom::{bytes::complete as bytes, combinator as comb, sequence, IResult},
+    nom::{bytes::complete as bytes, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{
     cmp::Ordering,
@@ -14,16 +15,16 @@ struct Row(u8);
 
 impl<'s> NomParse<&'s str> for Row {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            comb::map_res(bytes::take(7usize), |s: &str| {
+        bytes::take(7usize)
+            .map_res(|s: &str| {
                 s.chars().try_fold(0, |acc, c| match (acc, c) {
                     (acc, 'F') => Ok(acc * 2),
                     (acc, 'B') => Ok(acc * 2 + 1),
                     (_, c) => Err(format!("Invalid row character: {c:?}")),
                 })
-            }),
-            Row,
-        )(s)
+            })
+            .map(Self)
+            .parse(s)
     }
 }
 
@@ -33,16 +34,16 @@ struct Column(u8);
 
 impl<'s> NomParse<&'s str> for Column {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            comb::map_res(bytes::take(3usize), |s: &str| {
+        bytes::take(3usize)
+            .map_res(|s: &str| {
                 s.chars().try_fold(0, |acc, c| match (acc, c) {
                     (acc, 'L') => Ok(acc * 2),
                     (acc, 'R') => Ok(acc * 2 + 1),
                     (_, c) => Err(format!("Invalid column character: {c:?}")),
                 })
-            }),
-            Column,
-        )(s)
+            })
+            .map(Self)
+            .parse(s)
     }
 }
 
@@ -72,10 +73,10 @@ impl Ord for Seat {
 
 impl<'s> NomParse<&'s str> for Seat {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
-        comb::map(
-            sequence::pair(Row::nom_parse, Column::nom_parse),
-            |(row, column)| Seat { row, column },
-        )(s)
+        Row::nom_parse
+            .and(Column::nom_parse)
+            .map(|(row, column)| Seat { row, column })
+            .parse(s)
     }
 }
 

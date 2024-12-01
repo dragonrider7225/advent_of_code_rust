@@ -1,9 +1,7 @@
 use aoc_util::{
-    nom::{
-        branch, bytes::complete as bytes, character::complete as character, combinator as comb,
-        sequence, IResult,
-    },
+    nom::{branch, bytes::complete as bytes, character::complete as character, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 use std::{collections::HashSet, convert::TryFrom, fs, io};
 
@@ -19,57 +17,27 @@ aoc_util::impl_from_str_for_nom_parse!(Instruction);
 impl<'s> NomParse<&'s str> for Instruction {
     fn nom_parse(s: &'s str) -> IResult<&'s str, Self> {
         branch::alt((
-            comb::map(
-                sequence::pair(
-                    bytes::tag("nop "),
-                    comb::map(
-                        sequence::pair(character::one_of("+-"), character::u32),
-                        |(sign, val)| {
-                            let val = isize::try_from(val).unwrap();
-                            if sign == '-' {
-                                -val
-                            } else {
-                                val
-                            }
-                        },
-                    ),
-                ),
-                |(_, val)| Self::NoOp(val),
-            ),
-            comb::map(
-                sequence::pair(
-                    bytes::tag("acc "),
-                    comb::map(
-                        sequence::pair(character::one_of("+-"), character::u32),
-                        |(sign, val)| {
-                            let val = i32::try_from(val).unwrap();
-                            if sign == '-' {
-                                -val
-                            } else {
-                                val
-                            }
-                        },
-                    ),
-                ),
-                |(_, val)| Self::Accumulate(val),
-            ),
-            comb::map(
-                sequence::pair(
-                    bytes::tag("jmp "),
-                    comb::map(
-                        sequence::pair(character::one_of("+-"), character::u32),
-                        |(sign, val)| {
-                            let val = isize::try_from(val).unwrap();
-                            if sign == '-' {
-                                -val
-                            } else {
-                                val
-                            }
-                        },
-                    ),
-                ),
-                |(_, val)| Self::Jump(val),
-            ),
+            bytes::tag("nop ")
+                .precedes(
+                    character::one_of("+-")
+                        .and(character::u32.map(|val| val as isize))
+                        .map(|(sign, val)| if sign == '-' { -val } else { val }),
+                )
+                .map(Self::NoOp),
+            bytes::tag("acc ")
+                .precedes(
+                    character::one_of("+-")
+                        .and(character::u32.map(|val| val as i32))
+                        .map(|(sign, val)| if sign == '-' { -val } else { val }),
+                )
+                .map(Self::Accumulate),
+            bytes::tag("jmp ")
+                .precedes(
+                    character::one_of("+-")
+                        .and(character::u32.map(|val| val as isize))
+                        .map(|(sign, val)| if sign == '-' { -val } else { val }),
+                )
+                .map(Self::Jump),
         ))(s)
     }
 }

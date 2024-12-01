@@ -9,23 +9,21 @@ use std::{
 
 use aoc_util::{
     geometry::Point3D,
-    nom::{
-        bytes::complete as bytes, character::complete as character, combinator, sequence, IResult,
-    },
+    nom::{bytes::complete as bytes, character::complete as character, sequence, IResult, Parser},
     nom_extended::NomParse,
+    nom_supreme::ParserExt,
 };
 
 type Point = Point3D<u32>;
 
 fn nom_parse_point(s: &str) -> IResult<&str, Point> {
-    combinator::map(
-        sequence::tuple((
-            sequence::terminated(character::u32, bytes::tag(",")),
-            sequence::terminated(character::u32, bytes::tag(",")),
-            character::u32,
-        )),
-        |(x, y, z)| Point3D::at(x, y, z),
-    )(s)
+    sequence::tuple((
+        character::u32.terminated(bytes::tag(",")),
+        character::u32.terminated(bytes::tag(",")),
+        character::u32,
+    ))
+    .map(|(x, y, z)| Point3D::at(x, y, z))
+    .parse(s)
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -64,13 +62,13 @@ impl<'s> NomParse<&'s str> for Brick {
     fn nom_parse(input: &'s str) -> IResult<&'s str, Self> {
         static BRICK_ID: AtomicUsize = AtomicUsize::new(0);
 
-        combinator::map(
-            sequence::separated_pair(nom_parse_point, bytes::tag("~"), nom_parse_point),
-            |ends| Self {
+        nom_parse_point
+            .and(nom_parse_point.preceded_by(bytes::tag("~")))
+            .map(|ends| Self {
                 id: BRICK_ID.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
                 ends,
-            },
-        )(input)
+            })
+            .parse(input)
     }
 }
 

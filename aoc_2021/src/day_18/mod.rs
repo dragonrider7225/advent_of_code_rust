@@ -1,5 +1,7 @@
-use aoc_util::nom::{
-    branch, character::complete as character, combinator as comb, sequence, Finish, IResult,
+use aoc_util::{
+    nom::{self, branch, character::complete as character, IResult, Parser},
+    nom_extended::NomParse,
+    nom_supreme::{final_parser, ParserExt},
 };
 use std::{
     fmt::{self, Display, Formatter},
@@ -19,8 +21,8 @@ enum Number {
 impl Number {
     fn nom_parse(input: &str) -> IResult<&str, Self> {
         branch::alt((
-            comb::map(character::u32, Self::from),
-            comb::map(SnailfishNumber::nom_parse, Self::from),
+            character::u32.map(Self::from),
+            SnailfishNumber::nom_parse.map(Self::from),
         ))(input)
     }
 }
@@ -99,25 +101,11 @@ impl SnailfishNumber {
     fn read(input: &mut dyn BufRead) -> io::Result<Self> {
         let mut buf = String::new();
         input.read_line(&mut buf)?;
-        let (_, this) = comb::all_consuming(Self::nom_parse)(buf.trim())
-            .finish()
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
+        let this = final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(Self::nom_parse)(
+            buf.trim(),
+        )
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
         Ok(this)
-    }
-
-    fn nom_parse(input: &str) -> IResult<&str, Self> {
-        comb::map(
-            sequence::delimited(
-                character::char('['),
-                sequence::separated_pair(
-                    Number::nom_parse,
-                    character::char(','),
-                    Number::nom_parse,
-                ),
-                character::char(']'),
-            ),
-            Self::from,
-        )(input)
     }
 }
 
@@ -334,6 +322,17 @@ impl IndexMut<Branch> for SnailfishNumber {
             Branch::Left => &mut self.0,
             Branch::Right => &mut self.1,
         }
+    }
+}
+
+impl NomParse<&str> for SnailfishNumber {
+    fn nom_parse(input: &str) -> IResult<&str, Self> {
+        Number::nom_parse
+            .and(Number::nom_parse.preceded_by(character::char(',')))
+            .preceded_by(character::char('['))
+            .terminated(character::char(']'))
+            .map(Self::from)
+            .parse(input)
     }
 }
 
