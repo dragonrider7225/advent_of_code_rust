@@ -19,6 +19,26 @@ impl Direction2D {
     pub const fn values() -> &'static [Self] {
         &[Self::Down, Self::Left, Self::Right, Self::Up]
     }
+
+    /// Rotates this direction clockwise by 90 degrees.
+    pub const fn rotate_clockwise(&self) -> Self {
+        match self {
+            Self::Up => Self::Right,
+            Self::Right => Self::Down,
+            Self::Down => Self::Left,
+            Self::Left => Self::Up,
+        }
+    }
+
+    /// Rotates this direction counter-clockwise by 90 degrees.
+    pub const fn rotate_counter_clockwise(&self) -> Self {
+        match self {
+            Self::Up => Self::Left,
+            Self::Right => Self::Up,
+            Self::Down => Self::Right,
+            Self::Left => Self::Down,
+        }
+    }
 }
 
 impl<T> Add<Direction2D> for Point2D<T>
