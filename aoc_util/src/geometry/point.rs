@@ -55,6 +55,33 @@ macro_rules! impl_manhattan_distance_2d {
 
 impl_manhattan_distance_2d!(f32 f64);
 
+macro_rules! impl_checked_arithmetic {
+    ($($t:ty)+) => {$(
+        impl Point2D<$t> {
+            /// Calculate `self + rhs` if that calculation would not overflow.
+            pub fn checked_add(self, rhs: Self) -> Option<Self> {
+                Some(Self {
+                    x: self.x.checked_add(rhs.x)?,
+                    y: self.y.checked_add(rhs.y)?,
+                })
+            }
+
+            /// Calculate `self - rhs` if that calculation would not overflow.
+            pub fn checked_sub(self, rhs: Self) -> Option<Self> {
+                Some(Self {
+                    x: self.x.checked_sub(rhs.x)?,
+                    y: self.y.checked_sub(rhs.y)?,
+                })
+            }
+        }
+    )+};
+}
+
+impl_checked_arithmetic!(
+    u8 u16 u32 u64 u128 usize
+    i8 i16 i32 i64 i128 isize
+);
+
 impl<T, U, V> Add<Point2D<U>> for Point2D<T>
 where
     T: Add<U, Output = V>,
