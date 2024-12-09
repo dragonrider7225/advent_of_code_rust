@@ -89,7 +89,7 @@ impl Map {
                 self.guard_position = guard_position;
                 self.guard_facing = self.guard_facing.rotate_clockwise();
             } else {
-                let visited = self.visited.entry(p).or_insert_with(HashSet::new);
+                let visited = self.visited.entry(p).or_default();
                 if !visited.insert(self.guard_facing) {
                     return StepResult::Loop;
                 }
