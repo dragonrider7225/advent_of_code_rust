@@ -297,7 +297,7 @@ impl Fn<(PartRange,)> for Workflow {
                 let mut new_targets = rule(range);
                 completed_ranges.extend(
                     new_targets
-                        .extract_if(|(_, target)| target.is_some())
+                        .extract_if(.., |(_, target)| target.is_some())
                         .map(|(range, target)| (range, target.unwrap())),
                 );
                 remaining_ranges.extend(new_targets.into_iter().map(|(range, _)| range));
@@ -434,7 +434,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
         let mut new_ranges = workflows[&workflow](range);
         finished_ranges.extend(
             new_ranges
-                .extract_if(|(_, target)| target.is_break())
+                .extract_if(.., |(_, target)| target.is_break())
                 .map(|(range, target)| (range, target.break_value().unwrap())),
         );
         remaining_ranges.extend(
