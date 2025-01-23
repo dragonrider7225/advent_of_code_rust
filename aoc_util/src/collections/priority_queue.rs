@@ -180,9 +180,25 @@ where
     }
 }
 
-impl<T, P> Default for PriorityQueue<T, P> {
+impl<P, T> Default for PriorityQueue<P, T> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<P, T> FromIterator<(T, P)> for PriorityQueue<P, T>
+where
+    P: Ord,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (T, P)>,
+    {
+        iter.into_iter()
+            .fold(Self::default(), |mut acc, (value, priority)| {
+                acc.insert(value, priority);
+                acc
+            })
     }
 }
 
