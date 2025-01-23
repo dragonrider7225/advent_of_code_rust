@@ -29,6 +29,13 @@ impl<P, T> PriorityQueue<P, T> {
     pub fn peek(&self) -> Option<&T> {
         self.values.first().map(|(_, value)| value)
     }
+
+    /// Like [`peek()`] except that the priority of the element is also returned.
+    pub fn peek_with_priority(&self) -> Option<(&T, &P)> {
+        self.values
+            .first()
+            .map(|(priority, value)| (value, priority))
+    }
 }
 
 impl<P, T> PriorityQueue<P, T>
@@ -38,6 +45,11 @@ where
     /// Returns the element in the queue with the greatest priority.
     pub fn pop(&mut self) -> Option<T> {
         self.remove(0).map(|(value, _)| value)
+    }
+
+    /// Like [`pop()`] except that the actual priority of the returned value is also returned.
+    pub fn pop_with_priority(&mut self) -> Option<(T, P)> {
+        self.remove(0)
     }
 
     /// Inserts `value` into the queue with priority `priority`.
