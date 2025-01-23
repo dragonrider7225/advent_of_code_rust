@@ -37,7 +37,7 @@ where
 {
     /// Returns the element in the queue with the greatest priority.
     pub fn pop(&mut self) -> Option<T> {
-        self.remove(0).map(|(_, value)| value)
+        self.remove(0).map(|(value, _)| value)
     }
 
     /// Inserts `value` into the queue with priority `priority`.
@@ -67,7 +67,8 @@ where
         self.insert(value, priority)
     }
 
-    fn remove(&mut self, mut idx: usize) -> Option<(P, T)> {
+    /// Remove the element stored at index `idx`, rebalancing the heap as necessary.
+    fn remove(&mut self, mut idx: usize) -> Option<(T, P)> {
         if self.is_empty() {
             return None;
         }
@@ -76,7 +77,7 @@ where
             self.values.swap(idx, parent_idx);
             idx = parent_idx;
         }
-        let ret = Some(self.values.swap_remove(0));
+        let ret = Some(self.values.swap_remove(0)).map(|(priority, element)| (element, priority));
         loop {
             let left_idx = 2 * idx + 1;
             let right_idx = left_idx + 1;
@@ -116,7 +117,7 @@ where
     /// Selects and removes an arbitrary value in the queue equal to `value` if such a value exists
     /// then inserts `value` with priority `priority`. If a value was removed, it and its priority
     /// are returned.
-    pub fn replace(&mut self, value: T, priority: P) -> Option<(P, T)> {
+    pub fn replace(&mut self, value: T, priority: P) -> Option<(T, P)> {
         self.replace_by(value, priority, PartialEq::eq)
     }
 
@@ -124,7 +125,7 @@ where
     /// passed in directly.
     ///
     /// [`replace()`]: #method.replace
-    pub fn replace_with_fn<F>(&mut self, value: T, priority_fn: F) -> Option<(P, T)>
+    pub fn replace_with_fn<F>(&mut self, value: T, priority_fn: F) -> Option<(T, P)>
     where
         F: FnOnce(&T) -> P,
     {
@@ -141,19 +142,15 @@ where
     /// [`PartialEq::eq`].
     ///
     /// [`replace()`]: #method.replace
-    pub fn replace_by<E>(&mut self, value: T, priority: P, mut eq: E) -> Option<(P, T)>
+    pub fn replace_by<E>(&mut self, value: T, priority: P, mut eq: E) -> Option<(T, P)>
     where
         E: FnMut(&T, &T) -> bool,
     {
-        for idx in 0..self.len() {
-            if eq(&self.values[0].1, &value) {
-                let ret = self.remove(idx);
-                self.insert(value, priority);
-                return ret;
-            }
-        }
+        let ret = (0..self.len())
+            .find(|&idx| eq(&self.values[idx].1, &value))
+            .and_then(|idx| self.remove(idx));
         self.insert(value, priority);
-        None
+        ret
     }
 
     /// Like [`replace()`] except that the priority is `priority_fn(&value)` instead of being
@@ -161,7 +158,7 @@ where
     /// [`PartialEq::eq`].
     ///
     /// [`replace()`]: #method.replace
-    pub fn replace_with_fn_by<F, E>(&mut self, value: T, priority_fn: F, eq: E) -> Option<(P, T)>
+    pub fn replace_with_fn_by<F, E>(&mut self, value: T, priority_fn: F, eq: E) -> Option<(T, P)>
     where
         F: FnOnce(&T) -> P,
         E: FnMut(&T, &T) -> bool,
