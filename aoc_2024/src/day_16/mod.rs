@@ -96,80 +96,124 @@ impl Map {
 
     /// From the given position and orientation, calculate the cells used by paths to `Tile::End` in
     /// the map with score at most `max_score`.
-    fn on_paths(&self, start: Position, max_score: usize) -> HashSet<Point2D<usize>> {
-        #[derive(Clone, Debug, Eq, PartialEq)]
-        enum CacheValue {
-            Found {
-                cost: usize,
-                successors: HashSet<Point2D<usize>>,
-            },
-            NotFound {
-                min_cost: usize,
-            },
-        }
+    fn on_paths(&self, max_score: usize) -> HashSet<Point2D<usize>> {
+        let _ = max_score;
+        // use aoc_util::collections::{PriorityQueue, SharedFilo};
+        // use std::cmp::Reverse;
+        // #[derive(Clone, Debug, Eq, PartialEq)]
+        // enum CacheValue {
+        //     /// All paths from the cache key associated with this value to the end of the race cost
+        //     /// at least `cost` and the set of fastest paths collectively use the set of tiles
+        //     /// `successors`.
+        //     Found {
+        //         /// The cost of the fastest path(s) from the cache key associated with this value
+        //         /// to the end of the race.
+        //         cost: usize,
+        //         /// The set of all tiles on any path to the end of the race with cost `cost`.
+        //         successors: HashSet<Point2D<usize>>,
+        //     },
+        //     /// There is no path from the cache key associated with this value to the end of the
+        //     /// race that costs less than `min_cost`.
+        //     NotFound {
+        //         /// The cost at which attempts to find a path to the end of the race were given up.
+        //         min_cost: usize,
+        //     },
+        // }
 
-        fn go(
-            this: &Map,
-            start: Position,
-            max_score: usize,
-            cache: &mut HashMap<Position, CacheValue>,
-        ) -> HashSet<Point2D<usize>> {
-            dbg!(start, max_score, &cache);
-            let populate_cache =
-                |neighbor: Position,
-                 cost: usize,
-                 ret: &mut HashSet<Point2D<usize>>,
-                 cache: &mut HashMap<Position, CacheValue>| {
-                    dbg!(start, max_score, &cache, neighbor, cost, &ret);
-                    let max_score = max_score - cost;
-                    let successors = go(this, neighbor, max_score, cache);
-                    if !successors.is_empty() {
-                        ret.extend(successors.iter().copied());
-                        cache.insert(
-                            neighbor,
-                            CacheValue::Found {
-                                cost: max_score,
-                                successors,
-                            },
-                        );
-                    } else {
-                        cache.insert(
-                            neighbor,
-                            CacheValue::NotFound {
-                                min_cost: max_score,
-                            },
-                        );
-                    }
-                };
-            let (position, _) = start;
-            if position == this.end {
-                return HashSet::from_iter([position]);
-            }
-            let mut ret = HashSet::new();
-            for (neighbor, cost) in this
-                .path_step(start, 0)
-                .filter(|&(_, cost)| cost <= max_score)
-            {
-                dbg!(neighbor, cost, &ret);
-                let cached = cache.get(&neighbor).filter(|&v| match *v {
-                    CacheValue::Found {
-                        cost: remaining_cost,
-                        ..
-                    } => remaining_cost <= max_score - cost,
-                    CacheValue::NotFound { min_cost } => min_cost > max_score - cost,
-                });
-                match cached {
-                    Some(CacheValue::Found { successors, .. }) => {
-                        ret.extend(successors.iter().copied());
-                    }
-                    Some(&CacheValue::NotFound { .. }) => {}
-                    None => populate_cache(neighbor, cost, &mut ret, cache),
-                }
-            }
-            ret
-        }
+        // fn go(
+        //     this: &Map,
+        //     start: Position,
+        //     max_score: usize,
+        //     cache: &mut HashMap<Position, CacheValue>,
+        // ) -> HashSet<Point2D<usize>> {
+        //     let (position, _) = start;
+        //     if position == this.end {
+        //         return HashSet::from_iter([position]);
+        //     }
+        //     let mut ret = HashSet::new();
+        //     for (neighbor, cost) in this
+        //         .path_step(start, 0)
+        //         .filter(|&(_, cost)| cost <= max_score)
+        //     {
+        //         let cached = cache.get(&neighbor).filter(|&v| match *v {
+        //             CacheValue::Found {
+        //                 cost: remaining_cost,
+        //                 ..
+        //             } => remaining_cost <= max_score - cost,
+        //             CacheValue::NotFound { min_cost } => min_cost > max_score - cost,
+        //         });
+        //         match cached {
+        //             Some(CacheValue::Found { successors, .. }) => {
+        //                 ret.extend(successors.iter().copied());
+        //             }
+        //             Some(&CacheValue::NotFound { .. }) => {}
+        //             None => {
+        //                 let max_score = max_score - cost;
+        //                 let path_tiles = go(this, neighbor, max_score, cache);
+        //                 if !path_tiles.is_empty() {
+        //                     ret.extend(path_tiles.iter().copied());
+        //                     cache.insert(
+        //                         neighbor,
+        //                         CacheValue::Found {
+        //                             cost: max_score,
+        //                             successors: path_tiles,
+        //                         },
+        //                     );
+        //                 } else {
+        //                     cache.insert(
+        //                         neighbor,
+        //                         CacheValue::NotFound {
+        //                             min_cost: max_score,
+        //                         },
+        //                     );
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     ret
+        // }
 
-        go(self, start, max_score, &mut HashMap::new())
+        // let start = (self.start, Direction::Right);
+        // go(self, start, max_score, &mut HashMap::new())
+
+        // fn bfs(this: &Map, start: Position, max_score: usize) -> HashSet<Point2D<usize>> {
+        //     let mut frontier = PriorityQueue::from_iter([(start, Reverse(0))]);
+        //     let mut visited = frontier
+        //         .iter()
+        //         .map(|(&position, _)| (position, (0, vec![SharedFilo::new()])))
+        //         .collect::<HashMap<_, _>>();
+        //     while let Some((position, Reverse(score))) = frontier.pop_with_priority() {
+        //         if score > max_score {
+        //             break;
+        //         }
+        //         let Some((_, paths)) = visited.get(&position).cloned() else {
+        //             unreachable!()
+        //         };
+        //         for (neighbor, neighbor_cost) in this.path_step(position, score) {
+        //             let &mut (best_neighbor, ref mut neighbor_paths) = visited
+        //                 .entry(neighbor)
+        //                 .or_insert_with(|| (neighbor_cost, vec![]));
+        //             if best_neighbor < neighbor_cost {
+        //                 continue;
+        //             }
+        //             neighbor_paths.extend(paths.iter().map(|path| path.push(neighbor)));
+        //             frontier.insert(neighbor, Reverse(neighbor_cost));
+        //         }
+        //     }
+        //     visited
+        //         .into_iter()
+        //         .filter(|&((position, _), _)| this.end == position)
+        //         .map(|(_, (_, paths))| paths)
+        //         .fold(HashSet::new(), |mut acc, paths| {
+        //             paths
+        //                 .into_iter()
+        //                 .for_each(|path| acc.extend(path.into_iter().map(|(tile, _)| tile)));
+        //             acc
+        //         })
+        // }
+
+        // bfs(self, start, max_score)
+        unimplemented!()
     }
 }
 
@@ -226,20 +270,20 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "End tile could not be reached"))
 }
 
-fn part2(_input: &mut dyn BufRead) -> io::Result<usize> {
-    return Err(io::Error::new(
-        io::ErrorKind::Unsupported,
-        "The test cases currently cause part 2 to freeze",
-    ));
-    #[allow(unreachable_code)]
-    let input = io::read_to_string(_input)?;
+fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
+    let input = io::read_to_string(input)?;
     let map = input
         .parse::<Map>()
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
     let max_score = map.best_score().ok_or_else(|| {
         io::Error::new(io::ErrorKind::InvalidData, "End tile could not be reached")
     })?;
-    Ok(map.on_paths((map.start, Direction::Right), max_score).len())
+    dbg!(max_score);
+    // return Err(io::Error::new(
+    //     io::ErrorKind::Unsupported,
+    //     "The test cases currently cause part 2 to freeze",
+    // ));
+    Ok(map.on_paths(max_score).len())
 }
 
 pub(super) fn run() -> io::Result<()> {
