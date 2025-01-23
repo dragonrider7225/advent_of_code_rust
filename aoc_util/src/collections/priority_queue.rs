@@ -131,7 +131,12 @@ where
         let priority = priority_fn(&value);
         self.replace(value, priority)
     }
+}
 
+impl<P, T> PriorityQueue<P, T>
+where
+    P: Ord,
+{
     /// Like [`replace()`] except that comparison between values is done by `eq` instead of
     /// [`PartialEq::eq`].
     ///
