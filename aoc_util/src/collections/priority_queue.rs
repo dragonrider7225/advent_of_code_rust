@@ -36,6 +36,11 @@ impl<P, T> PriorityQueue<P, T> {
             .first()
             .map(|(priority, value)| (value, priority))
     }
+
+    /// A convenience method for `(&self).into_iter()`.
+    pub fn iter(&self) -> Iter<'_, P, T> {
+        self.into_iter()
+    }
 }
 
 impl<P, T> PriorityQueue<P, T>
@@ -199,6 +204,51 @@ where
                 acc.insert(value, priority);
                 acc
             })
+    }
+}
+
+impl<P, T> IntoIterator for PriorityQueue<P, T> {
+    type IntoIter = IntoIter<P, T>;
+    type Item = (T, P);
+
+    fn into_iter(self) -> Self::IntoIter {
+        fn swap<L, R>((l, r): (L, R)) -> (R, L) {
+            (r, l)
+        }
+
+        self.values.into_iter().map(swap as _)
+    }
+}
+
+type IntoIter<P, T> = std::iter::Map<std::vec::IntoIter<(P, T)>, fn((P, T)) -> (T, P)>;
+
+impl<'a, P, T> IntoIterator for &'a PriorityQueue<P, T> {
+    type IntoIter = Iter<'a, P, T>;
+    type Item = (&'a T, &'a P);
+
+    fn into_iter(self) -> Self::IntoIter {
+        Iter { back: self, idx: 0 }
+    }
+}
+
+/// An iterator over references to the values of a priority queue and their associated priorities.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Iter<'a, P, T> {
+    back: &'a PriorityQueue<P, T>,
+    idx: usize,
+}
+
+impl<'a, P, T> Iterator for Iter<'a, P, T> {
+    type Item = (&'a T, &'a P);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ret = self
+            .back
+            .values
+            .get(self.idx)
+            .map(|(priority, value)| (value, priority));
+        self.idx += 1;
+        ret
     }
 }
 
