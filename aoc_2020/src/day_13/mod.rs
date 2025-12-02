@@ -107,7 +107,7 @@ struct BusNumber(u128);
 
 impl BusNumber {
     fn runs_at(&self, time: Timestamp) -> bool {
-        time.0 % self.0 == 0
+        time.0.is_multiple_of(self.0)
     }
 
     fn wait(&self, start_time: Timestamp) -> Duration {

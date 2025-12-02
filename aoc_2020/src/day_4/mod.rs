@@ -46,52 +46,51 @@ impl Passport<'_> {
     }
 
     fn has_valid_birth_year(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .birth_year
             .and_then(|s| Some((1920..=2002).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid birth year", self.birth_year);
-        } else {
-            println!("{:?} is a valid birth year", self.birth_year);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid birth year", self.birth_year);
+            } else {
+                println!("{:?} is a valid birth year", self.birth_year);
+            }
         }
         res
     }
 
     fn has_valid_issue_year(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .issue_year
             .and_then(|s| Some((2010..=2020).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid issue year", self.issue_year);
-        } else {
-            println!("{:?} is a valid issue year", self.issue_year);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid issue year", self.issue_year);
+            } else {
+                println!("{:?} is a valid issue year", self.issue_year);
+            }
         }
         res
     }
 
     fn has_valid_expiration_year(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .expiration_year
             .and_then(|s| Some((2020..=2030).contains(&s.parse::<u32>().ok()?)))
             .unwrap_or(false);
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid expiration year", self.expiration_year);
-        } else {
-            println!("{:?} is a valid expiration year", self.expiration_year);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid expiration year", self.expiration_year);
+            } else {
+                println!("{:?} is a valid expiration year", self.expiration_year);
+            }
         }
         res
     }
 
     fn has_valid_height(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .height
             .and_then(|s| match &*s.chars().rev().take(2).collect::<String>() {
@@ -107,49 +106,49 @@ impl Passport<'_> {
                 }
             })
             .is_some();
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid height", self.height);
-        } else {
-            println!("{:?} is a valid height", self.height);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid height", self.height);
+            } else {
+                println!("{:?} is a valid height", self.height);
+            }
         }
         res
     }
 
     fn has_valid_hair_color(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .hair_color
             .and_then(|s| {
                 Some(s.chars().next()? == '#' && u32::from_str_radix(&s[1..], 16).is_ok())
             })
             .unwrap_or(false);
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid hair color", self.hair_color);
-        } else {
-            println!("{:?} is a valid hair color", self.hair_color);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid hair color", self.hair_color);
+            } else {
+                println!("{:?} is a valid hair color", self.hair_color);
+            }
         }
         res
     }
 
     fn has_valid_eye_color(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .eye_color
             .filter(|s| ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(s))
             .is_some();
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid eye color", self.eye_color);
-        } else {
-            println!("{:?} is a valid eye color", self.eye_color);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid eye color", self.eye_color);
+            } else {
+                println!("{:?} is a valid eye color", self.eye_color);
+            }
         }
         res
     }
 
     fn has_valid_passport_id(&self) -> bool {
-        #[allow(clippy::let_and_return)]
         let res = self
             .passport_id
             .map(|s| {
@@ -159,11 +158,12 @@ impl Passport<'_> {
             })
             .unwrap_or(0)
             == 9;
-        #[cfg(test)]
-        if !res {
-            println!("{:?} is not a valid passport id", self.passport_id);
-        } else {
-            println!("{:?} is a valid passport id", self.passport_id);
+        if cfg!(test) {
+            if !res {
+                println!("{:?} is not a valid passport id", self.passport_id);
+            } else {
+                println!("{:?} is a valid passport id", self.passport_id);
+            }
         }
         res
     }
