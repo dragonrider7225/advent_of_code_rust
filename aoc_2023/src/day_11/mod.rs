@@ -23,13 +23,11 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     let mut image = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // TODO: Return this directly when it gets fixed
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Pixel::nom_parse)(&line)
-                .map(|(_, pixels)| pixels)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Pixel::nom_parse)(&line)
+                    .map(|(_, pixels)| pixels)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .try_fold::<_, _, io::Result<_>>(vec![], |mut acc, row| {
             let row = row?;
@@ -75,13 +73,11 @@ fn part2(input: &mut dyn BufRead, scale_factor: usize) -> io::Result<usize> {
     let (image, duplicated_rows) = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // TODO: Return this directly when it gets fixed
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Pixel::nom_parse)(&line)
-                .map(|(_, pixels)| pixels)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Pixel::nom_parse)(&line)
+                    .map(|(_, pixels)| pixels)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .enumerate()
         .try_fold::<_, _, io::Result<_>>((vec![], vec![]), |mut acc, (row_idx, row)| {

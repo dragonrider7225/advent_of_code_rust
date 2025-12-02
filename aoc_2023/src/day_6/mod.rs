@@ -26,12 +26,12 @@ fn nom_parse_nums(header: &str) -> impl Parser<&str, Vec<f64>, nom::error::Error
 
 fn parse_times(s: &str) -> io::Result<Vec<f64>> {
     final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(nom_parse_nums("Time"))(s)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
 }
 
 fn parse_distances(s: &str) -> io::Result<Vec<f64>> {
     final_parser::final_parser::<_, _, _, nom::error::Error<&str>>(nom_parse_nums("Distance"))(s)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
 }
 
 fn count_success_ways(time: f64, distance: f64) -> u64 {
@@ -39,8 +39,8 @@ fn count_success_ways(time: f64, distance: f64) -> u64 {
     let center_to_zero = discriminant.sqrt() / 2.;
     let discriminant_is_square =
         (discriminant.sqrt().trunc().powi(2) - discriminant).abs() < 1.0e-5;
-    let discriminant_is_even = discriminant.trunc() as u32 % 2 == 0;
-    if (time as u32) % 2 == 0 {
+    let discriminant_is_even = (discriminant.trunc() as u32).is_multiple_of(2);
+    if (time as u32).is_multiple_of(2) {
         let mut side_points = center_to_zero.trunc() as u64;
         if discriminant_is_square && discriminant_is_even {
             side_points -= 1;

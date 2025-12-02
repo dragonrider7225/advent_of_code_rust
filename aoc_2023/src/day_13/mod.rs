@@ -116,7 +116,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     };
     let arrays = multi::separated_list1(character::newline, Array::nom_parse)(&input)
         .map(|(_, arrays)| arrays)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     Ok(arrays.into_iter().map(|array| array.find_mirror()).sum())
 }
 
@@ -128,7 +128,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     };
     let arrays = multi::separated_list1(character::newline, Array::nom_parse)(&input)
         .map(|(_, arrays)| arrays)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     Ok(arrays
         .into_iter()
         .map(|array| array.find_smudged_mirror())

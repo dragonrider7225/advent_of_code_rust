@@ -181,18 +181,15 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     let mut hands_and_bids = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // Need to separate this out here because otherwise the borrow checker claims that
-            // `line` doesn't live long enough even though the references in both `Ok` and `Err` are
-            // removed in the same expression.
-            // TODO: Remove unnecessary local when the compiler can handle it (2024 edition?).
-            let res = sequence::separated_pair(
-                Hand::<CardWithoutJokers>::nom_parse,
-                bytes::tag(" "),
-                character::u32,
-            )(&line);
-            res.map(|(_, hands_and_bids)| hands_and_bids)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+            line.and_then(|line| {
+                sequence::separated_pair(
+                    Hand::<CardWithoutJokers>::nom_parse,
+                    bytes::tag(" "),
+                    character::u32,
+                )(&line)
+                .map(|(_, hands_and_bids)| hands_and_bids)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Vec<_>>>()?;
     hands_and_bids.sort_by_key(|&(hand, _)| hand);
@@ -208,18 +205,15 @@ fn part2(input: &mut dyn BufRead) -> io::Result<u32> {
     let mut hands_and_bids = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // Need to separate this out here because otherwise the borrow checker claims that
-            // `line` doesn't live long enough even though the references in both `Ok` and `Err` are
-            // removed in the same expression.
-            // TODO: Remove unnecessary local when the compiler can handle it (2024 edition?).
-            let res = sequence::separated_pair(
-                Hand::<CardWithJokers>::nom_parse,
-                bytes::tag(" "),
-                character::u32,
-            )(&line);
-            res.map(|(_, hands_and_bids)| hands_and_bids)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+            line.and_then(|line| {
+                sequence::separated_pair(
+                    Hand::<CardWithJokers>::nom_parse,
+                    bytes::tag(" "),
+                    character::u32,
+                )(&line)
+                .map(|(_, hands_and_bids)| hands_and_bids)
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Vec<_>>>()?;
     hands_and_bids.sort_by_key(|&(hand, _)| hand);
