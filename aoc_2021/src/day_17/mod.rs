@@ -105,8 +105,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
     assert!(target.target_x.contains(&last_x));
     let max_up = if *target.target_y.end() < 0 {
         (0..=(-target.target_y.start()))
-            .filter(|&i| vertical_finds(target.target_y.clone(), i))
-            .last()
+            .rfind(|&i| vertical_finds(target.target_y.clone(), i))
             .unwrap()
     } else {
         target.naive_max_upward_velocity()
