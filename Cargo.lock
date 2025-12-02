@@ -11,6 +11,7 @@ dependencies = [
  "aoc_2022",
  "aoc_2023",
  "aoc_2024",
+ "aoc_2025",
  "aoc_iter",
  "aoc_util",
  "clap",
@@ -100,6 +101,10 @@ version = "0.1.0"
 dependencies = [
  "aoc_util",
 ]
+
+[[package]]
+name = "aoc_2025"
+version = "0.1.0"
 
 [[package]]
 name = "aoc_iter"
