@@ -5,16 +5,11 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 enum PixelIntensity {
+    #[default]
     Dark,
     Light,
-}
-
-impl Default for PixelIntensity {
-    fn default() -> Self {
-        Self::Dark
-    }
 }
 
 impl From<PixelIntensity> for usize {

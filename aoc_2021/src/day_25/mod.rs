@@ -211,7 +211,10 @@ fn part1(input: &mut dyn BufRead) -> io::Result<u32> {
             return Ok(i);
         }
     }
-    Err(io::Error::new(io::ErrorKind::Other, "Ran out of numbers"))
+    Err(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "Ran out of numbers",
+    ))
 }
 
 pub(super) fn run() -> io::Result<()> {

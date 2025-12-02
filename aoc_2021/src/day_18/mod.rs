@@ -50,7 +50,10 @@ impl Number {
 
     fn split(&mut self) {
         if let &mut Self::Literal(n) = self {
-            *self = Self::from(SnailfishNumber(Self::from(n / 2), Self::from((n + 1) / 2)));
+            *self = Self::from(SnailfishNumber(
+                Self::from(n / 2),
+                Self::from(n.div_ceil(2)),
+            ));
         }
     }
 

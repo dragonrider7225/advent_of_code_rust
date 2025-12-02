@@ -19,16 +19,7 @@ fn read_positions(input: &mut dyn BufRead) -> io::Result<Vec<usize>> {
 }
 
 fn count_fuel(positions: &[usize], position: usize) -> usize {
-    positions
-        .iter()
-        .map(|&crab| {
-            if crab < position {
-                position - crab
-            } else {
-                crab - position
-            }
-        })
-        .sum()
+    positions.iter().map(|&crab| position.abs_diff(crab)).sum()
 }
 
 fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
@@ -43,11 +34,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
         positions
             .iter()
             .map(|&crab| {
-                let distance = if crab < position {
-                    position - crab
-                } else {
-                    crab - position
-                };
+                let distance = position.abs_diff(crab);
                 (distance * (distance + 1)) / 2
             })
             .sum()

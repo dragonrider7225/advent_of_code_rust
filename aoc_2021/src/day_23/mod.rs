@@ -473,7 +473,12 @@ fn amphipod_heuristic(s: &State) -> u64 {
 
 fn part1(input: &mut dyn BufRead) -> io::Result<u64> {
     a_star::run_a_star_for_distance::<_, u64, _, _>(State::read(input)?, amphipod_heuristic)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Couldn't find path to sorted state"))
+        .ok_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidData,
+                "Couldn't find path to sorted state",
+            )
+        })
 }
 
 fn part2(_input: &mut dyn BufRead) -> io::Result<u64> {
