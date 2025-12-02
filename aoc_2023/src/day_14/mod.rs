@@ -221,7 +221,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     };
     let mut platform = Platform::nom_parse(&input)
         .map(|(_, platform)| platform)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     platform.shift_north();
     Ok(platform.total_northward_load())
 }
@@ -234,7 +234,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     };
     let mut platform = Platform::nom_parse(&input)
         .map(|(_, platform)| platform)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
     const NUM_CYCLES: usize = 1_000_000_000;
     let mut cache = [(platform.clone(), 0)]
         .into_iter()

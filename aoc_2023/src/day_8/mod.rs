@@ -45,7 +45,7 @@ impl Graph {
         fn factorize(n: usize) -> Vec<usize> {
             let mut ret = vec![];
             for i in 1..(n.isqrt() + 1) {
-                if n % i == 0 {
+                if n.is_multiple_of(i) {
                     if i * i != n {
                         ret.extend([i, n / i]);
                     } else {

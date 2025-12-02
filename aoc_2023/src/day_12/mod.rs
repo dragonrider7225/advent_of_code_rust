@@ -287,17 +287,17 @@ impl SpringRow {
     fn unfold(&mut self) {
         use std::{iter, mem};
 
-        self.springs = iter::repeat(mem::take(&mut self.springs).into_iter())
-            .take(5)
-            .fold(vec![], |mut acc, row| {
+        self.springs = iter::repeat_n(mem::take(&mut self.springs).into_iter(), 5).fold(
+            vec![],
+            |mut acc, row| {
                 if !acc.is_empty() {
                     acc.push(Spring::Unknown);
                 }
                 acc.extend(row);
                 acc
-            });
-        self.damaged_groups = iter::repeat(mem::take(&mut self.damaged_groups).into_iter())
-            .take(5)
+            },
+        );
+        self.damaged_groups = iter::repeat_n(mem::take(&mut self.damaged_groups).into_iter(), 5)
             .flatten()
             .collect();
     }
@@ -328,7 +328,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
         .map(|line| {
             SpringRow::nom_parse(&line?)
                 .map(|(_, row)| row)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
         })
         .collect::<io::Result<Vec<_>>>()?;
     Ok(spring_rows.iter_mut().map(|row| row.count_sat()).sum())
@@ -340,7 +340,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
         .map(|line| {
             SpringRow::nom_parse(&line?)
                 .map(|(_, row)| row)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
         })
         .collect::<io::Result<Vec<_>>>()?;
     Ok(spring_rows

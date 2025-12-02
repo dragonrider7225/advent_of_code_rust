@@ -154,12 +154,11 @@ fn part1(input: &mut dyn BufRead, num_steps: usize) -> io::Result<usize> {
     let map = input
         .lines()
         .map(|line| {
-            let line = line?;
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Tile::nom_parse)(&line)
-                .map(|(_, x)| x)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Tile::nom_parse)(&line)
+                    .map(|(_, x)| x)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Map>>()?;
     let mut positions = HashSet::new();
@@ -177,12 +176,11 @@ fn part2(input: &mut dyn BufRead, num_steps: usize) -> io::Result<usize> {
     let map = input
         .lines()
         .map(|line| {
-            let line = line?;
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Tile::nom_parse)(&line)
-                .map(|(_, x)| x)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Tile::nom_parse)(&line)
+                    .map(|(_, x)| x)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Map>>()?;
     let mut even_visited = HashSet::<IPosition>::new();
@@ -208,7 +206,7 @@ fn part2(input: &mut dyn BufRead, num_steps: usize) -> io::Result<usize> {
             })
             .collect();
     }
-    if num_steps % 2 == 0 {
+    if num_steps.is_multiple_of(2) {
         even_visited.extend(positions);
         Ok(even_visited.len())
     } else {

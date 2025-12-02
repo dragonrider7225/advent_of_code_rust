@@ -102,12 +102,11 @@ impl Contraption {
         input
             .lines()
             .map(|line| {
-                let line = line?;
-                #[allow(clippy::let_and_return)]
-                let ret = multi::many1(Tile::nom_parse)(&line)
-                    .map(|(_, row)| row)
-                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-                ret
+                line.and_then(|line| {
+                    multi::many1(Tile::nom_parse)(&line)
+                        .map(|(_, row)| row)
+                        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+                })
             })
             .collect()
     }

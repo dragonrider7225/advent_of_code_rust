@@ -169,7 +169,7 @@ impl Almanac {
         }?;
         Self::nom_parse(&input)
             .map(|(_, almanac)| almanac)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
     }
 }
 

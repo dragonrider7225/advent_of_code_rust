@@ -356,12 +356,11 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     let map = input
         .lines()
         .map(|line| {
-            let line = line?;
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Tile::nom_parse)(&line)
-                .map(|(_, x)| x)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Tile::nom_parse)(&line)
+                    .map(|(_, x)| x)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Map>>()?;
     let starting_point = Position::at(
@@ -399,12 +398,11 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let map = input
         .lines()
         .map(|line| {
-            let line = line?;
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Tile::nom_parse)(&line)
-                .map(|(_, x)| x)
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Tile::nom_parse)(&line)
+                    .map(|(_, x)| x)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Map>>()?;
     let map_ref = &map;

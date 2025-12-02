@@ -133,13 +133,11 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     let sketch = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // TODO: This is required to fix a "dropped while borrowed" error on `line`.
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Pipe::nom_parse)(&line)
-                .map(|(_, pipes)| pipes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Pipe::nom_parse)(&line)
+                    .map(|(_, pipes)| pipes)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Vec<_>>>()?;
     let start_coords = sketch
@@ -187,13 +185,11 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let sketch = input
         .lines()
         .map(|line| {
-            let line = line?;
-            // TODO: This is required to fix a "dropped while borrowed" error on `line`.
-            #[allow(clippy::let_and_return)]
-            let ret = multi::many1(Pipe::nom_parse)(&line)
-                .map(|(_, pipes)| pipes)
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()));
-            ret
+            line.and_then(|line| {
+                multi::many1(Pipe::nom_parse)(&line)
+                    .map(|(_, pipes)| pipes)
+                    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))
+            })
         })
         .collect::<io::Result<Vec<_>>>()?;
     let start_coords = sketch

@@ -59,7 +59,7 @@ fn parse_game(line: &str) -> io::Result<(u32, Vec<Reveal>)> {
         sequence::delimited(bytes::tag("Game "), character::u32, bytes::tag(": ")),
         multi::separated_list1(bytes::tag("; "), Reveal::nom_parse),
     )))(line)
-    .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")))
+    .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, format!("{e:?}")))
 }
 
 fn part1(input: &mut dyn BufRead) -> io::Result<u32> {

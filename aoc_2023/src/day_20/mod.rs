@@ -360,7 +360,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
             let mut seen = vec![broadcaster_output];
             let mut pending = Vec::from(target.outputs());
             while let Some(module_id) = pending.pop() {
-                if !seen.iter().any(|&module| module == module_id) {
+                if !seen.contains(&module_id) {
                     let module = modules
                         .iter()
                         .find(|module| module.name() == &module_id)
@@ -400,10 +400,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
                     }
                 }
             }
-            Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Ran out of numbers in usize",
-            ))
+            Err(io::Error::other("Ran out of numbers in usize"))
         })
         .collect::<io::Result<Vec<_>>>()?;
     counts

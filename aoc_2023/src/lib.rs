@@ -1,7 +1,5 @@
 // Features fn_traits and unboxed_closures used in day 19
 #![feature(fn_traits, unboxed_closures)]
-// Feature extract_if used in day 19
-#![feature(extract_if)]
 // Feature iter_map_windows used in day 23
 #![feature(iter_map_windows)]
 

@@ -175,10 +175,9 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     io::stdout().flush()?;
     let graph_filename = read_line!()?.trim().to_string();
     if !graph.write_to_file(&graph_filename)?.success() {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!("Couldn't write graph to {graph_filename:?}"),
-        ));
+        return Err(io::Error::other(format!(
+            "Couldn't write graph to {graph_filename:?}"
+        )));
     }
     let mut num_edges_found = 0;
     println!("Open {graph_filename:?} and look for a place where a cut through three edges will break it into two pieces");
@@ -225,10 +224,9 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
             }
         }
         if !graph.write_to_file(&graph_filename)?.success() {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Couldn't write graph to {graph_filename:?}"),
-            ));
+            return Err(io::Error::other(format!(
+                "Couldn't write graph to {graph_filename:?}"
+            )));
         }
         print!("Recolored graph. Enter the same edge's new color: ");
     }
