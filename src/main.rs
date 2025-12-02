@@ -16,7 +16,7 @@ fn app() -> Command {
                 .short('y')
                 .long("year")
                 .value_name("YEAR")
-                .value_parser(2018..=2024)
+                .value_parser(2018..=2025)
                 .help("Selects the year to run"),
         )
         .arg(
