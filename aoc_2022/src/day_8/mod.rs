@@ -54,7 +54,7 @@ impl Forest {
         // Fix the length of `row` if it doesn't match the extant rows.
         if !self.rows.is_empty() {
             if row.len() < self.rows[0].len() {
-                row.extend(std::iter::repeat(1).take(self.rows[0].len() - row.len()));
+                row.extend(std::iter::repeat_n(1, self.rows[0].len() - row.len()));
             } else {
                 row.truncate(self.rows[0].len());
             }

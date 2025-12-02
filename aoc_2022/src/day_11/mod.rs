@@ -90,7 +90,7 @@ struct NextMonkey {
 
 impl NextMonkey {
     fn test(&self, worry: Worry) -> MonkeyId {
-        if worry % self.test_denominator == 0 {
+        if worry.is_multiple_of(self.test_denominator) {
             self.success
         } else {
             self.failure
