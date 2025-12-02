@@ -134,13 +134,13 @@ impl Aabb {
         ]
         .into_iter()
         .filter(|piece| {
-            #[allow(clippy::let_and_return)]
             let ret = !piece.is_empty();
-            #[cfg(test)]
-            if ret {
-                println!("Including piece {piece:?}");
-            } else {
-                println!("Removing empty piece {piece:?}");
+            if cfg!(test) {
+                if ret {
+                    println!("Including piece {piece:?}");
+                } else {
+                    println!("Removing empty piece {piece:?}");
+                }
             }
             ret
         })
@@ -148,11 +148,14 @@ impl Aabb {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 enum AabbSetInner {
+    #[default]
     Empty,
     Singleton(Aabb),
-    Multi { pieces: Vec<Aabb> },
+    Multi {
+        pieces: Vec<Aabb>,
+    },
 }
 
 impl AabbSetInner {
@@ -225,12 +228,6 @@ impl AabbSetInner {
                 }
             }
         }
-    }
-}
-
-impl Default for AabbSetInner {
-    fn default() -> Self {
-        Self::Empty
     }
 }
 
