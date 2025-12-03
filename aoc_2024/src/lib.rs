@@ -1,6 +1,3 @@
-// Used in day 20
-#![feature(hash_extract_if)]
-
 use std::io;
 
 mod day_1;

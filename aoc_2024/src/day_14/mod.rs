@@ -210,7 +210,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let christmas_tree_frame = (0..REAL_FLOOR_WIDTH)
         .find(|i| (horizontal + i * REAL_FLOOR_HEIGHT) % REAL_FLOOR_WIDTH == vertical)
         .map(|i| horizontal + i * REAL_FLOOR_HEIGHT)
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Couldn't find christmas tree"))?;
+        .ok_or_else(|| io::Error::other("Couldn't find christmas tree"))?;
     let positions = starts
         .into_iter()
         .map(|start| start.position + start.velocity * christmas_tree_frame)
