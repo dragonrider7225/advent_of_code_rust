@@ -82,7 +82,7 @@ impl StoneBlinkMap {
             let children = match stone.checked_ilog10() {
                 None => (Stone(1), None),
                 Some(n) if (n + 1) % 2 == 0 => {
-                    let denominator = 10u128.pow((n + 1) / 2);
+                    let denominator = 10u128.pow(n.div_ceil(2));
                     (stone / denominator, Some(stone % denominator))
                 }
                 _ => (stone * 2024, None),

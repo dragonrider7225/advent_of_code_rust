@@ -19,7 +19,7 @@ enum Operator {
 
 impl Operator {
     fn pop2(n: Number) -> (Number, Operator) {
-        let operator = if n % 2 == 0 {
+        let operator = if n.is_multiple_of(2) {
             Self::Add
         } else {
             Self::Multiply
