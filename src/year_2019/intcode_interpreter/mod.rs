@@ -313,7 +313,7 @@ where
     {
         std::fs::read_to_string(path)?
             .parse()
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
     }
 
     pub fn dup<R1, W1>(&self) -> IntcodeInterpreter<R1, W1>

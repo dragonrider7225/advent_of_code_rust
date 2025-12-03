@@ -31,16 +31,11 @@ impl TryFrom<i64> for Rotation {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum Color {
+    #[default]
     Black,
     White,
-}
-
-impl Default for Color {
-    fn default() -> Self {
-        Self::Black
-    }
 }
 
 impl From<Color> for i64 {
@@ -132,18 +127,13 @@ impl Display for Field {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Default)]
 enum Direction {
+    #[default]
     Up,
     Left,
     Down,
     Right,
-}
-
-impl Default for Direction {
-    fn default() -> Self {
-        Self::Up
-    }
 }
 
 #[derive(Clone)]

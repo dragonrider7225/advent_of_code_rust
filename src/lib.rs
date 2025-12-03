@@ -2,7 +2,6 @@
 
 #![warn(rust_2018_idioms)]
 #![feature(box_patterns)]
-#![feature(hash_extract_if)]
 #![feature(step_trait)]
 
 use std::io;
