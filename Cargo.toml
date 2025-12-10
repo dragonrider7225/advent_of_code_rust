@@ -19,5 +19,8 @@ aoc_2024 = { path = "aoc_2024" }
 aoc_2025 = { path = "aoc_2025" }
 clap = { version = "^4.5.11", features = ["wrap_help"] }
 
+[features]
+write_images = ["aoc_2025/write_images"]
+
 [workspace]
 members = ["iter_extensions", "aoc_2020", "aoc_2021", "aoc_2022", "aoc_2023", "aoc_2024", "aoc_util", "aoc_2025"]
