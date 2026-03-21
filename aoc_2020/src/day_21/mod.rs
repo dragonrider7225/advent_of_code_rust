@@ -162,10 +162,7 @@ fn separate_allergens(
                 })
         }) || modified;
         if !modified {
-            let remaining_potentials = potential_sources
-                .into_iter()
-                .flat_map(|(_, ingredients)| ingredients)
-                .collect::<HashSet<_>>();
+            let remaining_potentials = potential_sources.values().flatten().collect::<HashSet<_>>();
             ingredients.retain(|ingredient| !remaining_potentials.contains(ingredient));
             break;
         }
