@@ -100,12 +100,8 @@ impl Expenses {
                     let least = iters[least_index].peek().copied();
                     let current = iters[index].peek().copied();
                     match (least, current) {
-                        (Some(least), Some(current)) => {
-                            if current < least {
-                                least_index = index;
-                            }
-                        }
                         (None, Some(_)) => least_index = index,
+                        (Some(least), Some(current)) if current < least => least_index = index,
                         _ => {}
                     }
                 }
