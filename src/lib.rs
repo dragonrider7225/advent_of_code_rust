@@ -1,8 +1,6 @@
 //! This crate aggregates my solutions to all [advent of code](https://adventofcode.com/) problems.
 
 #![warn(rust_2018_idioms)]
-#![feature(box_patterns)]
-#![feature(step_trait)]
 
 use std::io;
 

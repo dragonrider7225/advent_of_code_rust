@@ -1,4 +1,4 @@
-#![feature(extend_one, iter_advance_by, trusted_len, try_find, try_trait_v2)]
+#![feature(iter_advance_by, trusted_len, try_trait_v2)]
 
 mod cycle_bounded_impl;
 mod replicate_impl;
