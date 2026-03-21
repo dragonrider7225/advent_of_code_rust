@@ -145,6 +145,7 @@ fn separate_allergens(
                 _ => {}
             }
         }
+        #[expect(clippy::unnecessary_fold, reason = "Don't short-circuit")]
         let modified = allergens_to_remove
             .drain()
             // non-short-circuit `.any`.
