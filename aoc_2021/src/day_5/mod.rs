@@ -117,8 +117,8 @@ fn count_points_covered(lines: impl Iterator<Item = io::Result<Line>>) -> io::Re
         }
     }
     Ok(points_covered
-        .into_iter()
-        .filter_map(|(_, num_lines)| Some(num_lines).filter(|&x| x > 1))
+        .into_values()
+        .filter(|&num_lines| num_lines > 1)
         .count())
 }
 
