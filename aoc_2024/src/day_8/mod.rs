@@ -65,8 +65,8 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
     let map = Map::read(input)?;
     Ok(map
         .positions
-        .iter()
-        .flat_map(|(_, positions)| {
+        .values()
+        .flat_map(|positions| {
             positions.iter().flat_map(|position1| {
                 positions
                     .iter()
@@ -97,8 +97,8 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
     let map_ref = &map;
     let ret = map
         .positions
-        .iter()
-        .flat_map(|(_, positions)| {
+        .values()
+        .flat_map(|positions| {
             positions.iter().flat_map(|position1| {
                 positions
                     .iter()
