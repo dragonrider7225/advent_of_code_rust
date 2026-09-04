@@ -2,7 +2,7 @@
 Each year two related puzzles are released on each of the first twenty-four days of December.
 The second puzzle for any given day is only available after solving the first puzzle.
 On December 25th there is only one puzzle and part two gives a free star if and only if you already
-have 23 stars. (Or 49 until 2024)
+have 23 stars. (Or 49 through 2024)
 
 My progress as of 2026-09-04 can be seen in the images below:
 
