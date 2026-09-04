@@ -3,7 +3,11 @@ Each year two related puzzles are released on each of the first twenty-four days
 The second puzzle for any given day is only available after solving the first puzzle.
 On December 25th there is only one puzzle and part two gives a free star if and only if you already have 49 stars.
 
-My progress as of 2025-01-21 can be seen in the images below:
+My progress as of 2026-09-04 can be seen in the images below:
+
+2025:
+
+![24/24 stars in 2025](images/AoC_2025_Status.png)
 
 2024:
 
