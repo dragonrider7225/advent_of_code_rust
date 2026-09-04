@@ -36,7 +36,7 @@ fn part1(input: &mut dyn BufRead) -> io::Result<usize> {
                             .iter()
                             .copied()
                             .enumerate()
-                            .filter_map(|(column, tile)| Some(column).filter(|_| tile == b'S'))
+                            .filter_map(|(column, tile)| (tile == b'S').then_some(column))
                     );
                 }
                 {
@@ -92,7 +92,7 @@ fn part2(input: &mut dyn BufRead) -> io::Result<usize> {
                             .copied()
                             .enumerate()
                             .filter_map(|(column, tile)| {
-                                Some((column, 1)).filter(|_| tile == b'S')
+                                (tile == b'S').then_some((column, 1))
                             }),
                     );
                 }

@@ -342,7 +342,7 @@ impl Joltage {
                         let mut sub = this.clone();
                         unpack_button_list(idx, buttons.len())
                             .zip(buttons)
-                            .filter_map(|(push, button)| Some(button).filter(|_| push))
+                            .filter_map(|(push, button)| push.then_some(button))
                             .try_for_each(|button| {
                                 button.unpack().zip(&mut sub.joltages).try_for_each(
                                     |(effect, joltage)| {
@@ -373,7 +373,7 @@ impl Joltage {
             .map(|idx| {
                 unpack_button_list(idx, buttons.len())
                     .zip(buttons)
-                    .filter_map(|(push, button)| Some(button).filter(|_| push))
+                    .filter_map(|(push, button)| push.then_some(button))
                     .fold(vec![false; self.joltages.len()], |mut acc, button| {
                         button
                             .unpack()
