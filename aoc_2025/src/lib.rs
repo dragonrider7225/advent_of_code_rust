@@ -1,3 +1,5 @@
+#![cfg_attr(test, feature(formatting_options))]
+
 use std::io;
 
 mod day_1;
